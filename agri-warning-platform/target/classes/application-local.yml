@@ -1,0 +1,43 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/agri_warning_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password: 你的本地数据库密码
+
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password:
+      database: 0
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+sa-token:
+  is-log: true
+
+qiniu:
+  enabled: true
+  access-key: 你自己的七牛云AccessKey
+  secret-key: 你自己的七牛云SecretKey
+  bucket: 你自己的bucket
+  domain: http://你的cdn域名
+  region: huanan
+
+ai:
+  enabled: true
+  base-url: https://api.deepseek.com
+  api-key: 你自己的AI接口Key
+  model: deepseek-chat
+  connect-timeout: 30
+  read-timeout: 60
+
+logging:
+  level:
+    root: info
+    com.zhku.agri: debug
