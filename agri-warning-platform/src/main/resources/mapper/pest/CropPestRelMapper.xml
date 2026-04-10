@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhku.agriwarningplatform.module.pest.mapper.CropPestRelMapper">
+
+    <!-- =========================
+         ResultMap
+    ========================== -->
+    <resultMap id="CropSimpleDTOResultMap" type="com.zhku.agriwarningplatform.module.pest.dto.CropSimpleDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+    </resultMap>
+
+    <!-- =========================
+         batch insert
+    ========================== -->
+    <insert id="batchInsert">
+        INSERT INTO crop_pest_rel (
+        crop_id,
+        pest_id,
+        delete_flag
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.cropId},
+            #{item.pestId},
+            #{item.deleteFlag}
+            )
+        </foreach>
+    </insert>
+
+    <!-- =========================
+         delete
+    ========================== -->
+    <update id="logicDeleteByPestId">
+        UPDATE crop_pest_rel
+        SET delete_flag = 1
+        WHERE pest_id = #{pestId}
+          AND delete_flag = 0
+    </update>
+
+    <delete id="deletePhysicalByPestId">
+        DELETE FROM crop_pest_rel
+        WHERE pest_id = #{pestId}
+    </delete>
+
+    <!-- =========================
+         select
+    ========================== -->
+    <select id="selectCropIdsByPestId" resultType="java.lang.Long">
+        SELECT crop_id
+        FROM crop_pest_rel
+        WHERE pest_id = #{pestId}
+          AND delete_flag = 0
+        ORDER BY gmt_create ASC, crop_id ASC
+    </select>
+
+    <select id="selectCropListByPestId" resultMap="CropSimpleDTOResultMap">
+        SELECT
+            c.id,
+            c.name
+        FROM crop_pest_rel cpr
+                 INNER JOIN crop c ON cpr.crop_id = c.id
+        WHERE cpr.pest_id = #{pestId}
+          AND cpr.delete_flag = 0
+          AND c.delete_flag = 0
+        ORDER BY cpr.gmt_create ASC, c.id ASC
+    </select>
+
+    <!-- =========================
+         validate crop ids
+    ========================== -->
+    <select id="countValidCropIds" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM crop
+        WHERE delete_flag = 0
+        AND id IN
+        <foreach collection="cropIds" item="cropId" open="(" separator="," close=")">
+            #{cropId}
+        </foreach>
+    </select>
+
+</mapper>

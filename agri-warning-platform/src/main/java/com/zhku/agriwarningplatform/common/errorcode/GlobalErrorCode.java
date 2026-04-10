@@ -8,5 +8,6 @@ package com.zhku.agriwarningplatform.common.errorcode;
  * Time: 10:48
  */
 public interface GlobalErrorCode {
+
     ErrorCode INTERNAL_SERVER_ERROR = new ErrorCode(500, "GLOBAL","系统异常！");
 }
