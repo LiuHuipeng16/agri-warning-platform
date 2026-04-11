@@ -50,7 +50,7 @@ public class PestController {
     public CommonResult<PestDetailVO> detail(@PathVariable("id") @NotNull(message = "病虫害ID不能为空") Long id) {
         PestDetailDTO dto = pestService.detail(id);
         return CommonResult.success(PestConvert.toDetailVO(dto));
-    }git status
+    }
 
     @PostMapping("/create")
     public CommonResult<Long> create(@Valid @RequestBody PestCreateParam param) {
