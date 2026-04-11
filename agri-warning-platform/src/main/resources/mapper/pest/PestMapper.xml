@@ -8,7 +8,7 @@
     <!-- =========================
          ResultMap
     ========================== -->
-    <resultMap id="PestDOResultMap" type="com.zhku.agriwarningplatform.module.pest.repository.dataobject.PestDO">
+    <resultMap id="PestDOResultMap" type="com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO">
         <id property="id" column="id"/>
         <result property="name" column="name"/>
         <result property="type" column="type"/>
@@ -23,7 +23,7 @@
         <result property="gmtModified" column="gmt_modified"/>
     </resultMap>
 
-    <resultMap id="PestPageItemDTOResultMap" type="com.zhku.agriwarningplatform.module.pest.dto.PestPageItemDTO">
+    <resultMap id="PestPageItemDTOResultMap" type="com.zhku.agriwarningplatform.module.pest.service.dto.PestPageItemDTO">
         <id property="id" column="id"/>
         <result property="name" column="name"/>
         <result property="type" column="type"/>
@@ -32,7 +32,7 @@
         <result property="description" column="description"/>
     </resultMap>
 
-    <resultMap id="PestOptionDTOResultMap" type="com.zhku.agriwarningplatform.module.pest.dto.PestOptionDTO">
+    <resultMap id="PestOptionDTOResultMap" type="com.zhku.agriwarningplatform.module.pest.service.dto.PestOptionDTO">
         <result property="label" column="label"/>
         <result property="value" column="value"/>
     </resultMap>

@@ -62,7 +62,6 @@ public class GlobalExceptionHandler {
     public CommonResult<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         FieldError fieldError = e.getBindingResult().getFieldError();
         String message = fieldError != null ? fieldError.getDefaultMessage() : "参数校验失败";
-
         log.warn("参数校验异常: {}", message);
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
     }

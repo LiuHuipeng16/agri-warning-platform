@@ -8,7 +8,7 @@
     <!-- =========================
          ResultMap
     ========================== -->
-    <resultMap id="PestEnvironmentDOResultMap" type="com.zhku.agriwarningplatform.module.pest.repository.dataobject.PestEnvironmentDO">
+    <resultMap id="PestEnvironmentDOResultMap" type="com.zhku.agriwarningplatform.module.pestenvironment.mapper.dataobject.PestEnvironmentDO">
         <id property="pestId" column="pest_id"/>
         <result property="temperatureRange" column="temperature_range"/>
         <result property="humidityRange" column="humidity_range"/>
