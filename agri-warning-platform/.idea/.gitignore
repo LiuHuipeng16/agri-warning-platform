@@ -6,3 +6,7 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+# 忽略本地私有配置文件，不上传远程仓库
+application-local.yml
+# 也可以用通配符忽略所有local结尾的配置
+# application-*.yml

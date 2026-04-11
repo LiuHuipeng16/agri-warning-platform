@@ -108,3 +108,11 @@ app:
     - /swagger-ui/**
     - /v3/api-docs/**
     - /webjars/**
+
+# ... existing code ...
+
+jwt:
+  secret: agriWarningPlatformSecretKey2026ChangeThisInProduction
+  expiration: 86400000
+
+# ... existing code ...

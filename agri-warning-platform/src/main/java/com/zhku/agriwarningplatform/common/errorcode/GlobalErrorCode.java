@@ -1,5 +1,7 @@
 package com.zhku.agriwarningplatform.common.errorcode;
 
+import cn.dev33.satoken.exception.SaTokenException;
+
 /**
  * Created with IntelliJ IDEA.
  * Description:
@@ -9,4 +11,5 @@ package com.zhku.agriwarningplatform.common.errorcode;
  */
 public interface GlobalErrorCode {
     ErrorCode INTERNAL_SERVER_ERROR = new ErrorCode(500, "GLOBAL","系统异常！");
+
 }
