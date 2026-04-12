@@ -6,12 +6,15 @@ import com.zhku.agriwarningplatform.common.exception.ServiceException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.validation.ConstraintViolation;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 /**
  * Created with IntelliJ IDEA.
  * Description:
@@ -29,7 +32,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ControllerException.class)
     public CommonResult<?> handlerServiceException(ControllerException e){
-        log.error("ControllerException:", e);
+        log.error("ControllerException:{},{},{}",e.getCode(),e.getInternalCode(),e.getMessage(), e);
         return CommonResult.error(e.getCode(),e.getMessage());
     }
 
@@ -40,7 +43,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ServiceException.class)
     public CommonResult<?> handlerServiceException(ServiceException e){
-        log.error("ServiceException:", e);
+        log.error("ServiceException:{},{},{}",e.getCode(),e.getInternalCode(),e.getMessage(), e);
         return CommonResult.error(e.getCode(),e.getMessage());
     }
 
@@ -62,7 +65,6 @@ public class GlobalExceptionHandler {
     public CommonResult<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         FieldError fieldError = e.getBindingResult().getFieldError();
         String message = fieldError != null ? fieldError.getDefaultMessage() : "参数校验失败";
-
         log.warn("参数校验异常: {}", message);
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
     }
@@ -94,5 +96,17 @@ public class GlobalExceptionHandler {
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public CommonResult<?> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
 
+        return CommonResult.error(
+                400,
+                "参数类型错误: " + e.getName()
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public CommonResult<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        return CommonResult.error(400, "请求JSON格式错误");
+    }
 }

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhku.agriwarningplatform.module.pestenvironment.mapper.PestEnvironmentMapper">
+
+    <!-- =========================
+         ResultMap
+    ========================== -->
+    <resultMap id="PestEnvironmentDOResultMap" type="com.zhku.agriwarningplatform.module.pestenvironment.mapper.dataobject.PestEnvironmentDO">
+        <id property="pestId" column="pest_id"/>
+        <result property="temperatureRange" column="temperature_range"/>
+        <result property="humidityRange" column="humidity_range"/>
+        <result property="environmentDescription" column="environment_description"/>
+        <result property="deleteFlag" column="delete_flag"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="gmtModified" column="gmt_modified"/>
+    </resultMap>
+
+    <!-- =========================
+         select
+    ========================== -->
+    <select id="selectByPestId" resultMap="PestEnvironmentDOResultMap">
+        SELECT
+            pest_id,
+            temperature_range,
+            humidity_range,
+            environment_description,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM pest_environment_conditions
+        WHERE pest_id = #{pestId}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="selectByPestIdIncludingDeleted" resultMap="PestEnvironmentDOResultMap">
+        SELECT
+            pest_id,
+            temperature_range,
+            humidity_range,
+            environment_description,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM pest_environment_conditions
+        WHERE pest_id = #{pestId}
+            LIMIT 1
+    </select>
+
+    <!-- =========================
+         insert
+    ========================== -->
+    <insert id="insert">
+        INSERT INTO pest_environment_conditions(
+            pest_id,
+            temperature_range,
+            humidity_range,
+            environment_description,
+            delete_flag
+        ) VALUES (
+                     #{pestId},
+                     #{temperatureRange},
+                     #{humidityRange},
+                     #{environmentDescription},
+                     #{deleteFlag}
+                 )
+    </insert>
+
+    <!-- =========================
+         update
+    ========================== -->
+    <update id="updateByPestId">
+        UPDATE pest_environment_conditions
+        <set>
+            <if test="temperatureRange != null">
+                temperature_range = #{temperatureRange},
+            </if>
+            <if test="humidityRange != null">
+                humidity_range = #{humidityRange},
+            </if>
+            <if test="environmentDescription != null">
+                environment_description = #{environmentDescription},
+            </if>
+            <if test="deleteFlag != null">
+                delete_flag = #{deleteFlag},
+            </if>
+        </set>
+        WHERE pest_id = #{pestId}
+    </update>
+
+    <update id="logicDeleteByPestId">
+        UPDATE pest_environment_conditions
+        SET delete_flag = 1
+        WHERE pest_id = #{pestId}
+          AND delete_flag = 0
+    </update>
+
+    <delete id="deletePhysicalByPestId">
+        DELETE FROM pest_environment_conditions
+        WHERE pest_id = #{pestId}
+    </delete>
+
+</mapper>
