@@ -25,12 +25,13 @@ public class AuthController {
     private final AuthService authService;
     @PostMapping("/login")
     public CommonResult<LoginRespVO> login(@RequestBody LoginReqVO loginReqVO){
+        log.info("用户登录：{}", loginReqVO);
         LoginRespVO loginRespVO = authService.login(loginReqVO);
         if (loginRespVO == null){
             throw new ControllerException(AuthErrorCode.USERNAME_OR_PASSWORD_ERROR);
         }
         return CommonResult.success(loginRespVO);
     }
-
+    
 
 }

@@ -20,11 +20,16 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     default-property-inclusion: non_null
 
+
+  # ... existing code ...
+
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/agri_warning_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
+    url: jdbc:mysql://localhost:3306/agri_pest_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
-    password: 123456
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ... existing code ...
 
   data:
     redis:
@@ -108,3 +113,11 @@ app:
     - /swagger-ui/**
     - /v3/api-docs/**
     - /webjars/**
+
+# ... existing code ...
+
+jwt:
+  secret: agriWarningPlatformSecretKey2026ChangeThisInProduction
+  expiration: 86400000
+
+# ... existing code ...

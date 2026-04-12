@@ -2,11 +2,13 @@ package com.zhku.agriwarningplatform.common.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,13 +17,28 @@ import java.util.Map;
 @Component
 public class JwtUtils {
 
+    // 🔴 静态变量 + @Value 注入（必须用 set 方法给静态变量赋值）
+    private static String secret;
+    private static Long expiration;
+
+    // 🔴 关键：用 @Value 给静态变量赋值的标准写法
     @Value("${jwt.secret:agriWarningPlatformSecretKey2026}")
-    private String secret;
+    public void setSecret(String secret) {
+        JwtUtils.secret = secret;
+    }
 
     @Value("${jwt.expiration:86400000}")
-    private Long expiration;
+    public void setExpiration(Long expiration) {
+        JwtUtils.expiration = expiration;
+    }
 
-    public String generateToken(Long userId, String username, String role) {
+    // ====================== 核心改动：生成密钥（现在是静态，且能访问静态secret）======================
+    private static SecretKey getSecretKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    // ====================== 方法全改成静态，业务完全不变 ======================
+    public static String generateToken(Long userId, String username, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("username", username);
@@ -35,14 +52,15 @@ public class JwtUtils {
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .signWith(getSecretKey())
                 .compact();
     }
 
-    public Claims getClaimsFromToken(String token) {
+    public static Claims getClaimsFromToken(String token) {
         try {
-            return Jwts.parser()
-                    .setSigningKey(secret)
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSecretKey())
+                    .build()
                     .parseClaimsJws(token)
                     .getBody();
         } catch (Exception e) {
@@ -51,22 +69,22 @@ public class JwtUtils {
         }
     }
 
-    public String getUsernameFromToken(String token) {
+    public static String getUsernameFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         return claims != null ? claims.getSubject() : null;
     }
 
-    public Long getUserIdFromToken(String token) {
+    public static Long getUserIdFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         return claims != null ? ((Number) claims.get("userId")).longValue() : null;
     }
 
-    public String getRoleFromToken(String token) {
+    public static String getRoleFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         return claims != null ? (String) claims.get("role") : null;
     }
 
-    public boolean validateToken(String token) {
+    public static boolean validateToken(String token) {
         try {
             Claims claims = getClaimsFromToken(token);
             return claims != null && !isTokenExpired(claims);
@@ -76,7 +94,7 @@ public class JwtUtils {
         }
     }
 
-    private boolean isTokenExpired(Claims claims) {
+    private static boolean isTokenExpired(Claims claims) {
         Date expiration = claims.getExpiration();
         return expiration.before(new Date());
     }
