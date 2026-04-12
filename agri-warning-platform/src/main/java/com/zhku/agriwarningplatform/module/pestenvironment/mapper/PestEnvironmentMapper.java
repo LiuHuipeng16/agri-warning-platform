@@ -8,10 +8,12 @@ package com.zhku.agriwarningplatform.module.pestenvironment.mapper;
  * Time: 23:23
  */
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.zhku.agriwarningplatform.module.pestenvironment.mapper.dataobject.PestEnvironmentDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+@TableName("pest_environment_conditions")
 @Mapper
 public interface PestEnvironmentMapper {
 

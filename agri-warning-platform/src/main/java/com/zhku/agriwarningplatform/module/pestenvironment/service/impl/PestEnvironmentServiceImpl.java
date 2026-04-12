@@ -68,19 +68,22 @@ public class PestEnvironmentServiceImpl implements PestEnvironmentService {
         ReentrantLock lock = PestLockManager.getLock(lockKey);
         lock.lock();
         try {
+            // 1. 校验病虫害是否存在
             PestDO pestDO = pestMapper.selectById(param.getPestId());
             if (pestDO == null) {
                 throw new ServiceException(PestErrorCode.PEST_NOT_EXIST);
             }
 
+            // 2. 查环境记录是否已存在（包含已删除）
             PestEnvironmentDO oldDO = pestEnvironmentMapper.selectByPestIdIncludingDeleted(param.getPestId());
 
             if (oldDO == null) {
+                // 3. 不存在则新增
                 PestEnvironmentDO insertDO = new PestEnvironmentDO();
                 insertDO.setPestId(param.getPestId());
-                insertDO.setTemperatureRange(trimToNull(param.getTemperatureRange()));
-                insertDO.setHumidityRange(trimToNull(param.getHumidityRange()));
-                insertDO.setEnvironmentDescription(trimToNull(param.getEnvironmentDescription()));
+                insertDO.setTemperatureRange(trim(param.getTemperatureRange()));
+                insertDO.setHumidityRange(trim(param.getHumidityRange()));
+                insertDO.setEnvironmentDescription(trim(param.getEnvironmentDescription()));
                 insertDO.setDeleteFlag(DeleteFlagEnum.NOT_DELETED.getCode());
 
                 int count = pestEnvironmentMapper.insert(insertDO);
@@ -88,11 +91,21 @@ public class PestEnvironmentServiceImpl implements PestEnvironmentService {
                     throw new ServiceException(PestErrorCode.PEST_ENV_SAVE_FAILED);
                 }
             } else {
+                // 4. 存在则按“有传才更新”的语义更新
                 PestEnvironmentDO updateDO = new PestEnvironmentDO();
                 updateDO.setPestId(param.getPestId());
-                updateDO.setTemperatureRange(trimToNull(param.getTemperatureRange()));
-                updateDO.setHumidityRange(trimToNull(param.getHumidityRange()));
-                updateDO.setEnvironmentDescription(trimToNull(param.getEnvironmentDescription()));
+
+                if (param.getTemperatureRange() != null) {
+                    updateDO.setTemperatureRange(trim(param.getTemperatureRange()));
+                }
+                if (param.getHumidityRange() != null) {
+                    updateDO.setHumidityRange(trim(param.getHumidityRange()));
+                }
+                if (param.getEnvironmentDescription() != null) {
+                    updateDO.setEnvironmentDescription(trim(param.getEnvironmentDescription()));
+                }
+
+                // 如果之前是逻辑删除状态，saveOrUpdate 应恢复为未删除
                 updateDO.setDeleteFlag(DeleteFlagEnum.NOT_DELETED.getCode());
 
                 int count = pestEnvironmentMapper.updateByPestId(updateDO);
@@ -107,10 +120,9 @@ public class PestEnvironmentServiceImpl implements PestEnvironmentService {
         }
     }
 
-    private String trimToNull(String value) {
-        if (!StringUtils.hasText(value)) {
-            return null;
-        }
-        return value.trim();
+    private String trim(String value) {
+        return value == null ? null : value.trim();
     }
+
+
 }

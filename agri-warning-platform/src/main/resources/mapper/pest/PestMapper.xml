@@ -83,9 +83,8 @@
     <!-- =========================
          insert
     ========================== -->
-    <insert id="insert">
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true" keyColumn="id">
         INSERT INTO pest (
-            id,
             name,
             type,
             description,
@@ -96,7 +95,6 @@
             season,
             delete_flag
         ) VALUES (
-                     #{id},
                      #{name},
                      #{type},
                      #{description},
@@ -114,26 +112,37 @@
     ========================== -->
     <update id="updateById">
         UPDATE pest
-        SET
-            name = #{name},
-            type = #{type},
-            description = #{description},
-            symptoms = #{symptoms},
-            cause = #{cause},
-            prevention = #{prevention},
-            risk_level = #{riskLevel},
-            season = #{season}
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="type != null and type != ''">
+                type = #{type},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="symptoms != null">
+                symptoms = #{symptoms},
+            </if>
+            <if test="cause != null">
+                cause = #{cause},
+            </if>
+            <if test="prevention != null">
+                prevention = #{prevention},
+            </if>
+            <if test="riskLevel != null and riskLevel != ''">
+                risk_level = #{riskLevel},
+            </if>
+            <if test="season != null">
+                season = #{season},
+            </if>
+            <if test="deleteFlag != null">
+                delete_flag = #{deleteFlag},
+            </if>
+        </set>
         WHERE id = #{id}
-          AND delete_flag = 0
     </update>
-
-    <update id="logicDeleteById">
-        UPDATE pest
-        SET delete_flag = 1
-        WHERE id = #{id}
-          AND delete_flag = 0
-    </update>
-
     <!-- =========================
          select single
     ========================== -->
@@ -169,7 +178,6 @@
         FROM pest
         WHERE name = #{name}
         AND id != #{excludeId}
-        AND delete_flag = 0
         LIMIT 1
     </select>
 
@@ -210,4 +218,20 @@
         ORDER BY gmt_create DESC, id DESC
     </select>
 
+    <select id="selectByNameIncludingDeleted" resultMap="PestDOResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pest
+        WHERE name = #{name}
+        LIMIT 1
+    </select>
+
+    <select id="selectByNameExcludeIdIncludingDeleted" resultMap="PestDOResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM pest
+        WHERE name = #{name}
+        AND id != #{excludeId}
+        LIMIT 1
+    </select>
 </mapper>

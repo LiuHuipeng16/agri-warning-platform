@@ -15,13 +15,13 @@ import org.apache.ibatis.annotations.Mapper;
 
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 @Mapper
 public interface PestMapper {
-
     int insert(PestDO pestDO);
 
     int updateById(PestDO pestDO);
@@ -51,4 +51,9 @@ public interface PestMapper {
     List<PestOptionDTO> selectOptions();
 
     int logicDeleteById(@Param("id") Long id);
+
+    PestDO selectByNameIncludingDeleted(@Param("name") String name);
+
+    PestDO selectByNameExcludeIdIncludingDeleted(@Param("name") String name,
+                                                 @Param("excludeId") Long excludeId);
 }

@@ -46,7 +46,8 @@ public interface PestErrorCode {
 
     ErrorCode PEST_ENVIRONMENT_NOT_EXIST =
             new ErrorCode(404, "PEST_104", "病虫害环境条件不存在");
-
+    ErrorCode PEST_NAME_OCCUPIED_BY_DELETED =
+            new ErrorCode(409, "PEST_015", "该名称不可用，请更换名称");
 
     /* =========================================================
        System ErrorCode
@@ -67,5 +68,6 @@ public interface PestErrorCode {
 
     ErrorCode PEST_ENV_SAVE_FAILED =
             new ErrorCode(500, "PEST_205", "病虫害环境条件保存失败");
+
 
 }

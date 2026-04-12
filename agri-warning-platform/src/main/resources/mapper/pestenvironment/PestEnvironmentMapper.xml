@@ -30,7 +30,7 @@
             delete_flag,
             gmt_create,
             gmt_modified
-        FROM new_table_for_environment_conditions
+        FROM pest_environment_conditions
         WHERE pest_id = #{pestId}
           AND delete_flag = 0
             LIMIT 1
@@ -45,7 +45,7 @@
             delete_flag,
             gmt_create,
             gmt_modified
-        FROM new_table_for_environment_conditions
+        FROM pest_environment_conditions
         WHERE pest_id = #{pestId}
             LIMIT 1
     </select>
@@ -54,7 +54,7 @@
          insert
     ========================== -->
     <insert id="insert">
-        INSERT INTO new_table_for_environment_conditions (
+        INSERT INTO pest_environment_conditions(
             pest_id,
             temperature_range,
             humidity_range,
@@ -73,24 +73,33 @@
          update
     ========================== -->
     <update id="updateByPestId">
-        UPDATE new_table_for_environment_conditions
-        SET
-            temperature_range = #{temperatureRange},
-            humidity_range = #{humidityRange},
-            environment_description = #{environmentDescription},
-            delete_flag = #{deleteFlag}
+        UPDATE pest_environment_conditions
+        <set>
+            <if test="temperatureRange != null">
+                temperature_range = #{temperatureRange},
+            </if>
+            <if test="humidityRange != null">
+                humidity_range = #{humidityRange},
+            </if>
+            <if test="environmentDescription != null">
+                environment_description = #{environmentDescription},
+            </if>
+            <if test="deleteFlag != null">
+                delete_flag = #{deleteFlag},
+            </if>
+        </set>
         WHERE pest_id = #{pestId}
     </update>
 
     <update id="logicDeleteByPestId">
-        UPDATE new_table_for_environment_conditions
+        UPDATE pest_environment_conditions
         SET delete_flag = 1
         WHERE pest_id = #{pestId}
           AND delete_flag = 0
     </update>
 
     <delete id="deletePhysicalByPestId">
-        DELETE FROM new_table_for_environment_conditions
+        DELETE FROM pest_environment_conditions
         WHERE pest_id = #{pestId}
     </delete>
 

@@ -18,7 +18,6 @@ spring:
   jackson:
     time-zone: Asia/Shanghai
     date-format: yyyy-MM-dd HH:mm:ss
-    default-property-inclusion: non_null
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
