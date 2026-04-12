@@ -28,9 +28,24 @@ public interface AuthErrorCode {
         //用户或密码错误
         ErrorCode USERNAME_OR_PASSWORD_ERROR =
                 new ErrorCode(400, "AUTH_006", "用户或密码错误");
+
         ErrorCode PASSWORD_EMPTY =
                 new ErrorCode(400, "AUTH_007", "密码不能为空");
 
+        ErrorCode NEW_PASSWORD_EMPTY =
+                new ErrorCode(400, "AUTH_008", "新密码不能为空");
+
+        ErrorCode OLD_PASSWORD_EMPTY =
+                new ErrorCode(400, "AUTH_009", "旧密码不能为空");
+
+        ErrorCode UPDATE_PASSWORD_FAILED =
+                new ErrorCode(400, "AUTH_010", "修改密码操作失败");
+
+        ErrorCode CONFIRM_PASSWORD_EMPTY =
+                new ErrorCode(400, "AUTH_011", "确认密码不能为空");
+
+        ErrorCode PASSWORD_NOT_MATCH =
+            new ErrorCode(400, "AUTH_012", "密码不匹配");
         // ================= CROP模块 CROP_001 =================
 
         ErrorCode CROP_NOT_EXIST =
@@ -44,6 +59,9 @@ public interface AuthErrorCode {
 
         ErrorCode CROP_NAME_DUPLICATE =
                 new ErrorCode(409, "CROP_004", "作物名称已存在");
+
+        ErrorCode ROle_EMPTY =
+                new ErrorCode(400, "ROle_EMPTY", "角色不能为空");
 
 
         // ================= PEST模块 PEST_001 =================
@@ -104,5 +122,6 @@ public interface AuthErrorCode {
 
         ErrorCode STATS_QUERY_ERROR =
                 new ErrorCode(500, "STATS_001", "统计数据查询失败");
-    }
+
+}
 
