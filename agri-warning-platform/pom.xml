@@ -155,6 +155,18 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- PageHelper 分页插件（纯MyBatis用，不是MP） -->
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+            <version>1.4.7</version>
+        </dependency>
+        <!-- 补充 PageHelper 依赖的 jsqlparser，解决类找不到问题 -->
+        <dependency>
+            <groupId>com.github.jsqlparser</groupId>
+            <artifactId>jsqlparser</artifactId>
+            <version>4.6</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

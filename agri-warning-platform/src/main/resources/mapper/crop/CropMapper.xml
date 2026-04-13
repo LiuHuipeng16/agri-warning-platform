@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhku.agriwarningplatform.module.crop.mapper.CropMapper">
+    <insert id="addcrop">
+        insert into crop(name, category, intro, description,image_url) values (#{name}, #{category}, #{intro}, #{description}, #{imageUrl})
+    </insert>
+    <update id="update">
+        update crop
+        <set>
+                name = #{name},
+                category = #{category},
+            <if test="intro != null">
+                intro = #{intro},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="imageUrl != null">
+                image_url = #{imageUrl},
+            </if>
+
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="selectList" resultType="com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO">
+        select id, name, category, intro, image_url, gmt_create
+        from crop
+        <where>
+        <if test="name != null and name != ''">
+            and name like concat('%',#{name},'%')
+        </if>
+        <if test="category != null and category != ''">
+            and category like concat('%',#{category},'%')
+        </if>
+        </where>
+        order by gmt_modified desc
+    </select>
+</mapper>

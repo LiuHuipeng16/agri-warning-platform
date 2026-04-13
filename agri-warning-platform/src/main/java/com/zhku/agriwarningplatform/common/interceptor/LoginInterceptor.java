@@ -52,6 +52,34 @@ public class LoginInterceptor implements HandlerInterceptor {
             log.info("用户权限验证通过");
             return true;
         }
+        if (requestURI.contains("create")){
+            String role = JwtUtils.getRoleFromToken(token);
+            if ("USER".equals(role)){
+                log.warn("你的权限不足");
+                response.setStatus(403);
+                return false;
+            }
+            log.info("用户权限验证通过");
+            return true;
+        }
+        if (requestURI.contains("update")){
+            String role = JwtUtils.getRoleFromToken(token);
+            if ("USER".equals(role)){
+                log.warn("你的权限不足");
+                response.setStatus(403);
+                return false;
+            }
+            log.info("用户权限验证通过");
+            return true;
+        }
+        if (requestURI.contains("delete")){
+            String role = JwtUtils.getRoleFromToken(token);
+            if ("USER".equals(role)){
+                log.warn("你的权限不足");
+            }
+            log.info("用户权限验证通过");
+            return true;
+        }
         try {
             JwtUtils.validateToken(token);
         } catch (Exception e) {
