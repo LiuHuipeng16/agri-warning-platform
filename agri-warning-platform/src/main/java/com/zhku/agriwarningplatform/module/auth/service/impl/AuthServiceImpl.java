@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -22,6 +23,8 @@ public class AuthServiceImpl implements AuthService {
     private final AuthMapper authMapper;
     private final JwtUtils jwtUtils;
     private final PasswordUtils passwordUtils;
+
+    @Transactional(rollbackFor = Exception.class)
     public LoginRespVO login(LoginReqVO loginReqVO) {
         if (!StringUtils.hasText(loginReqVO.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
@@ -54,6 +57,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public LoginRespVO GetCurrentUser(String token) {
         Long userId = JwtUtils.getUserIdFromToken(token);
         String username = JwtUtils.getUsernameFromToken(token);
@@ -67,6 +71,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updatePassword(UpdatePasswordReqVO updatePasswordReqVO, String token) {
         if (!StringUtils.hasText(updatePasswordReqVO.getNewPassword())){
             throw new ServiceException(AuthErrorCode.NEW_PASSWORD_EMPTY);
@@ -92,6 +97,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public LoginRespVO.UserInfoVO register(RegisterReqVO registerReqVO) {
         if (!StringUtils.hasText(registerReqVO.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
@@ -118,6 +124,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public LoginRespVO.UserInfoVO adminRegister(RegisterReqVO registerReqVO) {
         if (!StringUtils.hasText(registerReqVO.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);

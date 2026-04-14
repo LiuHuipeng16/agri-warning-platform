@@ -1,8 +1,10 @@
 package com.zhku.agriwarningplatform.module.crop.mapper;
 
 import com.zhku.agriwarningplatform.common.result.CommonResult;
+import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -24,9 +26,12 @@ public interface CropMapper {
 
     int update(CropQueryReqVO cropQueryReqVO);
 
-    @Select("delete from crop where id = #{id}")
+    @Delete("delete from crop where id = #{id}")
     int delete(Long id);
 
     @Select("select * from crop where id = #{id}")
     CropQueryRespVO selectById(Long id);
+
+    @Select("select id as value, name as label from crop")
+    List<CropOptionVO> selectCropOptions();
 }

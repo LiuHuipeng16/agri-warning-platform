@@ -3,11 +3,14 @@ package com.zhku.agriwarningplatform.module.crop.controller;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.module.crop.service.CropService;
+import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -46,6 +49,11 @@ public class CropController {
     public CommonResult<Boolean> delete(@PathVariable Long id){
         log.info("删除作物：{}", id);
         return CommonResult.success(cropservice.delete(id));
+    }
+    @GetMapping("/options")
+    public CommonResult<List<CropOptionVO>> options(){
+        log.info("获取作物选项");
+        return CommonResult.success(cropservice.getCropOptions());
     }
 
 }

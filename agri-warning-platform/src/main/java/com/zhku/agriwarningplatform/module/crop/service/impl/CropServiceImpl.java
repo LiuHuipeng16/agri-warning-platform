@@ -8,12 +8,16 @@ import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.module.crop.mapper.CropMapper;
 import com.zhku.agriwarningplatform.module.crop.service.CropService;
+import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -21,6 +25,7 @@ import org.springframework.stereotype.Service;
 public class CropServiceImpl implements CropService {
     private final CropMapper cropMapper;
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PageResult<CropQueryRespVO> pageQuery(CropQueryReqVO cropQueryReqVO) {
         if (cropQueryReqVO.getPageNum() == null || cropQueryReqVO.getPageSize() == null){
             throw new ServiceException(CropErrorCode.PAGE_PARAM_ERROR);
@@ -39,6 +44,7 @@ public class CropServiceImpl implements CropService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public CropQueryRespVO detail(Long id) {
         if (id == null){
             throw new ServiceException(CropErrorCode.CROP_ID_EMPTY);
@@ -53,6 +59,7 @@ public class CropServiceImpl implements CropService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public CommonResult<Long> create(CropQueryReqVO cropQueryReqVO) {
         if (cropQueryReqVO.getName() == null || cropQueryReqVO.getName().isEmpty()){
             throw new ServiceException(CropErrorCode.CROP_NAME_EMPTY);
@@ -62,7 +69,6 @@ public class CropServiceImpl implements CropService {
         }
         CropQueryRespVO cropQueryRespVO = new CropQueryRespVO();
         BeanUtils.copyProperties(cropQueryReqVO,cropQueryRespVO);
-        //给我生成检验名字是否相同的if语句
         if (cropMapper.selectByName(cropQueryRespVO.getName()) != null){
             throw new ServiceException(CropErrorCode.CROP_NAME_EXISTS);
         }
@@ -71,10 +77,11 @@ public class CropServiceImpl implements CropService {
             throw new ServiceException(CropErrorCode.CREATE_CROP_FAILED);
         }
 
-        return CommonResult.success(cropMapper.getIdByName(cropQueryRespVO.getName()));
+        return CommonResult.success(cropQueryReqVO.getId());
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(CropQueryReqVO cropQueryReqVO) {
         if (cropQueryReqVO.getId() == null){
             throw new ServiceException(CropErrorCode.CROP_ID_EMPTY);
@@ -97,6 +104,7 @@ public class CropServiceImpl implements CropService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id) {
         if (id == null){
             throw new ServiceException(CropErrorCode.CROP_ID_EMPTY);
@@ -105,6 +113,12 @@ public class CropServiceImpl implements CropService {
         if (rows != 1){
             throw new ServiceException(CropErrorCode.DELETE_CROP_FAILED);
         }
-        return true;
+        return rows > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<CropOptionVO> getCropOptions() {
+        return cropMapper.selectCropOptions();
     }
 }
