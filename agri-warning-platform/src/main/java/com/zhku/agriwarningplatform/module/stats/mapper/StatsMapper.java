@@ -7,10 +7,7 @@ package com.zhku.agriwarningplatform.module.stats.mapper;
  * Date: 2026-04-14
  * Time: 16:55
  */
-import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.CropPestCountStatsDO;
-import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.HighRiskPestStatsDO;
-import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.PestTypeDistributionStatsDO;
-import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.SeasonTrendStatsDO;
+import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.reactivestreams.Publisher;
 
@@ -27,7 +24,7 @@ public interface StatsMapper {
      *
      * @return 仪表盘统计数据
      */
-    Publisher<?> getDashboardStats();
+    StatsDashboardDO getDashboardStats();
 
     /**
      * 获取作物病虫害数量统计
