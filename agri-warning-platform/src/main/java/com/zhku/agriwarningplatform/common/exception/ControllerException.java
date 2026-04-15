@@ -38,7 +38,7 @@ public class ControllerException extends RuntimeException{
 
     public ControllerException(ErrorCode errorCode) {
         this.code = errorCode.getCode();
-        this.internalCode = internalCode;
+        this.internalCode = errorCode.getInternalCode();
         this.message = errorCode.getMessage();
     }
 }

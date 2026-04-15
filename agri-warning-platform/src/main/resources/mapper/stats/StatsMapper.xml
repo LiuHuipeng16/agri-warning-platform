@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhku.agriwarningplatform.module.stats.mapper.StatsMapper">
+
+    <resultMap id="statsDashboardResultMap"
+               type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.StatsDashboardDO">
+        <result property="cropCount" column="crop_count"/>
+        <result property="pestCount" column="pest_count"/>
+        <result property="warningCount" column="warning_count"/>
+        <result property="aiQaCount" column="ai_qa_count"/>
+    </resultMap>
+
+    <resultMap id="cropPestCountStatsResultMap"
+               type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.CropPestCountStatsDO">
+        <result property="cropName" column="crop_name"/>
+        <result property="count" column="count"/>
+    </resultMap>
+
+    <resultMap id="pestTypeDistributionStatsResultMap"
+               type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.PestTypeDistributionStatsDO">
+        <result property="name" column="name"/>
+        <result property="value" column="value"/>
+    </resultMap>
+
+    <resultMap id="highRiskPestStatsResultMap"
+               type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.HighRiskPestStatsDO">
+        <result property="pestName" column="pest_name"/>
+        <result property="riskLevel" column="risk_level"/>
+    </resultMap>
+
+    <resultMap id="seasonTrendStatsResultMap"
+               type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.SeasonTrendStatsDO">
+        <result property="season" column="season"/>
+        <result property="count" column="count"/>
+    </resultMap>
+
+    <select id="getDashboardStats" resultMap="statsDashboardResultMap">
+        SELECT
+            (
+                SELECT COUNT(1)
+                FROM crop
+                WHERE delete_flag = 0
+            ) AS crop_count,
+            (
+                SELECT COUNT(1)
+                FROM pest
+                WHERE delete_flag = 0
+            ) AS pest_count,
+            (
+                SELECT COUNT(1)
+                FROM warning
+                WHERE delete_flag = 0
+            ) AS warning_count,
+            (
+                SELECT COUNT(1)
+                FROM ai_qa_record
+                WHERE delete_flag = 0
+            ) AS ai_qa_count
+    </select>
+
+    <select id="listCropPestCountStats" resultMap="cropPestCountStatsResultMap">
+        SELECT
+            c.name AS crop_name,
+            COUNT(DISTINCT cpr.pest_id) AS count
+        FROM crop c
+            LEFT JOIN crop_pest_rel cpr
+        ON c.id = cpr.crop_id
+            AND cpr.delete_flag = 0
+            LEFT JOIN pest p
+            ON cpr.pest_id = p.id
+            AND p.delete_flag = 0
+        WHERE c.delete_flag = 0
+        GROUP BY c.id, c.name
+        ORDER BY count DESC, c.id ASC
+    </select>
+
+    <select id="listPestTypeDistributionStats" resultMap="pestTypeDistributionStatsResultMap">
+        SELECT
+            p.type AS name,
+            COUNT(1) AS value
+        FROM pest p
+        WHERE p.delete_flag = 0
+          AND p.type IS NOT NULL
+        GROUP BY p.type
+        ORDER BY value DESC
+    </select>
+
+    <select id="listHighRiskPestStats" resultMap="highRiskPestStatsResultMap">
+        SELECT
+            p.name AS pest_name,
+            p.risk_level
+        FROM pest p
+        WHERE p.delete_flag = 0
+          AND p.risk_level = '高'
+        ORDER BY p.gmt_create DESC, p.id DESC
+    </select>
+
+    <select id="listSeasonTrendStats" resultMap="seasonTrendStatsResultMap">
+        SELECT
+            p.season,
+            COUNT(1) AS count
+        FROM pest p
+        WHERE p.delete_flag = 0
+          AND p.season IS NOT NULL
+          AND p.season != ''
+        GROUP BY p.season
+        ORDER BY
+            CASE p.season
+            WHEN '春' THEN 1
+            WHEN '夏' THEN 2
+            WHEN '秋' THEN 3
+            WHEN '冬' THEN 4
+            WHEN '全年' THEN 5
+            ELSE 6
+        END
+    </select>
+
+</mapper>

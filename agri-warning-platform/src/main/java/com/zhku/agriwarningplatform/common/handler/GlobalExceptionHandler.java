@@ -13,7 +13,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.validation.ConstraintViolation;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import java.util.Objects;
 
 /**
  * Created with IntelliJ IDEA.
@@ -96,6 +99,22 @@ public class GlobalExceptionHandler {
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
     }
 
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public CommonResult<?> handleHandlerMethodValidationException(HandlerMethodValidationException e) {
+
+        String message = e.getAllValidationResults()
+                .stream()
+                .flatMap(r -> r.getResolvableErrors().stream())
+                .map(error -> error.getDefaultMessage())
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse("参数校验失败");
+
+        log.warn("参数校验异常: {}", message);
+        return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public CommonResult<?> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
 
@@ -109,4 +128,5 @@ public class GlobalExceptionHandler {
     public CommonResult<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         return CommonResult.error(400, "请求JSON格式错误");
     }
+
 }
