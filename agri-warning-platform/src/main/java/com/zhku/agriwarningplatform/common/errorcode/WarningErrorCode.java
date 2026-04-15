@@ -18,7 +18,5 @@ public interface WarningErrorCode {
     ErrorCode WARNING_CONTENT_EMPTY =
             new ErrorCode(400, "WARNING_003", "预警内容不能为空");
 
-
-
     //service层错误码
 }
