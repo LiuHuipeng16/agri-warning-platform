@@ -11,9 +11,7 @@ import cn.dev33.satoken.exception.SaTokenException;
  */
 public interface GlobalErrorCode {
 
-
-    ErrorCode INTERNAL_SERVER_ERROR 
-        = new ErrorCode(500, "GLOBAL","系统异常！");
+    ErrorCode INTERNAL_SERVER_ERROR = new ErrorCode(500, "GLOBAL","系统异常！");
         ErrorCode BAD_REQUEST =
                 new ErrorCode(400, "GLOBAL_400", "请求参数错误");
 }
