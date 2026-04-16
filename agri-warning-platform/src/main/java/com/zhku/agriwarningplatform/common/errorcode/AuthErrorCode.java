@@ -46,6 +46,9 @@ public interface AuthErrorCode {
 
         ErrorCode PASSWORD_NOT_MATCH =
             new ErrorCode(400, "AUTH_012", "密码不匹配");
+
+        ErrorCode ROLE_NOT_EXIST =
+                new ErrorCode(400, "AUTH_013", "角色参数不合法");
         // ================= CROP模块 CROP_001 =================
 
         ErrorCode CROP_NOT_EXIST =
@@ -122,6 +125,7 @@ public interface AuthErrorCode {
 
         ErrorCode STATS_QUERY_ERROR =
                 new ErrorCode(500, "STATS_001", "统计数据查询失败");
+
 
 }
 

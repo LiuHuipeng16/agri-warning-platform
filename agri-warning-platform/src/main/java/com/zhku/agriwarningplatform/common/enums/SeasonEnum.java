@@ -10,6 +10,8 @@ package com.zhku.agriwarningplatform.common.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 /**
  * 高发季节枚举
  */
@@ -24,5 +26,7 @@ public enum SeasonEnum {
     ALL_YEAR("全年");
 
     private final String message;
-
+    public static boolean isValid(String value) {
+        return Arrays.stream(values()).anyMatch(item -> item.getMessage().equals(value));
+    }
 }

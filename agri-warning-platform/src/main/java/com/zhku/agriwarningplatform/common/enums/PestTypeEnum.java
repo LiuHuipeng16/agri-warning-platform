@@ -10,6 +10,8 @@ package com.zhku.agriwarningplatform.common.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 /**
  * 病虫害类型枚举
  */
@@ -21,5 +23,7 @@ public enum PestTypeEnum {
     INSECT("虫害");
 
     private final String message;
-
+    public static boolean isValid(String value) {
+        return Arrays.stream(values()).anyMatch(item -> item.getMessage().equals(value));
+    }
 }

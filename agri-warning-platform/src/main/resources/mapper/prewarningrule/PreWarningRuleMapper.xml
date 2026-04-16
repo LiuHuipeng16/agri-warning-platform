@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zhku.agriwarningplatform.module.prewarningrule.mapper.PreWarningRuleMapper">
+
+    <resultMap id="PreWarningRuleDOResultMap"
+               type="com.zhku.agriwarningplatform.module.prewarningrule.mapper.dataobject.PreWarningRuleDO">
+        <id property="id" column="id"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="cropId" column="crop_id"/>
+        <result property="pestId" column="pest_id"/>
+        <result property="minTemp" column="min_temp"/>
+        <result property="maxTemp" column="max_temp"/>
+        <result property="minHumidity" column="min_humidity"/>
+        <result property="maxHumidity" column="max_humidity"/>
+        <result property="minPrecipitation" column="min_precipitation"/>
+        <result property="maxPrecipitation" column="max_precipitation"/>
+        <result property="minWindSpeed" column="min_wind_speed"/>
+        <result property="maxWindSpeed" column="max_wind_speed"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="suggestion" column="suggestion"/>
+        <result property="ruleStatus" column="rule_status"/>
+        <result property="deleteFlag" column="delete_flag"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="gmtModified" column="gmt_modified"/>
+    </resultMap>
+
+    <resultMap id="PreWarningRuleDTOResultMap"
+               type="com.zhku.agriwarningplatform.module.prewarningrule.service.dto.PreWarningRuleDTO">
+        <id property="id" column="id"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="cropId" column="crop_id"/>
+        <result property="cropName" column="crop_name"/>
+        <result property="pestId" column="pest_id"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="minTemp" column="min_temp"/>
+        <result property="maxTemp" column="max_temp"/>
+        <result property="minHumidity" column="min_humidity"/>
+        <result property="maxHumidity" column="max_humidity"/>
+        <result property="minPrecipitation" column="min_precipitation"/>
+        <result property="maxPrecipitation" column="max_precipitation"/>
+        <result property="minWindSpeed" column="min_wind_speed"/>
+        <result property="maxWindSpeed" column="max_wind_speed"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="suggestion" column="suggestion"/>
+        <result property="ruleStatus" column="rule_status"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="gmtModified" column="gmt_modified"/>
+    </resultMap>
+
+    <resultMap id="PreWarningRuleOptionDTOResultMap"
+               type="com.zhku.agriwarningplatform.module.prewarningrule.service.dto.PreWarningRuleOptionDTO">
+        <result property="label" column="label"/>
+        <result property="value" column="value"/>
+    </resultMap>
+
+    <sql id="BaseColumn">
+        pr.id,
+        pr.rule_name,
+        pr.crop_id,
+        c.name AS crop_name,
+        pr.pest_id,
+        p.name AS pest_name,
+        pr.min_temp,
+        pr.max_temp,
+        pr.min_humidity,
+        pr.max_humidity,
+        pr.min_precipitation,
+        pr.max_precipitation,
+        pr.min_wind_speed,
+        pr.max_wind_speed,
+        pr.risk_level,
+        pr.suggestion,
+        pr.rule_status,
+        pr.gmt_create,
+        pr.gmt_modified
+    </sql>
+
+    <sql id="BaseFrom">
+        FROM prewarning_rules pr
+        LEFT JOIN crop c
+            ON pr.crop_id = c.id
+            AND c.delete_flag = 0
+        LEFT JOIN pest p
+            ON pr.pest_id = p.id
+            AND p.delete_flag = 0
+        WHERE pr.delete_flag = 0
+    </sql>
+
+    <sql id="PageCondition">
+        <if test="param != null">
+            <if test="param.ruleName != null and param.ruleName != ''">
+                AND pr.rule_name LIKE CONCAT('%', #{param.ruleName}, '%')
+            </if>
+            <if test="param.cropId != null">
+                AND pr.crop_id = #{param.cropId}
+            </if>
+            <if test="param.pestId != null">
+                AND pr.pest_id = #{param.pestId}
+            </if>
+            <if test="param.riskLevel != null and param.riskLevel != ''">
+                AND pr.risk_level = #{param.riskLevel}
+            </if>
+            <if test="param.ruleStatus != null and param.ruleStatus != ''">
+                AND pr.rule_status = #{param.ruleStatus}
+            </if>
+        </if>
+    </sql>
+
+    <select id="countPage" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        <include refid="BaseFrom"/>
+        <include refid="PageCondition"/>
+    </select>
+
+    <select id="selectPage" resultMap="PreWarningRuleDTOResultMap">
+        <bind name="offset" value="(param.pageNum - 1) * param.pageSize"/>
+
+        SELECT
+        <include refid="BaseColumn"/>
+        <include refid="BaseFrom"/>
+        <include refid="PageCondition"/>
+        ORDER BY pr.gmt_create DESC, pr.id DESC
+        LIMIT #{offset}, #{param.pageSize}
+    </select>
+
+    <select id="selectById" resultMap="PreWarningRuleDOResultMap">
+        SELECT
+            pr.id,
+            pr.rule_name,
+            pr.crop_id,
+            pr.pest_id,
+            pr.min_temp,
+            pr.max_temp,
+            pr.min_humidity,
+            pr.max_humidity,
+            pr.min_precipitation,
+            pr.max_precipitation,
+            pr.min_wind_speed,
+            pr.max_wind_speed,
+            pr.risk_level,
+            pr.suggestion,
+            pr.rule_status,
+            pr.delete_flag,
+            pr.gmt_create,
+            pr.gmt_modified
+        FROM prewarning_rules pr
+        WHERE pr.id = #{id}
+          AND pr.delete_flag = 0
+    </select>
+
+    <select id="selectDetailById" resultMap="PreWarningRuleDTOResultMap">
+        SELECT
+        <include refid="BaseColumn"/>
+        <include refid="BaseFrom"/>
+        AND pr.id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO prewarning_rules
+        (
+            rule_name,
+            crop_id,
+            pest_id,
+            min_temp,
+            max_temp,
+            min_humidity,
+            max_humidity,
+            min_precipitation,
+            max_precipitation,
+            min_wind_speed,
+            max_wind_speed,
+            risk_level,
+            suggestion,
+            rule_status,
+            delete_flag
+        )
+        VALUES
+            (
+                #{ruleName},
+                #{cropId},
+                #{pestId},
+                #{minTemp},
+                #{maxTemp},
+                #{minHumidity},
+                #{maxHumidity},
+                #{minPrecipitation},
+                #{maxPrecipitation},
+                #{minWindSpeed},
+                #{maxWindSpeed},
+                #{riskLevel},
+                #{suggestion},
+                #{ruleStatus},
+                0
+            )
+    </insert>
+
+    <update id="updateByIdSelective">
+        UPDATE prewarning_rules
+        <set>
+            <if test="ruleName != null">
+                rule_name = #{ruleName},
+            </if>
+            <if test="cropId != null">
+                crop_id = #{cropId},
+            </if>
+            <if test="pestId != null">
+                pest_id = #{pestId},
+            </if>
+            <if test="minTemp != null">
+                min_temp = #{minTemp},
+            </if>
+            <if test="maxTemp != null">
+                max_temp = #{maxTemp},
+            </if>
+            <if test="minHumidity != null">
+                min_humidity = #{minHumidity},
+            </if>
+            <if test="maxHumidity != null">
+                max_humidity = #{maxHumidity},
+            </if>
+            <if test="minPrecipitation != null">
+                min_precipitation = #{minPrecipitation},
+            </if>
+            <if test="maxPrecipitation != null">
+                max_precipitation = #{maxPrecipitation},
+            </if>
+            <if test="minWindSpeed != null">
+                min_wind_speed = #{minWindSpeed},
+            </if>
+            <if test="maxWindSpeed != null">
+                max_wind_speed = #{maxWindSpeed},
+            </if>
+            <if test="riskLevel != null">
+                risk_level = #{riskLevel},
+            </if>
+            <if test="updateSuggestion">
+                suggestion = #{suggestion},
+            </if>
+            <if test="ruleStatus != null">
+                rule_status = #{ruleStatus},
+            </if>
+        </set>
+        WHERE id = #{id}
+        AND delete_flag = 0
+    </update>
+
+    <update id="logicalDeleteById">
+        UPDATE prewarning_rules
+        SET delete_flag = 1
+        WHERE id = #{id}
+          AND delete_flag = 0
+    </update>
+
+    <update id="updateRuleStatusById">
+        UPDATE prewarning_rules
+        SET rule_status = #{ruleStatus}
+        WHERE id = #{id}
+          AND delete_flag = 0
+    </update>
+
+    <select id="selectOptions" resultMap="PreWarningRuleOptionDTOResultMap">
+        SELECT
+        pr.rule_name AS label,
+        pr.id AS value
+        FROM prewarning_rules pr
+        WHERE pr.delete_flag = 0
+        <if test="param != null and param.ruleStatus != null and param.ruleStatus != ''">
+            AND pr.rule_status = #{param.ruleStatus}
+        </if>
+        ORDER BY pr.gmt_create DESC, pr.id DESC
+    </select>
+
+</mapper>

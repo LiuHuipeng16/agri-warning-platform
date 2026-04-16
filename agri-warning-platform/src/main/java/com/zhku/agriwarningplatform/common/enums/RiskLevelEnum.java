@@ -10,6 +10,8 @@ package com.zhku.agriwarningplatform.common.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 /**
  * 风险等级枚举
  */
@@ -22,5 +24,7 @@ public enum RiskLevelEnum {
     HIGH("高");
 
     private final String message;
-
+    public static boolean isValid(String value) {
+        return Arrays.stream(values()).anyMatch(item -> item.getMessage().equals(value));
+    }
 }

@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -30,11 +31,9 @@ public class CropServiceImpl implements CropService {
         if (cropQueryReqVO.getPageNum() == null || cropQueryReqVO.getPageSize() == null){
             throw new ServiceException(CropErrorCode.PAGE_PARAM_ERROR);
         }
-
                 Page<CropQueryRespVO> page = PageHelper.startPage(
                         cropQueryReqVO.getPageNum(),
                         cropQueryReqVO.getPageSize());
-
 
         cropMapper.selectList(cropQueryReqVO);
         PageResult<CropQueryRespVO> pageResult = new PageResult<>();
@@ -52,6 +51,9 @@ public class CropServiceImpl implements CropService {
         CropQueryRespVO cropQueryRespVO = cropMapper.detail(id);
         if (cropQueryRespVO == null){
             throw new ServiceException(CropErrorCode.CROP_NOT_EXIST);
+        }
+        if (id <= 0){
+            throw new ServiceException(CropErrorCode.CROP_ID_INVALID);
         }
         cropQueryRespVO.setGmtCreate(null);
         cropQueryRespVO.setGmtModified(null);
@@ -77,7 +79,7 @@ public class CropServiceImpl implements CropService {
             throw new ServiceException(CropErrorCode.CREATE_CROP_FAILED);
         }
 
-        return CommonResult.success(cropQueryReqVO.getId());
+        return CommonResult.success(cropQueryRespVO.getId());
     }
 
     @Override
@@ -86,13 +88,19 @@ public class CropServiceImpl implements CropService {
         if (cropQueryReqVO.getId() == null){
             throw new ServiceException(CropErrorCode.CROP_ID_EMPTY);
         }
-        if (cropQueryReqVO.getName() == null || cropQueryReqVO.getName().isEmpty()){
+        if (cropQueryReqVO.getId() <= 0){
+            throw new ServiceException(CropErrorCode.CROP_ID_INVALID);
+        }
+        if (!StringUtils.hasText(cropQueryReqVO.getName())) {
             throw new ServiceException(CropErrorCode.CROP_NAME_EMPTY);
         }
-        if (cropQueryReqVO.getCategory() == null || cropQueryReqVO.getCategory().isEmpty()){
+        if (!StringUtils.hasText(cropQueryReqVO.getCategory())) {
             throw new ServiceException(CropErrorCode.CROP_CATEGORY_EMPTY);
         }
         CropQueryRespVO cropQueryRespVO = cropMapper.selectById(cropQueryReqVO.getId());
+        if (cropQueryRespVO == null){
+            throw new ServiceException(CropErrorCode.CROP_NOT_EXIST);
+        }
         if (cropMapper.selectByName(cropQueryReqVO.getName()) != null && !cropQueryRespVO.getName().equals(cropQueryReqVO.getName())){
             throw new ServiceException(CropErrorCode.CROP_NAME_EXISTS);
         }
@@ -106,10 +114,11 @@ public class CropServiceImpl implements CropService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id) {
+        log.info("删除作物：{}", id);
         if (id == null){
             throw new ServiceException(CropErrorCode.CROP_ID_EMPTY);
         }
-        int rows = cropMapper.delete(id);
+        int rows = cropMapper.updateDeleteFlag(id);
         if (rows != 1){
             throw new ServiceException(CropErrorCode.DELETE_CROP_FAILED);
         }
@@ -119,6 +128,10 @@ public class CropServiceImpl implements CropService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<CropOptionVO> getCropOptions() {
-        return cropMapper.selectCropOptions();
+        List<CropOptionVO> cropOptions =cropMapper.selectCropOptions();
+        if (cropOptions == null){
+            throw new ServiceException(CropErrorCode.CROP_OPTIONS_EMPTY);
+        }
+        return cropOptions;
     }
 }

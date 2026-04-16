@@ -89,12 +89,12 @@
             <version>${qiniu.version}</version>
         </dependency>
 
-        <!-- SpringAI 暂时不用 -->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.ai</groupId>-->
-<!--            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>-->
-<!--            <version>1.0.0-M6</version>-->
-<!--        </dependency>-->
+        <!-- SpringAI  -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+            <version>1.0.0-M6</version>
+        </dependency>
 
         <!-- 常用工具类 -->
         <dependency>
@@ -167,6 +167,22 @@
             <artifactId>jsqlparser</artifactId>
             <version>4.6</version>
         </dependency>
+        <!-- 七牛云上传 -->
+        <dependency>
+            <groupId>com.qiniu</groupId>
+            <artifactId>qiniu-java-sdk</artifactId>
+            <version>${qiniu.version}</version>
+        </dependency>
+
+        <!-- 阿里云OSS -->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+            <version>3.17.4</version>
+        </dependency>
+
+        <!-- SpringAI 暂时不用 -->
+
     </dependencies>
     <build>
         <plugins>

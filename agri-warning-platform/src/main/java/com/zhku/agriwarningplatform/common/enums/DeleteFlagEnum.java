@@ -10,6 +10,8 @@ package com.zhku.agriwarningplatform.common.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 /**
  * 删除标记枚举
  */

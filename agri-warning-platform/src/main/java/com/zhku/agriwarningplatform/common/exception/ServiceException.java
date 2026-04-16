@@ -36,7 +36,7 @@ public class ServiceException extends RuntimeException{
     }
     public ServiceException(ErrorCode errorCode) {
         this.code = errorCode.getCode();
-        this.internalCode = internalCode;
+        this.internalCode = errorCode.getInternalCode();
         this.message = errorCode.getMessage();
     }
 }

@@ -4,14 +4,20 @@ import com.zhku.agriwarningplatform.common.errorcode.GlobalErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.exception.ServiceException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import jakarta.validation.ConstraintViolation;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import java.util.Objects;
+
 /**
  * Created with IntelliJ IDEA.
  * Description:
@@ -22,65 +28,78 @@ import jakarta.validation.ConstraintViolation;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     /**
-     * 统一处理controller层异常
-     * @param e
-     * @return
+     * 统一处理 controller 层异常
+     *
+     * @param e 异常
+     * @return 响应结果
      */
     @ExceptionHandler(ControllerException.class)
-    public CommonResult<?> handlerServiceException(ControllerException e){
-        log.error("ControllerException:", e);
-        return CommonResult.error(e.getCode(),e.getMessage());
+    public CommonResult<?> handleControllerException(ControllerException e) {
+        log.error("ControllerException:{},{},{}", e.getCode(), e.getInternalCode(), e.getMessage(), e);
+        return CommonResult.error(e.getCode(), e.getMessage());
     }
 
     /**
-     * 统一处理service层异常
-     * @param e
-     * @return
+     * 统一处理 service 层异常
+     *
+     * @param e 异常
+     * @return 响应结果
      */
     @ExceptionHandler(ServiceException.class)
-    public CommonResult<?> handlerServiceException(ServiceException e){
-        log.error("ServiceException:", e);
-        return CommonResult.error(e.getCode(),e.getMessage());
+    public CommonResult<?> handleServiceException(ServiceException e) {
+        log.error("ServiceException:{},{},{}", e.getCode(), e.getInternalCode(), e.getMessage(), e);
+        return CommonResult.error(e.getCode(), e.getMessage());
     }
 
     /**
      * 统一处理未预知异常
-     * @param e
-     * @return
+     *
+     * @param e 异常
+     * @return 响应结果
      */
     @ExceptionHandler(Exception.class)
-    public CommonResult<?> handlerServiceException(Exception e){
-        log.error("服务异常:", e);
-        return CommonResult.error(GlobalErrorCode.INTERNAL_SERVER_ERROR.getCode(),e.getMessage());
+    public CommonResult<?> handleException(Exception e) {
+        log.error("系统未捕获异常:", e);
+        return CommonResult.error(GlobalErrorCode.INTERNAL_SERVER_ERROR.getCode(), e.getMessage());
     }
 
     /**
      * 处理 @RequestBody 参数校验异常
+     *
+     * @param e 异常
+     * @return 响应结果
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public CommonResult<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         FieldError fieldError = e.getBindingResult().getFieldError();
         String message = fieldError != null ? fieldError.getDefaultMessage() : "参数校验失败";
 
-        log.warn("参数校验异常: {}", message);
+        log.warn("MethodArgumentNotValidException: {}", message, e);
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
     }
 
     /**
      * 处理表单参数 / Query 参数校验异常
+     *
+     * @param e 异常
+     * @return 响应结果
      */
     @ExceptionHandler(BindException.class)
     public CommonResult<?> handleBindException(BindException e) {
         FieldError fieldError = e.getBindingResult().getFieldError();
         String message = fieldError != null ? fieldError.getDefaultMessage() : "参数校验失败";
 
-        log.warn("参数绑定异常: {}", message);
+        log.warn("BindException: {}", message, e);
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
     }
 
     /**
-     * 处理 @RequestParam / @PathVariable 校验异常
+     * 处理 @RequestParam / @PathVariable 参数校验异常
+     *
+     * @param e 异常
+     * @return 响应结果
      */
     @ExceptionHandler(ConstraintViolationException.class)
     public CommonResult<?> handleConstraintViolationException(ConstraintViolationException e) {
@@ -90,9 +109,59 @@ public class GlobalExceptionHandler {
                 .map(ConstraintViolation::getMessage)
                 .orElse("参数校验失败");
 
-        log.warn("参数约束异常: {}", message);
+        log.warn("ConstraintViolationException: {}", message, e);
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
     }
 
+    /**
+     * 处理方法级参数校验异常
+     *
+     * @param e 异常
+     * @return 响应结果
+     */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public CommonResult<?> handleHandlerMethodValidationException(HandlerMethodValidationException e) {
+        String message = e.getAllValidationResults()
+                .stream()
+                .flatMap(result -> result.getResolvableErrors().stream())
+                .map(error -> error.getDefaultMessage())
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse("参数校验失败");
 
+        log.warn("HandlerMethodValidationException: {}", message, e);
+        return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
+    }
+
+    /**
+     * 处理参数类型不匹配异常
+     *
+     * @param e 异常
+     * @return 响应结果
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public CommonResult<?> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        log.warn("MethodArgumentTypeMismatchException: 参数名={}, 参数值={}, 目标类型={}",
+                e.getName(),
+                e.getValue(),
+                e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown",
+                e);
+
+        return CommonResult.error(
+                GlobalErrorCode.BAD_REQUEST.getCode(),
+                "参数类型错误: " + e.getName()
+        );
+    }
+
+    /**
+     * 处理请求体不可读异常，例如 JSON 格式错误
+     *
+     * @param e 异常
+     * @return 响应结果
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public CommonResult<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.warn("HttpMessageNotReadableException: 请求JSON格式错误", e);
+        return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), "请求JSON格式错误");
+    }
 }
