@@ -37,7 +37,7 @@
                 pest_id = #{pestId},
             </if>
         </set>
-        where id = #{id}
+        where id = #{id} and delete_flag = 0
     </update>
 
     <select id="page" resultType="com.zhku.agriwarningplatform.module.knowledgeqa.vo.KnowledgeqaRespVO">
@@ -53,6 +53,7 @@
             <if test="pestId != null and pestId !='' ">
                 and pest_id = #{pestId}
             </if>
+                and delete_flag = 0
         </where>
     </select>
 </mapper>

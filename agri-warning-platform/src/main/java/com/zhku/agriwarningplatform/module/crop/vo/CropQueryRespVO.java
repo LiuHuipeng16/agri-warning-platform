@@ -43,4 +43,5 @@ public class CropQueryRespVO {
      * 作物描述
      */
     private String description;
+
 }

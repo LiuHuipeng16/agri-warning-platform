@@ -90,7 +90,7 @@ public class KnowledgeqaServiceImpl implements KnowledgeqaService {
         if (id == null){
             throw new ServiceException(KnowledgeqaCode.ID_NOT_NULL);
         }
-        int rows = knowledgeqaMapper.delete(id);
+        int rows = knowledgeqaMapper.updatedDeleteFlag(id);
         if (rows != 1){
             throw new ServiceException(KnowledgeqaCode.DELETE_KNOWLEDGEQA_FAILED);
         }

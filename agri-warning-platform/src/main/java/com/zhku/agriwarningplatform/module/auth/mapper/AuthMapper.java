@@ -11,7 +11,7 @@ public interface AuthMapper {
     LoginRespVO.UserInfoVO selectByUsername(@Param("username") String username);
 
 
-    @Update("update user set password = #{password} where username = #{username}")
+    @Update("update user set password = #{password} where username = #{username} and delete_flag = 0")
     int updatePassword(@Param("username") String username, @Param("password") String encode);
 
     @Insert("insert into user (username, password, role) values (#{username}, #{password}, #{role})")

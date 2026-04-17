@@ -3,7 +3,7 @@
 
 <mapper namespace="com.zhku.agriwarningplatform.module.crop.mapper.CropMapper">
     <insert id="addcrop" useGeneratedKeys="true" keyProperty="id">
-        insert into crop(name, category, intro, description,image_url) values (#{name}, #{category}, #{intro}, #{description}, #{imageUrl})
+        insert into agri_pest_platform.crop(name, category, intro, description, image_url) values (#{name}, #{category}, #{intro}, #{description}, #{imageUrl})
     </insert>
     <update id="update">
         update crop
@@ -37,19 +37,7 @@
         </where>
         order by gmt_modified desc
     </select>
-    <resultMap id="CropDOResultMap"
-               type="com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO">
-        <id property="id" column="id"/>
-        <result property="name" column="name"/>
-        <result property="category" column="category"/>
-        <result property="intro" column="intro"/>
-        <result property="description" column="description"/>
-        <result property="imageUrl" column="image_url"/>
-        <result property="deleteFlag" column="delete_flag"/>
-        <result property="gmtCreate" column="gmt_create"/>
-        <result property="gmtModified" column="gmt_modified"/>
-    </resultMap>
-    <select id="selectById" resultMap="CropDOResultMap">
+    <select id="selectById" resultType="com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO">
         SELECT
             id,
             name,
@@ -60,7 +48,7 @@
             delete_flag,
             gmt_create,
             gmt_modified
-        FROM crop
+        FROM agri_pest_platform.crop
         WHERE id = #{id}
           AND delete_flag = 0
     </select>

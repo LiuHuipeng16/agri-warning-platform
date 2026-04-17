@@ -2,8 +2,10 @@ package com.zhku.agriwarningplatform.module.knowledgeqa.mapper;
 
 import com.zhku.agriwarningplatform.module.knowledgeqa.vo.KnowledgeqaReqVO;
 import com.zhku.agriwarningplatform.module.knowledgeqa.vo.KnowledgeqaRespVO;
+import jakarta.validation.constraints.Min;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -15,6 +17,6 @@ public interface KnowledgeqaMapper {
 
     int update(KnowledgeqaReqVO reqVO);
 
-    @Delete("delete from lightweight_knowledge_base_enhanced_qa where id = #{id}")
-    int delete(Long id);
+    @Update("update knowledgeqa set delete_flag = 1 where id = #{id}")
+    int updatedDeleteFlag(@Min(value = 1, message = "ID必须大于0") Long id);
 }
