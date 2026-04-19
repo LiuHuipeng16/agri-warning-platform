@@ -38,7 +38,6 @@ public class CropServiceImpl implements CropService {
                 Page<CropQueryRespVO> page = PageHelper.startPage(
                         cropQueryReqVO.getPageNum(),
                         cropQueryReqVO.getPageSize());
-
         cropMapper.selectList(cropQueryReqVO);
         PageResult<CropQueryRespVO> pageResult = new PageResult<>();
         pageResult.setTotal((int)page.getTotal());

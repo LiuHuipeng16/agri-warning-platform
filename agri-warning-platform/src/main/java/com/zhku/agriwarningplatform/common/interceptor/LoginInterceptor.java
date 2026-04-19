@@ -37,11 +37,23 @@ public class LoginInterceptor implements HandlerInterceptor {
             return true;
         }
         String token = request.getHeader("token");
-        if (token == null || token ==""){
+        if (token == null || token.trim().isEmpty()){
             log.warn("未登录，请登录");
             response.setStatus(401);
             response.setContentType("application/json;charset=UTF-8");
             String json = "{\n\"code\":401,\n\"msg\":\"未登录\",\n\"data\":null\n}";
+            response.getWriter().write(json);
+            response.getWriter().flush();
+            response.getWriter().close();
+            return false;
+        }
+        try {
+            JwtUtils.validateToken(token);
+        } catch (Exception e) {
+            log.warn("登录失效，请重新登录");
+            response.setStatus(401);
+            response.setContentType("application/json;charset=UTF-8");
+            String json = "{\n\"code\":401,\n\"msg\":\"登录失效\",\n\"data\":null\n}";
             response.getWriter().write(json);
             response.getWriter().flush();
             response.getWriter().close();
@@ -102,6 +114,7 @@ public class LoginInterceptor implements HandlerInterceptor {
                 response.getWriter().write(json);
                 response.getWriter().flush();
                 response.getWriter().close();
+                return false;
             }
             log.info("用户权限验证通过");
             return true;
@@ -131,6 +144,7 @@ public class LoginInterceptor implements HandlerInterceptor {
                 response.getWriter().write(json);
                 response.getWriter().flush();
                 response.getWriter().close();
+                return false;
             }
             log.info("用户权限验证通过");
             return true;
@@ -166,18 +180,7 @@ public class LoginInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        try {
-            JwtUtils.validateToken(token);
-        } catch (Exception e) {
-            log.warn("登录失效，请重新登录");
-            response.setStatus(401);
-            response.setContentType("application/json;charset=UTF-8");
-            String json = "{\n\"code\":401,\n\"msg\":\"登录失效\",\n\"data\":null\n}";
-            response.getWriter().write(json);
-            response.getWriter().flush();
-            response.getWriter().close();
-            return false;
-        }
+
         log.info("令牌合法，放行");
         return true;
     }

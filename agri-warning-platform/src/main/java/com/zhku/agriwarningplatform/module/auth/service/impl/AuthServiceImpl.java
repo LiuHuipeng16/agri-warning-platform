@@ -132,7 +132,8 @@ public class AuthServiceImpl implements AuthService {
         if (authMapper.selectByUsername(registerReqVO.getUsername()) != null){
             throw new ServiceException(AuthErrorCode.USERNAME_EXISTS);
         }
-        if (!registerReqVO.getRole().equals("USER") && !registerReqVO.getRole().equals("ADMIN")){
+        String role = registerReqVO.getRole();
+        if (!"USER".equals(role) && !"ADMIN".equals(role)){
             throw new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
         }
         authMapper.addUser(registerReqVO.getUsername(), passwordUtils.encode(registerReqVO.getPassword()), registerReqVO.getRole());
