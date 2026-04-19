@@ -3,12 +3,10 @@ import com.zhku.agriwarningplatform.common.errorcode.AuthErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ServiceException;
 import com.zhku.agriwarningplatform.common.util.JwtUtils;
 import com.zhku.agriwarningplatform.common.util.PasswordUtils;
+import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.AuthMapper;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginReqVO;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginRespVO;
-import com.zhku.agriwarningplatform.module.auth.vo.RegisterReqVO;
-import com.zhku.agriwarningplatform.module.auth.vo.UpdatePasswordReqVO;
+import com.zhku.agriwarningplatform.module.auth.vo.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +30,7 @@ public class AuthServiceImpl implements AuthService {
         if (!StringUtils.hasText(loginReqVO.getPassword())){
             throw new ServiceException(AuthErrorCode.PASSWORD_EMPTY);
         }
-        LoginRespVO.UserInfoVO userInfo = authMapper.selectByUsername(loginReqVO.getUsername());
+        UserDO userInfo= authMapper.selectByUsername(loginReqVO.getUsername());
         if (userInfo == null){
             throw new ServiceException(AuthErrorCode.USER_NOT_EXIST);
         }
@@ -48,11 +46,11 @@ public class AuthServiceImpl implements AuthService {
 
         LoginRespVO loginRespVO = new LoginRespVO();
         loginRespVO.setToken(token);
-        loginRespVO.setUserInfo(userInfo);
-        loginRespVO.getUserInfo().setPassword(null);
-        loginRespVO.getUserInfo().setGmtCreate( null);
-        loginRespVO.getUserInfo().setGmtModified( null);
-        loginRespVO.getUserInfo().setDeleteFlag( null);
+        loginRespVO.setUserInfo(new LoginRespVO.UserInfoVO(
+                userInfo.getId(),
+                userInfo.getUsername(),
+                userInfo.getRole()
+        ));
         return loginRespVO;
     }
 
@@ -63,9 +61,8 @@ public class AuthServiceImpl implements AuthService {
         String username = JwtUtils.getUsernameFromToken(token);
         String role = JwtUtils.getRoleFromToken(token);
         LoginRespVO loginRespVO= new LoginRespVO();
-        LoginRespVO.UserInfoVO userInfo = new LoginRespVO.UserInfoVO(userId, username, null,role, null,null, null);
+        LoginRespVO.UserInfoVO userInfo = new LoginRespVO.UserInfoVO(userId, username, role);
         loginRespVO.setUserInfo(userInfo);
-        loginRespVO.setToken(token);
         return loginRespVO;
 
     }
@@ -83,7 +80,7 @@ public class AuthServiceImpl implements AuthService {
         if (username== null){
             throw new ServiceException(AuthErrorCode.TOKEN_INVALID);
         }
-        LoginRespVO.UserInfoVO userInfo = authMapper.selectByUsername(username);
+        UserDO userInfo = authMapper.selectByUsername(username);
         if (userInfo== null){
             throw new ServiceException(AuthErrorCode.USER_NOT_EXIST);
         }
@@ -98,7 +95,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public LoginRespVO.UserInfoVO register(RegisterReqVO registerReqVO) {
+    public RegisterRespVO register(RegisterReqVO registerReqVO) {
         if (!StringUtils.hasText(registerReqVO.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
@@ -115,17 +112,14 @@ public class AuthServiceImpl implements AuthService {
             throw new ServiceException(AuthErrorCode.USERNAME_EXISTS);
         }
         authMapper.addUser(registerReqVO.getUsername(), passwordUtils.encode(registerReqVO.getPassword()), "USER");
-        LoginRespVO.UserInfoVO userInfo = authMapper.selectByUsername(registerReqVO.getUsername());
-        userInfo.setPassword(null);
-        userInfo.setGmtCreate( null);
-        userInfo.setGmtModified( null);
-        userInfo.setDeleteFlag( null);
-        return userInfo;
+        UserDO userdo = authMapper.selectByUsername(registerReqVO.getUsername());
+
+        return new RegisterRespVO(userdo.getId(), userdo.getUsername(), userdo.getRole());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public LoginRespVO.UserInfoVO adminRegister(RegisterReqVO registerReqVO) {
+    public CreateUserResp adminRegister(CreateUserReq registerReqVO) {
         if (!StringUtils.hasText(registerReqVO.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
@@ -142,11 +136,6 @@ public class AuthServiceImpl implements AuthService {
             throw new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
         }
         authMapper.addUser(registerReqVO.getUsername(), passwordUtils.encode(registerReqVO.getPassword()), registerReqVO.getRole());
-        LoginRespVO.UserInfoVO userInfo = authMapper.selectByUsername(registerReqVO.getUsername());
-        userInfo.setPassword(null);
-        userInfo.setGmtCreate( null);
-        userInfo.setGmtModified( null);
-        userInfo.setDeleteFlag( null);
-        return userInfo;
+        return authMapper.adminselectByUsername(registerReqVO.getUsername());
     }
 }

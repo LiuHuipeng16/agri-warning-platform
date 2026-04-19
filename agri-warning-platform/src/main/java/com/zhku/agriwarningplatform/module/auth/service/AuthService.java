@@ -1,9 +1,6 @@
 package com.zhku.agriwarningplatform.module.auth.service;
 
-import com.zhku.agriwarningplatform.module.auth.vo.LoginReqVO;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginRespVO;
-import com.zhku.agriwarningplatform.module.auth.vo.RegisterReqVO;
-import com.zhku.agriwarningplatform.module.auth.vo.UpdatePasswordReqVO;
+import com.zhku.agriwarningplatform.module.auth.vo.*;
 
 public interface AuthService {
     LoginRespVO login(LoginReqVO loginReqVO);
@@ -12,7 +9,7 @@ public interface AuthService {
 
     void updatePassword(UpdatePasswordReqVO updatePasswordReqVO, String token);
 
-    LoginRespVO.UserInfoVO register(RegisterReqVO registerReqVO);
+    RegisterRespVO register(RegisterReqVO registerReqVO);
 
-    LoginRespVO.UserInfoVO adminRegister(RegisterReqVO registerReqVO);
+    CreateUserResp adminRegister(CreateUserReq registerReqVO);
 }

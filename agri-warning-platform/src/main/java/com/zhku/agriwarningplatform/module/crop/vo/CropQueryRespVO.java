@@ -35,13 +35,4 @@ public class CropQueryRespVO {
      * 创建时间
      */
     private LocalDateTime gmtCreate;
-    /**
-     * 修改时间
-     */
-    private LocalDateTime gmtModified;
-    /**
-     * 作物描述
-     */
-    private String description;
-
 }
