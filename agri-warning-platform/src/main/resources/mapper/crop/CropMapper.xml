@@ -1,23 +1,43 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.zhku.agriwarningplatform.module.crop.mapper.CropMapper">
+    <insert id="addcrop" useGeneratedKeys="true" keyProperty="id">
+        insert into agri_pest_platform.crop(name, category, intro, description, image_url) values (#{name}, #{category}, #{intro}, #{description}, #{imageUrl})
+    </insert>
+    <update id="update">
+        update crop
+        <set>
+                name = #{name},
+                category = #{category},
+            <if test="intro != null">
+                intro = #{intro},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="imageUrl != null">
+                image_url = #{imageUrl},
+            </if>
 
-    <resultMap id="CropDOResultMap"
-               type="com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO">
-        <id property="id" column="id"/>
-        <result property="name" column="name"/>
-        <result property="category" column="category"/>
-        <result property="intro" column="intro"/>
-        <result property="description" column="description"/>
-        <result property="imageUrl" column="image_url"/>
-        <result property="deleteFlag" column="delete_flag"/>
-        <result property="gmtCreate" column="gmt_create"/>
-        <result property="gmtModified" column="gmt_modified"/>
-    </resultMap>
+        </set>
+        where id = #{id} and delete_flag = 0
+    </update>
 
-    <select id="selectById" resultMap="CropDOResultMap">
+    <select id="selectList" resultType="com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO">
+        select id, name, category, intro, image_url, gmt_create
+        from crop
+        <where>
+        <if test="name != null and name != ''">
+            and name like concat('%',#{name},'%')
+        </if>
+        <if test="category != null and category != ''">
+            and category like concat('%',#{category},'%')
+        </if>
+        </where>
+        order by gmt_modified desc
+    </select>
+    <select id="selectById" resultType="com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO">
         SELECT
             id,
             name,
@@ -28,9 +48,8 @@
             delete_flag,
             gmt_create,
             gmt_modified
-        FROM crop
+        FROM agri_pest_platform.crop
         WHERE id = #{id}
           AND delete_flag = 0
     </select>
-
 </mapper>

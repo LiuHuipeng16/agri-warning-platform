@@ -20,3 +20,4 @@ application-local.yml
 
 # 系统文件
 .DS_Store
+**/application-local.yml

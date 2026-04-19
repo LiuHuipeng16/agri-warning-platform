@@ -18,12 +18,18 @@ spring:
   jackson:
     time-zone: Asia/Shanghai
     date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: non_null
+
+
+  # ... existing code ...
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/agri_pest_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
+    url: jdbc:mysql://localhost:3306/agri_pest_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ... existing code ...
 
   data:
     redis:
@@ -32,34 +38,10 @@ spring:
       password:
       database: 0
       timeout: 5s
-  spring:
-    ai:
 
-      # ===============================
-      # DeepSeek 聊天模型（OpenAI兼容）
-      # ===============================
-      openai:
-        api-key: ${OPENAI_API_KEY}
-        base-url: https://api.deepseek.com
-
-        chat:
-          options:
-            model: deepseek-chat
-            temperature: 0.7
-
-
-      # ===============================
-      # 阿里百炼 向量模型
-      # ===============================
-      dashscope:
-        api-key: ${DASHSCOPE_API_KEY}
-
-        embedding:
-          options:
-            model: text-embedding-v4
-            dimensions: 2048
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
+  type-aliases-package: com.zhku.agri.entity
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
@@ -105,6 +87,22 @@ project:
       - image/png
       - image/gif
       - image/webp
+
+#qiniu:
+#  enabled: false
+#  access-key: your-access-key
+#  secret-key: your-secret-key
+#  bucket: your-bucket-name
+#  domain: http://your-cdn-domain
+#  region: huanan
+#
+#ai:
+#  enabled: false
+#  base-url: https://api.deepseek.com
+#  api-key: your-api-key
+#  model: deepseek-chat
+#  connect-timeout: 30
+#  read-timeout: 60
 
 app:
   jwt-ignore-urls:

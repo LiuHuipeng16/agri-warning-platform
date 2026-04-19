@@ -1,5 +1,7 @@
 package com.zhku.agriwarningplatform.common.errorcode;
 
+import cn.dev33.satoken.exception.SaTokenException;
+
 /**
  * Created with IntelliJ IDEA.
  * Description:

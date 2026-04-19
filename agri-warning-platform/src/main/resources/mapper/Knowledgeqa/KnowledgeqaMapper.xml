@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhku.agriwarningplatform.module.knowledgeqa.mapper.KnowledgeqaMapper">
+    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+        insert into lightweight_knowledge_base_enhanced_qa
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                question,
+                answer,
+            <if test="cropId != null and cropId != ''">
+                crop_id,
+            </if>
+            <if test="pestId != null and pestId != ''">
+                pest_id,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{question},
+            #{answer},
+            <if test="cropId != null and cropId != ''">
+                #{cropId},
+            </if>
+            <if test="pestId != null and pestId != ''">
+                #{pestId},
+            </if>
+        </trim>
+    </insert>
+    <update id="update" useGeneratedKeys="true" keyProperty="id">
+        update lightweight_knowledge_base_enhanced_qa
+        <set>
+                question = #{question},
+                answer = #{answer},
+            <if test="cropId != null and cropId != ''">
+                crop_id = #{cropId},
+            </if>
+            <if test="pestId != null and pestId != ''">
+                pest_id = #{pestId},
+            </if>
+        </set>
+        where id = #{id} and delete_flag = 0
+    </update>
+
+    <select id="page" resultType="com.zhku.agriwarningplatform.module.knowledgeqa.vo.KnowledgeqaRespVO">
+        select id, question, answer, crop_id, pest_id, gmt_create
+        from lightweight_knowledge_base_enhanced_qa
+        <where>
+            <if test="keyword != null and keyword !=''">
+                and question like concat('%' , #{keyword} , '%')
+            </if>
+            <if test="cropId != null and cropId != ''">
+                and crop_id =#{cropId}
+            </if>
+            <if test="pestId != null and pestId !='' ">
+                and pest_id = #{pestId}
+            </if>
+                and delete_flag = 0
+        </where>
+    </select>
+</mapper>
