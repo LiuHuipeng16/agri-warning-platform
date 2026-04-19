@@ -8,11 +8,13 @@ package com.zhku.agriwarningplatform.module.prewarningrule.mapper.dataobject;
  * Time: 14:53
  */
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+@TableName("prewarning_rules")
 @Data
 public class PreWarningRuleDO {
 
@@ -89,6 +91,7 @@ public class PreWarningRuleDO {
     /**
      * 判断当前suggestion是否清空
      */
+    @TableField(exist = false)
     private Boolean updateSuggestion;
 
     /**

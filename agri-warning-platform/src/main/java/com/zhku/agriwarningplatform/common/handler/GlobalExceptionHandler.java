@@ -66,21 +66,6 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理 @RequestBody 参数校验异常
-     *
-     * @param e 异常
-     * @return 响应结果
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public CommonResult<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        FieldError fieldError = e.getBindingResult().getFieldError();
-        String message = fieldError != null ? fieldError.getDefaultMessage() : "参数校验失败";
-
-        log.warn("MethodArgumentNotValidException: {}", message, e);
-        return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
-    }
-
-    /**
      * 处理表单参数 / Query 参数校验异常
      *
      * @param e 异常
@@ -141,15 +126,20 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public CommonResult<?> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+
+        String paramName = e.getName();
+        String targetType = e.getRequiredType() != null ?
+                e.getRequiredType().getSimpleName() : "unknown";
+
         log.warn("MethodArgumentTypeMismatchException: 参数名={}, 参数值={}, 目标类型={}",
-                e.getName(),
+                paramName,
                 e.getValue(),
-                e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown",
+                targetType,
                 e);
 
         return CommonResult.error(
                 GlobalErrorCode.BAD_REQUEST.getCode(),
-                "参数类型错误: " + e.getName()
+                "请求参数 " + paramName + " 类型错误"
         );
     }
 
@@ -163,5 +153,40 @@ public class GlobalExceptionHandler {
     public CommonResult<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         log.warn("HttpMessageNotReadableException: 请求JSON格式错误", e);
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), "请求JSON格式错误");
+    }
+
+    /**
+     * 处理方法参数校验异常
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public CommonResult<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        FieldError fieldError = e.getBindingResult().getFieldError();
+
+        if (fieldError == null) {
+            log.warn("MethodArgumentNotValidException: 无字段错误信息", e);
+            return CommonResult.error(
+                    GlobalErrorCode.BAD_REQUEST.getCode(),
+                    "请求参数错误"
+            );
+        }
+
+        String fieldName = fieldError.getField();
+        Object rejectedValue = fieldError.getRejectedValue();
+        String defaultMessage = fieldError.getDefaultMessage();
+
+        log.warn("MethodArgumentNotValidException: 参数名={}, 参数值={}, 默认消息={}",
+                fieldName, rejectedValue, defaultMessage, e);
+
+        String message;
+        if (defaultMessage != null && defaultMessage.contains("Failed to convert")) {
+            message = "请求参数 " + fieldName + " 类型错误";
+        } else {
+            message = defaultMessage;
+        }
+
+        return CommonResult.error(
+                GlobalErrorCode.BAD_REQUEST.getCode(),
+                message
+        );
     }
 }

@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhku.agriwarningplatform.module.warning.mapper.WarningMapper">
+
+    <!-- ==================== ResultMap ==================== -->
+
+    <resultMap id="WarningDOResultMap" type="com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="cropId" column="crop_id"/>
+        <result property="pestId" column="pest_id"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="warningType" column="warning_type"/>
+        <result property="warningDate" column="warning_date"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="deleteFlag" column="delete_flag"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="gmtModified" column="gmt_modified"/>
+    </resultMap>
+
+    <resultMap id="WarningListItemDOResultMap" type="com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningListItemDO">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="cropId" column="crop_id"/>
+        <result property="cropName" column="crop_name"/>
+        <result property="pestId" column="pest_id"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="warningType" column="warning_type"/>
+        <result property="warningDate" column="warning_date"/>
+    </resultMap>
+
+    <resultMap id="WarningDetailDOResultMap" type="com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDetailDO">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="cropId" column="crop_id"/>
+        <result property="cropName" column="crop_name"/>
+        <result property="pestId" column="pest_id"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="warningType" column="warning_type"/>
+        <result property="warningDate" column="warning_date"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="suggestion" column="suggestion"/>
+        <result property="gmtCreate" column="gmt_create"/>
+    </resultMap>
+
+    <!-- ==================== 公共SQL ==================== -->
+
+    <sql id="BaseWarningColumns">
+        w.id,
+        w.title,
+        w.crop_id,
+        w.pest_id,
+        w.risk_level,
+        w.warning_type,
+        w.warning_date,
+        w.rule_id,
+        w.delete_flag,
+        w.gmt_create,
+        w.gmt_modified
+    </sql>
+
+    <sql id="WarningListColumns">
+        w.id,
+        w.title,
+        w.crop_id,
+        c.name AS crop_name,
+        w.pest_id,
+        p.name AS pest_name,
+        w.risk_level,
+        w.warning_type,
+        w.warning_date
+    </sql>
+
+    <sql id="WarningPageWhere">
+        w.delete_flag = 0
+        AND c.delete_flag = 0
+        AND p.delete_flag = 0
+        <if test="query != null">
+            <if test="query.title != null and query.title != ''">
+                AND w.title LIKE CONCAT('%', #{query.title}, '%')
+            </if>
+            <if test="query.cropId != null">
+                AND w.crop_id = #{query.cropId}
+            </if>
+            <if test="query.pestId != null">
+                AND w.pest_id = #{query.pestId}
+            </if>
+            <if test="query.riskLevel != null and query.riskLevel != ''">
+                AND w.risk_level = #{query.riskLevel}
+            </if>
+            <if test="query.warningType != null and query.warningType != ''">
+                AND w.warning_type = #{query.warningType}
+            </if>
+            <if test="query.warningDateStart != null">
+                AND w.warning_date <![CDATA[>=]]> #{query.warningDateStart}
+            </if>
+            <if test="query.warningDateEnd != null">
+                AND w.warning_date <![CDATA[<=]]> #{query.warningDateEnd}
+            </if>
+        </if>
+    </sql>
+
+    <!-- ==================== 分页查询 ==================== -->
+
+    <select id="countByPage" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM warning w
+        INNER JOIN crop c ON w.crop_id = c.id
+        INNER JOIN pest p ON w.pest_id = p.id
+        WHERE
+        <include refid="WarningPageWhere"/>
+    </select>
+
+    <select id="selectByPage" resultMap="WarningListItemDOResultMap">
+        SELECT
+        <include refid="WarningListColumns"/>
+        FROM warning w
+        INNER JOIN crop c ON w.crop_id = c.id
+        INNER JOIN pest p ON w.pest_id = p.id
+        WHERE
+        <include refid="WarningPageWhere"/>
+        ORDER BY w.warning_date DESC, w.id DESC
+        LIMIT #{query.pageSize} OFFSET #{query.offset}
+    </select>
+
+    <!-- ==================== 详情查询 ==================== -->
+
+    <select id="selectDetailById" resultMap="WarningDetailDOResultMap">
+        SELECT
+            w.id,
+            w.title,
+            w.crop_id,
+            c.name AS crop_name,
+            w.pest_id,
+            p.name AS pest_name,
+            w.risk_level,
+            w.warning_type,
+            w.warning_date,
+            w.rule_id,
+            pr.suggestion,
+            w.gmt_create
+        FROM warning w
+                 INNER JOIN crop c ON w.crop_id = c.id
+                 INNER JOIN pest p ON w.pest_id = p.id
+                 INNER JOIN prewarning_rules pr ON w.rule_id = pr.id
+        WHERE w.id = #{id}
+          AND w.delete_flag = 0
+          AND c.delete_flag = 0
+          AND p.delete_flag = 0
+          AND pr.delete_flag = 0
+    </select>
+
+    <!-- ==================== 当天预警 ==================== -->
+
+    <select id="selectTodayWarnings" resultMap="WarningListItemDOResultMap">
+        SELECT
+        <include refid="WarningListColumns"/>
+        FROM warning w
+        INNER JOIN crop c ON w.crop_id = c.id
+        INNER JOIN pest p ON w.pest_id = p.id
+        WHERE w.delete_flag = 0
+        AND c.delete_flag = 0
+        AND p.delete_flag = 0
+        AND w.warning_type = 'TODAY'
+        AND w.warning_date = #{warningDate}
+        ORDER BY
+        CASE w.risk_level
+        WHEN '高' THEN 1
+        WHEN '中' THEN 2
+        WHEN '低' THEN 3
+        ELSE 4
+        END,
+        w.id DESC
+    </select>
+
+    <!-- ==================== 多天预警 ==================== -->
+
+    <select id="selectForecastWarnings" resultMap="WarningListItemDOResultMap">
+        SELECT
+        <include refid="WarningListColumns"/>
+        FROM warning w
+        INNER JOIN crop c ON w.crop_id = c.id
+        INNER JOIN pest p ON w.pest_id = p.id
+        WHERE w.delete_flag = 0
+        AND c.delete_flag = 0
+        AND p.delete_flag = 0
+        AND w.warning_type = 'FORECAST'
+        AND w.warning_date <![CDATA[>=]]> #{startDate}
+        AND w.warning_date <![CDATA[<=]]> #{endDate}
+        ORDER BY
+        w.warning_date ASC,
+        CASE w.risk_level
+        WHEN '高' THEN 1
+        WHEN '中' THEN 2
+        WHEN '低' THEN 3
+        ELSE 4
+        END,
+        w.id DESC
+    </select>
+
+    <!-- ==================== 逻辑删除 ==================== -->
+
+    <update id="deleteByIdLogical">
+        UPDATE warning
+        SET delete_flag = 1
+        WHERE id = #{id}
+          AND delete_flag = 0
+    </update>
+
+    <update id="batchDeleteLogical">
+        UPDATE warning
+        SET delete_flag = 1
+        WHERE delete_flag = 0
+        AND id IN
+        <foreach collection="warningIds" item="warningId" open="(" separator="," close=")">
+            #{warningId}
+        </foreach>
+    </update>
+
+    <!-- ==================== 手动生成去重查询 ==================== -->
+
+    <select id="selectByUniqueCondition" resultMap="WarningDOResultMap">
+        SELECT
+        <include refid="BaseWarningColumns"/>
+        FROM warning w
+        WHERE w.crop_id = #{cropId}
+        AND w.pest_id = #{pestId}
+        AND w.rule_id = #{ruleId}
+        AND w.warning_type = #{warningType}
+        AND w.warning_date = #{warningDate}
+        AND w.delete_flag = 0
+        LIMIT 1
+    </select>
+
+    <!-- ==================== 插入预警 ==================== -->
+
+    <insert id="insertWarning" parameterType="com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO warning (
+            title,
+            crop_id,
+            pest_id,
+            risk_level,
+            warning_type,
+            warning_date,
+            rule_id,
+            delete_flag
+        ) VALUES (
+                     #{title},
+                     #{cropId},
+                     #{pestId},
+                     #{riskLevel},
+                     #{warningType},
+                     #{warningDate},
+                     #{ruleId},
+                     #{deleteFlag}
+                 )
+    </insert>
+
+    <!-- ==================== 定时任务刷新时清理旧预警 ==================== -->
+
+    <update id="deleteTodayWarningsByDate">
+        UPDATE warning
+        SET delete_flag = 1
+        WHERE delete_flag = 0
+          AND warning_type = 'TODAY'
+          AND warning_date = #{warningDate}
+    </update>
+
+    <update id="deleteForecastWarningsByDateRange">
+        UPDATE warning
+        SET delete_flag = 1
+        WHERE delete_flag = 0
+          AND warning_type = 'FORECAST'
+          AND warning_date <![CDATA[>=]]> #{startDate}
+          AND warning_date <![CDATA[<=]]> #{endDate}
+    </update>
+
+</mapper>

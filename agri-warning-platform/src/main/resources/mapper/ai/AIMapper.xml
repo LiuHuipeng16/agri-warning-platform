@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AIMapper">
+
+    <!-- ==================== ResultMap ==================== -->
+
+    <resultMap id="AIChatSessionResultMap" type="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIChatSessionDO">
+        <id property="chatId" column="chat_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="sessionType" column="session_type"/>
+        <result property="contextType" column="context_type"/>
+        <result property="contextId" column="context_id"/>
+        <result property="title" column="title"/>
+        <result property="deleteFlag" column="delete_flag"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="gmtModified" column="gmt_modified"/>
+    </resultMap>
+
+    <resultMap id="AIChatMessageResultMap" type="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIChatMessageDO">
+        <id property="id" column="id"/>
+        <result property="chatId" column="chat_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="role" column="role"/>
+        <result property="content" column="content"/>
+        <result property="deleteFlag" column="delete_flag"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="gmtModified" column="gmt_modified"/>
+    </resultMap>
+
+    <resultMap id="LightweightKnowledgeBaseEnhancedQaResultMap" type="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO">
+        <id property="id" column="id"/>
+        <result property="question" column="question"/>
+        <result property="answer" column="answer"/>
+        <result property="pestId" column="pest_id"/>
+        <result property="cropId" column="crop_id"/>
+        <result property="deleteFlag" column="delete_flag"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="gmtModified" column="gmt_modified"/>
+    </resultMap>
+
+    <resultMap id="AIWarningSuggestionContextResultMap" type="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIWarningSuggestionContextDO">
+        <id property="warningId" column="warning_id"/>
+        <result property="warningTitle" column="warning_title"/>
+        <result property="cropId" column="crop_id"/>
+        <result property="cropName" column="crop_name"/>
+        <result property="pestId" column="pest_id"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="pestType" column="pest_type"/>
+        <result property="symptoms" column="symptoms"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="warningType" column="warning_type"/>
+        <result property="warningDate" column="warning_date"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="suggestion" column="suggestion"/>
+    </resultMap>
+
+    <!-- ==================== 会话表（独立AI） ==================== -->
+
+    <select id="getSessionByChatId" resultMap="AIChatSessionResultMap">
+        SELECT
+            chat_id,
+            user_id,
+            session_type,
+            context_type,
+            context_id,
+            title,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM ai_chat_session
+        WHERE chat_id = #{chatId}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="getSessionByChatIdAndUserId" resultMap="AIChatSessionResultMap">
+        SELECT
+            chat_id,
+            user_id,
+            session_type,
+            context_type,
+            context_id,
+            title,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM ai_chat_session
+        WHERE chat_id = #{chatId}
+          AND user_id = #{userId}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="getChatSessionListByUserId" resultMap="AIChatSessionResultMap">
+        SELECT
+            chat_id,
+            user_id,
+            session_type,
+            context_type,
+            context_id,
+            title,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM ai_chat_session
+        WHERE user_id = #{userId}
+          AND session_type = 'CHAT'
+          AND delete_flag = 0
+        ORDER BY gmt_modified DESC, gmt_create DESC
+    </select>
+
+    <insert id="insertChatSession">
+        INSERT INTO ai_chat_session (
+            chat_id,
+            user_id,
+            session_type,
+            context_type,
+            context_id,
+            title,
+            delete_flag
+        ) VALUES (
+                     #{chatId},
+                     #{userId},
+                     #{sessionType},
+                     #{contextType},
+                     #{contextId},
+                     #{title},
+                     #{deleteFlag}
+                 )
+    </insert>
+
+    <update id="updateChatSessionTitleByChatId">
+        UPDATE ai_chat_session
+        <set>
+            <if test="title != null">
+                title = #{title},
+            </if>
+            gmt_modified = NOW()
+        </set>
+        WHERE chat_id = #{chatId}
+        AND user_id = #{userId}
+        AND delete_flag = 0
+    </update>
+
+    <update id="deleteChatSessionByChatId">
+        UPDATE ai_chat_session
+        SET delete_flag = 1,
+            gmt_modified = NOW()
+        WHERE chat_id = #{chatId}
+          AND user_id = #{userId}
+          AND delete_flag = 0
+    </update>
+
+    <!-- ==================== 消息表（悬浮助手 + 独立AI） ==================== -->
+
+    <insert id="insertChatMessage" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO ai_chat_message (
+            chat_id,
+            user_id,
+            role,
+            content,
+            delete_flag
+        ) VALUES (
+                     #{chatId},
+                     #{userId},
+                     #{role},
+                     #{content},
+                     #{deleteFlag}
+                 )
+    </insert>
+
+    <select id="getChatMessageHistoryByChatId" resultMap="AIChatMessageResultMap">
+        SELECT
+            id,
+            chat_id,
+            user_id,
+            role,
+            content,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM ai_chat_message
+        WHERE chat_id = #{chatId}
+          AND user_id = #{userId}
+          AND delete_flag = 0
+        ORDER BY gmt_create ASC, id ASC
+    </select>
+
+    <select id="getRecentChatMessagesByChatId" resultMap="AIChatMessageResultMap">
+        SELECT
+            id,
+            chat_id,
+            user_id,
+            role,
+            content,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM ai_chat_message
+        WHERE chat_id = #{chatId}
+          AND user_id = #{userId}
+          AND delete_flag = 0
+        ORDER BY gmt_create DESC, id DESC
+            LIMIT #{limit}
+    </select>
+
+    <update id="deleteChatMessagesByChatId">
+        UPDATE ai_chat_message
+        SET delete_flag = 1,
+            gmt_modified = NOW()
+        WHERE chat_id = #{chatId}
+          AND user_id = #{userId}
+          AND delete_flag = 0
+    </update>
+
+    <!-- ==================== 知识库加载 ==================== -->
+
+    <select id="getAllValidKnowledgeQaList" resultMap="LightweightKnowledgeBaseEnhancedQaResultMap">
+        SELECT
+            id,
+            question,
+            answer,
+            pest_id,
+            crop_id,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM lightweight_knowledge_base_enhanced_qa
+        WHERE delete_flag = 0
+        ORDER BY id ASC
+    </select>
+
+    <select id="getCropNameById" resultType="java.lang.String">
+        SELECT name
+        FROM crop
+        WHERE id = #{cropId}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="getPestNameById" resultType="java.lang.String">
+        SELECT name
+        FROM pest
+        WHERE id = #{pestId}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="getPestSymptomsById" resultType="java.lang.String">
+        SELECT symptoms
+        FROM pest
+        WHERE id = #{pestId}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <!-- ==================== 页面上下文查询 ==================== -->
+
+    <select id="getCropContextById" resultType="CropDO">
+        SELECT
+            id,
+            name,
+            category,
+            intro,
+            description,
+            image_url,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM crop
+        WHERE id = #{id}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="getPestContextById" resultType="PestDO">
+        SELECT
+            id,
+            name,
+            type,
+            description,
+            symptoms,
+            cause,
+            prevention,
+            risk_level,
+            season,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM pest
+        WHERE id = #{id}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="getWarningContextById" resultType="WarningDO">
+        SELECT
+            id,
+            title,
+            crop_id,
+            pest_id,
+            risk_level,
+            warning_type,
+            warning_date,
+            rule_id,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM warning
+        WHERE id = #{id}
+          AND delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="getWarningSuggestionContextByWarningId" resultMap="AIWarningSuggestionContextResultMap">
+        SELECT
+            w.id AS warning_id,
+            w.title AS warning_title,
+            w.crop_id AS crop_id,
+            c.name AS crop_name,
+            w.pest_id AS pest_id,
+            p.name AS pest_name,
+            p.type AS pest_type,
+            p.symptoms AS symptoms,
+            w.risk_level AS risk_level,
+            w.warning_type AS warning_type,
+            w.warning_date AS warning_date,
+            w.rule_id AS rule_id,
+            r.rule_name AS rule_name,
+            r.suggestion AS suggestion
+        FROM warning w
+                 INNER JOIN crop c
+                            ON w.crop_id = c.id
+                                AND c.delete_flag = 0
+                 INNER JOIN pest p
+                            ON w.pest_id = p.id
+                                AND p.delete_flag = 0
+                 INNER JOIN prewarning_rules r
+                            ON w.rule_id = r.id
+                                AND r.delete_flag = 0
+        WHERE w.id = #{warningId}
+          AND w.delete_flag = 0
+            LIMIT 1
+    </select>
+
+</mapper>

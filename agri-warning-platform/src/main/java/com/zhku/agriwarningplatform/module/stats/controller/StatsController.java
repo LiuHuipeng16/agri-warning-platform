@@ -8,6 +8,7 @@ package com.zhku.agriwarningplatform.module.stats.controller;
  * Time: 3:33
  */
 import com.zhku.agriwarningplatform.common.result.CommonResult;
+import com.zhku.agriwarningplatform.common.util.JacksonUtils;
 import com.zhku.agriwarningplatform.module.stats.controller.vo.CropPestCountStatsVO;
 import com.zhku.agriwarningplatform.module.stats.controller.vo.HighRiskPestStatsVO;
 import com.zhku.agriwarningplatform.module.stats.controller.vo.PestTypeDistributionStatsVO;
@@ -20,6 +21,7 @@ import com.zhku.agriwarningplatform.module.stats.service.dto.PestTypeDistributio
 import com.zhku.agriwarningplatform.module.stats.service.dto.SeasonTrendStatsDTO;
 import com.zhku.agriwarningplatform.module.stats.service.dto.StatsDashboardDTO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 /**
  * 数据统计与可视化 Controller
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/stats")
 @RequiredArgsConstructor
@@ -48,6 +51,7 @@ public class StatsController {
     @GetMapping("/dashboard")
     // @RequireRole("ADMIN")
     public CommonResult<StatsDashboardVO> getDashboardStats() {
+        log.info("进入接口:StatsController#getDashboardStats");
         StatsDashboardDTO statsDashboardDTO = statsService.getDashboardStats();
         return CommonResult.success(convertToStatsDashboardVO(statsDashboardDTO));
     }
@@ -62,6 +66,7 @@ public class StatsController {
      */
     @GetMapping("/cropPestCount")
     public CommonResult<List<CropPestCountStatsVO>> listCropPestCountStats() {
+        log.info("进入接口:StatsController#listCropPestCountStats");
         List<CropPestCountStatsDTO> statsDTOList = statsService.listCropPestCountStats();
         List<CropPestCountStatsVO> statsVOList = statsDTOList.stream()
                 .map(this::convertToCropPestCountStatsVO)
@@ -79,6 +84,7 @@ public class StatsController {
      */
     @GetMapping("/pestTypeDistribution")
     public CommonResult<List<PestTypeDistributionStatsVO>> listPestTypeDistributionStats() {
+        log.info("进入接口:StatsController#listPestTypeDistributionStats");
         List<PestTypeDistributionStatsDTO> statsDTOList = statsService.listPestTypeDistributionStats();
         List<PestTypeDistributionStatsVO> statsVOList = statsDTOList.stream()
                 .map(this::convertToPestTypeDistributionStatsVO)
@@ -96,6 +102,7 @@ public class StatsController {
      */
     @GetMapping("/highRiskPests")
     public CommonResult<List<HighRiskPestStatsVO>> listHighRiskPestStats() {
+        log.info("进入接口:StatsController#listHighRiskPestStats");
         List<HighRiskPestStatsDTO> statsDTOList = statsService.listHighRiskPestStats();
         List<HighRiskPestStatsVO> statsVOList = statsDTOList.stream()
                 .map(this::convertToHighRiskPestStatsVO)
@@ -113,6 +120,7 @@ public class StatsController {
      */
     @GetMapping("/seasonTrend")
     public CommonResult<List<SeasonTrendStatsVO>> listSeasonTrendStats() {
+        log.info("进入接口:StatsController#listSeasonTrendStats");
         List<SeasonTrendStatsDTO> statsDTOList = statsService.listSeasonTrendStats();
         List<SeasonTrendStatsVO> statsVOList = statsDTOList.stream()
                 .map(this::convertToSeasonTrendStatsVO)

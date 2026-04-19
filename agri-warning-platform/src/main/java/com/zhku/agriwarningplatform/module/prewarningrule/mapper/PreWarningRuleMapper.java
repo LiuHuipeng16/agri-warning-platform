@@ -8,6 +8,7 @@ package com.zhku.agriwarningplatform.module.prewarningrule.mapper;
  * Time: 11:19
  */
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.zhku.agriwarningplatform.module.prewarningrule.controller.param.PreWarningRuleOptionParam;
 import com.zhku.agriwarningplatform.module.prewarningrule.controller.param.PreWarningRulePageParam;
 import com.zhku.agriwarningplatform.module.prewarningrule.mapper.dataobject.PreWarningRuleDO;
@@ -19,7 +20,7 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 
 @Mapper
-public interface PreWarningRuleMapper {
+public interface PreWarningRuleMapper extends BaseMapper<PreWarningRuleDO> {
 
     /**
      * 分页总数

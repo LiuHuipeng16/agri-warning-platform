@@ -10,6 +10,8 @@ package com.zhku.agriwarningplatform.common.util;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.json.JsonParseException;
 
 import java.util.List;
@@ -24,11 +26,10 @@ public class JacksonUtils {
     /**
      * 单例
      */
-    private final static ObjectMapper OBJECT_MAPPER;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    static {
-        OBJECT_MAPPER = new ObjectMapper();
-    }
 
     private static ObjectMapper getObjectMapper() {
         return OBJECT_MAPPER;
