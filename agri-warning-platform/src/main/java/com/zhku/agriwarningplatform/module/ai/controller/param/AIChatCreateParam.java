@@ -8,6 +8,7 @@ package com.zhku.agriwarningplatform.module.ai.controller.param;
  * Time: 22:30
  */
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
@@ -16,11 +17,13 @@ public class AIChatCreateParam {
     /**
      * 会话ID
      */
+    @Size(max = 64, message = "chatId长度不能超过64")
     @NotBlank(message = "会话ID不能为空")
     private String chatId;
 
     /**
      * 会话标题
      */
+    @Size(max = 200, message = "title长度不能超过200")
     private String title;
 }

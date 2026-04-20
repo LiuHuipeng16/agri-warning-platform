@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="AIMapper">
+<mapper namespace="com.zhku.agriwarningplatform.module.ai.mapper.AIMapper">
 
     <!-- ==================== ResultMap ==================== -->
 
@@ -24,10 +24,12 @@
         <result property="userId" column="user_id"/>
         <result property="role" column="role"/>
         <result property="content" column="content"/>
+        <result property="messageStatus" column="message_status"/>
         <result property="deleteFlag" column="delete_flag"/>
         <result property="gmtCreate" column="gmt_create"/>
         <result property="gmtModified" column="gmt_modified"/>
     </resultMap>
+
 
     <resultMap id="LightweightKnowledgeBaseEnhancedQaResultMap" type="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO">
         <id property="id" column="id"/>
@@ -162,12 +164,14 @@
             user_id,
             role,
             content,
+            message_status,
             delete_flag
         ) VALUES (
                      #{chatId},
                      #{userId},
                      #{role},
                      #{content},
+                     #{messageStatus},
                      #{deleteFlag}
                  )
     </insert>
@@ -179,6 +183,7 @@
             user_id,
             role,
             content,
+            message_status,
             delete_flag,
             gmt_create,
             gmt_modified
@@ -196,6 +201,7 @@
             user_id,
             role,
             content,
+            message_status,
             delete_flag,
             gmt_create,
             gmt_modified
@@ -259,7 +265,7 @@
 
     <!-- ==================== 页面上下文查询 ==================== -->
 
-    <select id="getCropContextById" resultType="CropDO">
+    <select id="getCropContextById" resultType="com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO">
         SELECT
             id,
             name,
@@ -276,7 +282,7 @@
             LIMIT 1
     </select>
 
-    <select id="getPestContextById" resultType="PestDO">
+    <select id="getPestContextById" resultType="com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO">
         SELECT
             id,
             name,
@@ -296,7 +302,7 @@
             LIMIT 1
     </select>
 
-    <select id="getWarningContextById" resultType="WarningDO">
+    <select id="getWarningContextById" resultType="com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO">
         SELECT
             id,
             title,
@@ -346,4 +352,39 @@
             LIMIT 1
     </select>
 
+    <update id="updateChatMessageContentAndStatusById">
+        UPDATE ai_chat_message
+        <set>
+            <if test="content != null">
+                content = #{content},
+            </if>
+            <if test="messageStatus != null">
+                message_status = #{messageStatus},
+            </if>
+            gmt_modified = NOW()
+        </set>
+        WHERE id = #{id}
+        AND user_id = #{userId}
+        AND delete_flag = 0
+    </update>
+
+    <select id="getLastAssistantMessageByChatId" resultMap="AIChatMessageResultMap">
+        SELECT
+            id,
+            chat_id,
+            user_id,
+            role,
+            content,
+            message_status,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM ai_chat_message
+        WHERE chat_id = #{chatId}
+          AND user_id = #{userId}
+          AND role = 'assistant'
+          AND delete_flag = 0
+        ORDER BY gmt_create DESC, id DESC
+            LIMIT 1
+    </select>
 </mapper>

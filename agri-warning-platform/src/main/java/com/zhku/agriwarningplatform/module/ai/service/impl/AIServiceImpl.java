@@ -16,16 +16,17 @@ import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIWarningSuggest
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO;
 import com.zhku.agriwarningplatform.module.ai.service.AIService;
 import com.zhku.agriwarningplatform.module.ai.service.dto.*;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
 import com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO;
 import com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,13 +35,15 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Service
@@ -49,6 +52,14 @@ public class AIServiceImpl implements AIService {
 
     private static final Long SSE_TIMEOUT = 300000L;
     private static final Integer HISTORY_LIMIT = 8;
+
+    private static final String ROLE_USER = "user";
+    private static final String ROLE_ASSISTANT = "assistant";
+
+    private static final String MESSAGE_STATUS_STREAMING = "STREAMING";
+    private static final String MESSAGE_STATUS_COMPLETED = "COMPLETED";
+    private static final String MESSAGE_STATUS_STOPPED = "STOPPED";
+    private static final String MESSAGE_STATUS_FAILED = "FAILED";
 
     private final AIMapper aiMapper;
     private final ChatClient chatClient;
@@ -75,13 +86,17 @@ public class AIServiceImpl implements AIService {
             String stopKey = buildStopKey(reqDTO.getUserId(), reqDTO.getChatId());
             stopFlagMap.put(stopKey, false);
 
+            Long assistantMessageId = null;
+            StringBuilder displayedContent = new StringBuilder();
+            AtomicBoolean finished = new AtomicBoolean(false);
+
             try {
                 saveUserMessage(reqDTO.getChatId(), reqDTO.getUserId(), reqDTO.getPrompt());
+                assistantMessageId = createAssistantStreamingMessage(reqDTO.getChatId(), reqDTO.getUserId());
 
                 List<AIChatMessageDO> recentMessages = getRecentMessages(reqDTO.getChatId(), reqDTO.getUserId(), HISTORY_LIMIT);
                 String historyContext = buildHistoryContext(recentMessages);
                 String pageContext = buildPageContext(reqDTO.getContextType(), reqDTO.getContextId());
-
                 String finalPrompt = buildAssistantFinalPrompt(historyContext, pageContext, reqDTO.getPrompt());
 
                 PromptTemplate promptTemplate = buildRagPromptTemplate();
@@ -93,35 +108,99 @@ public class AIServiceImpl implements AIService {
                         .stream()
                         .content();
 
-                StringBuilder answerBuilder = new StringBuilder();
+                Long finalAssistantMessageId = assistantMessageId;
 
                 Disposable disposable = flux.subscribe(
                         chunk -> {
                             if (Boolean.TRUE.equals(stopFlagMap.get(stopKey))) {
-                                throw new RuntimeException("AI输出已手动停止");
+                                return;
                             }
-                            if (chunk != null) {
-                                answerBuilder.append(chunk);
-                                sendSseChunk(emitter, chunk);
+                            if (!StringUtils.hasText(chunk)) {
+                                return;
                             }
+
+                            sendSseChunk(emitter, chunk);
+                            displayedContent.append(chunk);
                         },
                         error -> {
-                            handleStreamError(emitter, reqDTO.getChatId(), error);
+                            try {
+                                if (finalAssistantMessageId != null && finished.compareAndSet(false, true)) {
+                                    String status = Boolean.TRUE.equals(stopFlagMap.get(stopKey))
+                                            ? MESSAGE_STATUS_STOPPED
+                                            : MESSAGE_STATUS_FAILED;
+                                    updateAssistantMessage(finalAssistantMessageId, reqDTO.getUserId(), displayedContent.toString(), status);
+                                }
+                            } catch (Exception ex) {
+                                log.error("更新悬浮AI消息失败, chatId={}", reqDTO.getChatId(), ex);
+                            } finally {
+                                handleStreamError(emitter, reqDTO.getChatId(), error);
+                                stopFlagMap.remove(stopKey);
+                            }
                         },
                         () -> {
-                            finishStreamAndSaveAnswer(emitter, reqDTO.getChatId(), reqDTO.getUserId(), answerBuilder.toString());
-                            stopFlagMap.remove(stopKey);
+                            try {
+                                if (finalAssistantMessageId != null && finished.compareAndSet(false, true)) {
+                                    String status = Boolean.TRUE.equals(stopFlagMap.get(stopKey))
+                                            ? MESSAGE_STATUS_STOPPED
+                                            : MESSAGE_STATUS_COMPLETED;
+                                    updateAssistantMessage(finalAssistantMessageId, reqDTO.getUserId(), displayedContent.toString(), status);
+                                }
+                                emitter.complete();
+                            } catch (Exception e) {
+                                log.error("保存悬浮AI回复异常, chatId={}", reqDTO.getChatId(), e);
+                                completeWithError(emitter, e);
+                            } finally {
+                                stopFlagMap.remove(stopKey);
+                            }
                         }
                 );
 
-                emitter.onCompletion(disposable::dispose);
+                Long finalAssistantMessageId1 = assistantMessageId;
+                emitter.onCompletion(() -> {
+                    try {
+                        disposable.dispose();
+                        if (finalAssistantMessageId1 != null && finished.compareAndSet(false, true)) {
+                            String status = Boolean.TRUE.equals(stopFlagMap.get(stopKey))
+                                    ? MESSAGE_STATUS_STOPPED
+                                    : MESSAGE_STATUS_FAILED;
+                            updateAssistantMessage(finalAssistantMessageId1, reqDTO.getUserId(), displayedContent.toString(), status);
+                        }
+                    } catch (Exception e) {
+                        log.error("SSE连接断开后兜底更新悬浮AI消息失败, chatId={}", reqDTO.getChatId(), e);
+                    } finally {
+                        stopFlagMap.remove(stopKey);
+                    }
+                });
+
                 emitter.onTimeout(() -> {
-                    disposable.dispose();
-                    stopFlagMap.remove(stopKey);
+                    try {
+                        disposable.dispose();
+                        if (finalAssistantMessageId1 != null && finished.compareAndSet(false, true)) {
+                            updateAssistantMessage(finalAssistantMessageId1, reqDTO.getUserId(), displayedContent.toString(), MESSAGE_STATUS_FAILED);
+                        }
+                    } catch (Exception e) {
+                        log.error("悬浮AI SSE超时后更新消息失败, chatId={}", reqDTO.getChatId(), e);
+                    } finally {
+                        stopFlagMap.remove(stopKey);
+                        try {
+                            emitter.complete();
+                        } catch (Exception ex) {
+                            log.error("悬浮AI SSE超时后关闭连接失败, chatId={}", reqDTO.getChatId(), ex);
+                        }
+                    }
                 });
 
             } catch (Exception e) {
                 log.error("悬浮AI对话异常, chatId={}", reqDTO.getChatId(), e);
+
+                if (assistantMessageId != null && finished.compareAndSet(false, true)) {
+                    try {
+                        updateAssistantMessage(assistantMessageId, reqDTO.getUserId(), displayedContent.toString(), MESSAGE_STATUS_FAILED);
+                    } catch (Exception ex) {
+                        log.error("异常场景更新悬浮AI消息失败, chatId={}", reqDTO.getChatId(), ex);
+                    }
+                }
+
                 stopFlagMap.remove(stopKey);
                 completeWithError(emitter, e);
             }
@@ -156,10 +235,15 @@ public class AIServiceImpl implements AIService {
             String stopKey = buildStopKey(reqDTO.getUserId(), reqDTO.getChatId());
             stopFlagMap.put(stopKey, false);
 
+            Long assistantMessageId = null;
+            StringBuilder displayedContent = new StringBuilder();
+            AtomicBoolean finished = new AtomicBoolean(false);
+
             try {
                 ensureChatSessionExists(reqDTO.getChatId(), reqDTO.getUserId(), reqDTO.getPrompt());
 
                 saveUserMessage(reqDTO.getChatId(), reqDTO.getUserId(), reqDTO.getPrompt());
+                assistantMessageId = createAssistantStreamingMessage(reqDTO.getChatId(), reqDTO.getUserId());
 
                 List<AIChatMessageDO> recentMessages = getRecentMessages(reqDTO.getChatId(), reqDTO.getUserId(), HISTORY_LIMIT);
                 String historyContext = buildHistoryContext(recentMessages);
@@ -174,35 +258,99 @@ public class AIServiceImpl implements AIService {
                         .stream()
                         .content();
 
-                StringBuilder answerBuilder = new StringBuilder();
+                Long finalAssistantMessageId = assistantMessageId;
 
                 Disposable disposable = flux.subscribe(
                         chunk -> {
                             if (Boolean.TRUE.equals(stopFlagMap.get(stopKey))) {
-                                throw new RuntimeException("AI输出已手动停止");
+                                return;
                             }
-                            if (chunk != null) {
-                                answerBuilder.append(chunk);
-                                sendSseChunk(emitter, chunk);
+                            if (!StringUtils.hasText(chunk)) {
+                                return;
                             }
+
+                            sendSseChunk(emitter, chunk);
+                            displayedContent.append(chunk);
                         },
                         error -> {
-                            handleStreamError(emitter, reqDTO.getChatId(), error);
+                            try {
+                                if (finalAssistantMessageId != null && finished.compareAndSet(false, true)) {
+                                    String status = Boolean.TRUE.equals(stopFlagMap.get(stopKey))
+                                            ? MESSAGE_STATUS_STOPPED
+                                            : MESSAGE_STATUS_FAILED;
+                                    updateAssistantMessage(finalAssistantMessageId, reqDTO.getUserId(), displayedContent.toString(), status);
+                                }
+                            } catch (Exception ex) {
+                                log.error("更新AI消息失败, chatId={}", reqDTO.getChatId(), ex);
+                            } finally {
+                                handleStreamError(emitter, reqDTO.getChatId(), error);
+                                stopFlagMap.remove(stopKey);
+                            }
                         },
                         () -> {
-                            finishStreamAndSaveAnswer(emitter, reqDTO.getChatId(), reqDTO.getUserId(), answerBuilder.toString());
-                            stopFlagMap.remove(stopKey);
+                            try {
+                                if (finalAssistantMessageId != null && finished.compareAndSet(false, true)) {
+                                    String status = Boolean.TRUE.equals(stopFlagMap.get(stopKey))
+                                            ? MESSAGE_STATUS_STOPPED
+                                            : MESSAGE_STATUS_COMPLETED;
+                                    updateAssistantMessage(finalAssistantMessageId, reqDTO.getUserId(), displayedContent.toString(), status);
+                                }
+                                emitter.complete();
+                            } catch (Exception e) {
+                                log.error("保存AI回复异常, chatId={}", reqDTO.getChatId(), e);
+                                completeWithError(emitter, e);
+                            } finally {
+                                stopFlagMap.remove(stopKey);
+                            }
                         }
                 );
 
-                emitter.onCompletion(disposable::dispose);
+                Long finalAssistantMessageId1 = assistantMessageId;
+                emitter.onCompletion(() -> {
+                    try {
+                        disposable.dispose();
+                        if (finalAssistantMessageId1 != null && finished.compareAndSet(false, true)) {
+                            String status = Boolean.TRUE.equals(stopFlagMap.get(stopKey))
+                                    ? MESSAGE_STATUS_STOPPED
+                                    : MESSAGE_STATUS_FAILED;
+                            updateAssistantMessage(finalAssistantMessageId1, reqDTO.getUserId(), displayedContent.toString(), status);
+                        }
+                    } catch (Exception e) {
+                        log.error("SSE连接断开后兜底更新AI消息失败, chatId={}", reqDTO.getChatId(), e);
+                    } finally {
+                        stopFlagMap.remove(stopKey);
+                    }
+                });
+
                 emitter.onTimeout(() -> {
-                    disposable.dispose();
-                    stopFlagMap.remove(stopKey);
+                    try {
+                        disposable.dispose();
+                        if (finalAssistantMessageId1 != null && finished.compareAndSet(false, true)) {
+                            updateAssistantMessage(finalAssistantMessageId1, reqDTO.getUserId(), displayedContent.toString(), MESSAGE_STATUS_FAILED);
+                        }
+                    } catch (Exception e) {
+                        log.error("SSE超时后更新AI消息失败, chatId={}", reqDTO.getChatId(), e);
+                    } finally {
+                        stopFlagMap.remove(stopKey);
+                        try {
+                            emitter.complete();
+                        } catch (Exception ex) {
+                            log.error("SSE超时后关闭连接失败, chatId={}", reqDTO.getChatId(), ex);
+                        }
+                    }
                 });
 
             } catch (Exception e) {
                 log.error("独立AI对话异常, chatId={}", reqDTO.getChatId(), e);
+
+                if (assistantMessageId != null && finished.compareAndSet(false, true)) {
+                    try {
+                        updateAssistantMessage(assistantMessageId, reqDTO.getUserId(), displayedContent.toString(), MESSAGE_STATUS_FAILED);
+                    } catch (Exception ex) {
+                        log.error("异常场景更新AI消息失败, chatId={}", reqDTO.getChatId(), ex);
+                    }
+                }
+
                 stopFlagMap.remove(stopKey);
                 completeWithError(emitter, e);
             }
@@ -210,7 +358,6 @@ public class AIServiceImpl implements AIService {
 
         return emitter;
     }
-
     @Override
     public List<AIChatSessionItemDTO> getChatSessionList(Long userId) {
         try {
@@ -328,9 +475,25 @@ public class AIServiceImpl implements AIService {
         if (!StringUtils.hasText(reqDTO.getChatId())) {
             throw new ServiceException(AIErrorCode.CHAT_ID_EMPTY);
         }
+
         String stopKey = buildStopKey(reqDTO.getUserId(), reqDTO.getChatId());
         stopFlagMap.put(stopKey, true);
-        return true;
+
+        try {
+            AIChatMessageDO lastAssistantMessage = aiMapper.getLastAssistantMessageByChatId(reqDTO.getChatId(), reqDTO.getUserId());
+            if (lastAssistantMessage != null && MESSAGE_STATUS_STREAMING.equals(lastAssistantMessage.getMessageStatus())) {
+                aiMapper.updateChatMessageContentAndStatusById(
+                        lastAssistantMessage.getId(),
+                        reqDTO.getUserId(),
+                        lastAssistantMessage.getContent(),
+                        MESSAGE_STATUS_STOPPED
+                );
+            }
+            return true;
+        } catch (Exception e) {
+            log.error("停止AI输出异常, chatId={}", reqDTO.getChatId(), e);
+            throw new ServiceException(AIErrorCode.CHAT_STREAM_STOP_FAILED);
+        }
     }
 
     @Override
@@ -363,7 +526,7 @@ public class AIServiceImpl implements AIService {
                 Disposable disposable = flux.subscribe(
                         chunk -> {
                             if (Boolean.TRUE.equals(stopFlagMap.get(stopKey))) {
-                                throw new RuntimeException("AI输出已手动停止");
+                                return;
                             }
                             if (chunk != null) {
                                 answerBuilder.append(chunk);
@@ -372,6 +535,7 @@ public class AIServiceImpl implements AIService {
                         },
                         error -> {
                             handleStreamError(emitter, "warning_suggestion_" + reqDTO.getWarningId(), error);
+                            stopFlagMap.remove(stopKey);
                         },
                         () -> {
                             try {
@@ -382,7 +546,11 @@ public class AIServiceImpl implements AIService {
                         }
                 );
 
-                emitter.onCompletion(disposable::dispose);
+                emitter.onCompletion(() -> {
+                    disposable.dispose();
+                    stopFlagMap.remove(stopKey);
+                });
+
                 emitter.onTimeout(() -> {
                     disposable.dispose();
                     stopFlagMap.remove(stopKey);
@@ -531,23 +699,32 @@ public class AIServiceImpl implements AIService {
         }
     }
 
-    private void saveUserMessage(String chatId, Long userId, String prompt) {
-        saveMessage(chatId, userId, "user", prompt);
-    }
-
-    private void saveAssistantMessage(String chatId, Long userId, String content) {
-        saveMessage(chatId, userId, "assistant", content);
-    }
-
-    private void saveMessage(String chatId, Long userId, String role, String content) {
+    private Long saveMessage(String chatId, Long userId, String role, String content, String messageStatus) {
         AIChatMessageDO messageDO = new AIChatMessageDO();
         messageDO.setChatId(chatId);
         messageDO.setUserId(userId);
         messageDO.setRole(role);
         messageDO.setContent(content);
+        messageDO.setMessageStatus(messageStatus);
         messageDO.setDeleteFlag(0);
 
         int rows = aiMapper.insertChatMessage(messageDO);
+        if (rows != 1) {
+            throw new ServiceException(AIErrorCode.CHAT_MESSAGE_SAVE_FAILED);
+        }
+        return messageDO.getId();
+    }
+
+    private Long saveUserMessage(String chatId, Long userId, String prompt) {
+        return saveMessage(chatId, userId, ROLE_USER, prompt, MESSAGE_STATUS_COMPLETED);
+    }
+
+    private Long createAssistantStreamingMessage(String chatId, Long userId) {
+        return saveMessage(chatId, userId, ROLE_ASSISTANT, "", MESSAGE_STATUS_STREAMING);
+    }
+
+    private void updateAssistantMessage(Long messageId, Long userId, String content, String status) {
+        int rows = aiMapper.updateChatMessageContentAndStatusById(messageId, userId, content, status);
         if (rows != 1) {
             throw new ServiceException(AIErrorCode.CHAT_MESSAGE_SAVE_FAILED);
         }
@@ -570,9 +747,9 @@ public class AIServiceImpl implements AIService {
         StringBuilder sb = new StringBuilder();
         sb.append("历史对话：\n");
         for (AIChatMessageDO messageDO : messageDOList) {
-            if ("user".equals(messageDO.getRole())) {
+            if (ROLE_USER.equals(messageDO.getRole())) {
                 sb.append("用户：").append(getNullableString(messageDO.getContent())).append("\n");
-            } else if ("assistant".equals(messageDO.getRole())) {
+            } else if (ROLE_ASSISTANT.equals(messageDO.getRole())) {
                 sb.append("助手：").append(getNullableString(messageDO.getContent())).append("\n");
             }
         }
@@ -753,18 +930,6 @@ public class AIServiceImpl implements AIService {
                         .topK(4)
                         .build())
                 .build();
-    }
-
-    private void finishStreamAndSaveAnswer(SseEmitter emitter, String chatId, Long userId, String answer) {
-        try {
-            if (StringUtils.hasText(answer)) {
-                saveAssistantMessage(chatId, userId, answer);
-            }
-            emitter.complete();
-        } catch (Exception e) {
-            log.error("保存AI回复异常, chatId={}", chatId, e);
-            completeWithError(emitter, e);
-        }
     }
 
     private void sendSseChunk(SseEmitter emitter, String chunk) {

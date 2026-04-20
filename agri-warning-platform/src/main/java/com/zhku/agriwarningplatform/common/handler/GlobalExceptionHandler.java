@@ -7,16 +7,20 @@ import com.zhku.agriwarningplatform.common.result.CommonResult;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -188,5 +192,130 @@ public class GlobalExceptionHandler {
                 GlobalErrorCode.BAD_REQUEST.getCode(),
                 message
         );
+    }
+
+    /**
+     * 处理数据库字段约束异常，例如 字段为空,字段截断
+     *
+     * @param e 异常
+     * @return 响应结果
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseBody
+    public CommonResult<Void> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        log.error("数据库字段约束异常", e);
+
+        String message = extractDataIntegrityViolationMessage(e);
+        return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);
+    }
+
+    /**
+     * 解析异常信息
+     * @param e
+     * @return
+     */
+    private String extractDataIntegrityViolationMessage(DataIntegrityViolationException e) {
+        Throwable rootCause = getRootCause(e);
+        String errorMessage = rootCause != null ? rootCause.getMessage() : e.getMessage();
+
+        if (errorMessage == null || errorMessage.isEmpty()) {
+            return "参数不合法";
+        }
+
+        if (errorMessage.contains("Data too long for column")) {
+            String columnName = extractColumnName(errorMessage);
+            if (columnName != null) {
+                return convertColumnNameToFieldMessage(columnName);
+            }
+            return "字段长度超出限制";
+        }
+
+        if (errorMessage.contains("Duplicate entry")) {
+            return "数据冲突，请勿重复提交";
+        }
+
+        if (errorMessage.contains("cannot be null")) {
+            String columnName = extractColumnNameForNotNull(errorMessage);
+            if (columnName != null) {
+                return convertColumnNameToNotNullMessage(columnName);
+            }
+            return "必填字段不能为空";
+        }
+
+        return "参数不合法";
+    }
+
+    /**
+     * 根异常提取
+     * @param throwable
+     * @return
+     */
+    private Throwable getRootCause(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+        return cause;
+    }
+
+    /**
+     * 提取字段名
+     * @param errorMessage
+     * @return
+     */
+    private String extractColumnName(String errorMessage) {
+        Pattern pattern = Pattern.compile("Data too long for column '([^']+)'");
+        Matcher matcher = pattern.matcher(errorMessage);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    /**
+     * 解析非空约束
+     * @param errorMessage
+     * @return
+     */
+    private String extractColumnNameForNotNull(String errorMessage) {
+        Pattern pattern = Pattern.compile("Column '([^']+)' cannot be null");
+        Matcher matcher = pattern.matcher(errorMessage);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    /**
+     * 字段映射
+     * @param columnName
+     * @return
+     */
+    private String convertColumnNameToFieldMessage(String columnName) {
+        if ("chat_id".equals(columnName)) {
+            return "chatId长度不能超过64";
+        }
+        if ("title".equals(columnName)) {
+            return "标题长度超出限制";
+        }
+        if ("context_type".equals(columnName)) {
+            return "contextType长度超出限制";
+        }
+        return columnName + "字段长度超出限制";
+    }
+
+    /**
+     * 处理非空约束
+     * @param columnName
+     * @return
+     */
+    private String convertColumnNameToNotNullMessage(String columnName) {
+        if ("chat_id".equals(columnName)) {
+            return "chatId不能为空";
+        }
+        if ("user_id".equals(columnName)) {
+            return "userId不能为空";
+        }
+        return columnName + "不能为空";
     }
 }

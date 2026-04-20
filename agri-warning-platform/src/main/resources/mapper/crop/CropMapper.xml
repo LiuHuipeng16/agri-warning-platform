@@ -52,4 +52,19 @@
         WHERE id = #{id}
           AND delete_flag = 0
     </select>
+    <select id="selectByIdDO" resultType="com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO">
+        SELECT
+            id,
+            name,
+            category,
+            intro,
+            description,
+            image_url,
+            delete_flag,
+            gmt_create,
+            gmt_modified
+        FROM agri_pest_platform.crop
+        WHERE id = #{id}
+          AND delete_flag = 0
+    </select>
 </mapper>

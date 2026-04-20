@@ -1,6 +1,7 @@
 package com.zhku.agriwarningplatform.module.crop.mapper;
 
 import com.zhku.agriwarningplatform.common.result.CommonResult;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
@@ -31,4 +32,8 @@ public interface CropMapper {
 
     @Update("update crop set delete_flag = 1 where id = #{id}")
     int updateDeleteFlag(Long id);
+
+    @Select("select * from crop where id = #{id} and delete_flag=0")
+    CropDO selectByIdDO(Long id);
+
 }

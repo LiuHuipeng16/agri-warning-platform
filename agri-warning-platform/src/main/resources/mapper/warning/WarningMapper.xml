@@ -262,23 +262,19 @@
                  )
     </insert>
 
-    <!-- ==================== 定时任务刷新时清理旧预警 ==================== -->
+    <!-- ==================== 定时任务刷新时清理旧预警（物理删除） ==================== -->
 
-    <update id="deleteTodayWarningsByDate">
-        UPDATE warning
-        SET delete_flag = 1
-        WHERE delete_flag = 0
-          AND warning_type = 'TODAY'
+    <delete id="deleteTodayWarningsByDate">
+        DELETE FROM warning
+        WHERE warning_type = 'TODAY'
           AND warning_date = #{warningDate}
-    </update>
+    </delete>
 
-    <update id="deleteForecastWarningsByDateRange">
-        UPDATE warning
-        SET delete_flag = 1
-        WHERE delete_flag = 0
-          AND warning_type = 'FORECAST'
+    <delete id="deleteForecastWarningsByDateRange">
+        DELETE FROM warning
+        WHERE warning_type = 'FORECAST'
           AND warning_date <![CDATA[>=]]> #{startDate}
           AND warning_date <![CDATA[<=]]> #{endDate}
-    </update>
+    </delete>
 
 </mapper>

@@ -36,8 +36,19 @@ public class LoginInterceptor implements HandlerInterceptor {
             log.info("进入注册功能，放行");
             return true;
         }
-        String token = request.getHeader("token");
-        if (token == null || token ==""){
+        String authorization = request.getHeader("Authorization");
+        if (authorization == null || authorization.isBlank() || !authorization.startsWith("Bearer ")) {
+            log.warn("未登录，请登录");
+            response.setStatus(401);
+            response.setContentType("application/json;charset=UTF-8");
+            String json = "{\n\"code\":401,\n\"msg\":\"未登录\",\n\"data\":null\n}";
+            response.getWriter().write(json);
+            response.getWriter().flush();
+            response.getWriter().close();
+            return false;
+        }
+        String token = authorization.substring(7);
+        if (token == null || token.isBlank()){
             log.warn("未登录，请登录");
             response.setStatus(401);
             response.setContentType("application/json;charset=UTF-8");

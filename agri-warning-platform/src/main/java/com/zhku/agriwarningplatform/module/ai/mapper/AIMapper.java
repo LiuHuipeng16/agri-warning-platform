@@ -11,6 +11,8 @@ import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIChatMessageDO;
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIChatSessionDO;
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIWarningSuggestionContextDO;
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
+import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
 import com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO;
 import com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO;
 import org.apache.ibatis.annotations.Mapper;
@@ -126,4 +128,18 @@ public interface AIMapper {
      * 查询预警AI建议上下文
      */
     AIWarningSuggestionContextDO getWarningSuggestionContextByWarningId(@Param("warningId") Long warningId);
+
+    /**
+     * 根据消息ID更新消息内容和状态
+     */
+    int updateChatMessageContentAndStatusById(@Param("id") Long id,
+                                              @Param("userId") Long userId,
+                                              @Param("content") String content,
+                                              @Param("messageStatus") String messageStatus);
+
+    /**
+     * 查询当前会话最后一条assistant消息
+     */
+    AIChatMessageDO getLastAssistantMessageByChatId(@Param("chatId") String chatId,
+                                                    @Param("userId") Long userId);
 }

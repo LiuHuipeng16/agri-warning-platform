@@ -1,12 +1,5 @@
 package com.zhku.agriwarningplatform.module.ai.mapper.dataobject;
 
-/**
- * Created with IntelliJ IDEA.
- * Description:
- * User: 12290
- * Date: 2026-04-18
- * Time: 22:22
- */
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,6 +31,11 @@ public class AIChatMessageDO {
      * 消息内容
      */
     private String content;
+
+    /**
+     * 消息状态：STREAMING / COMPLETED / STOPPED / FAILED
+     */
+    private String messageStatus;
 
     /**
      * 删除标记：0未删除，1已删除

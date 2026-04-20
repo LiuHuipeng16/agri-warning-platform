@@ -10,6 +10,9 @@ package com.zhku.agriwarningplatform.module.prewarningrule.service.impl;
 
 import com.zhku.agriwarningplatform.common.errorcode.PreWarningRuleErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ServiceException;
+import com.zhku.agriwarningplatform.module.crop.mapper.CropMapper;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
+import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
 import com.zhku.agriwarningplatform.module.pest.mapper.PestMapper;
 import com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO;
 import com.zhku.agriwarningplatform.module.prewarningrule.controller.param.PreWarningRuleChangeStatusParam;
@@ -230,7 +233,7 @@ public class PreWarningRuleServiceImpl implements PreWarningRuleService {
     }
 
     private void checkCropExists(Long cropId) {
-        CropDO cropDO = cropMapper.selectById(cropId);
+        CropDO cropDO = cropMapper.selectByIdDO(cropId);
         if (cropDO == null) {
             throw new ServiceException(PreWarningRuleErrorCode.CROP_NOT_EXIST);
         }

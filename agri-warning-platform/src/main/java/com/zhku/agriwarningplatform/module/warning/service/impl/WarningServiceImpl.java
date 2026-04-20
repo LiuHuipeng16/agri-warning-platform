@@ -16,6 +16,9 @@ import com.zhku.agriwarningplatform.common.errorcode.ErrorCode;
 import com.zhku.agriwarningplatform.common.errorcode.WarningErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ServiceException;
 import com.zhku.agriwarningplatform.common.result.PageResult;
+import com.zhku.agriwarningplatform.module.crop.mapper.CropMapper;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
+import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
 import com.zhku.agriwarningplatform.module.pest.mapper.PestMapper;
 import com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO;
 import com.zhku.agriwarningplatform.module.prewarningrule.mapper.PreWarningRuleMapper;
@@ -244,6 +247,8 @@ public class WarningServiceImpl implements WarningService {
             int skippedCount = 0;
 
             for (PreWarningRuleDO ruleDO : enabledRules) {
+                validateRuleRelation(ruleDO);
+
                 boolean matched = isRuleMatched(ruleDO, dailySummary);
                 if (!matched) {
                     skippedCount++;
@@ -272,6 +277,7 @@ public class WarningServiceImpl implements WarningService {
             warningGenerateLockSupport.unlock();
         }
     }
+
     /**
      * 手动触发多天预警生成
      * 要求：
@@ -316,6 +322,8 @@ public class WarningServiceImpl implements WarningService {
                 }
 
                 for (PreWarningRuleDO ruleDO : enabledRules) {
+                    validateRuleRelation(ruleDO);
+
                     boolean matched = isRuleMatched(ruleDO, dailySummary);
                     if (!matched) {
                         skippedCount++;
@@ -345,6 +353,7 @@ public class WarningServiceImpl implements WarningService {
             warningGenerateLockSupport.unlock();
         }
     }
+
     /**
      * 定时任务刷新当天预警
      * 要求：
@@ -356,15 +365,18 @@ public class WarningServiceImpl implements WarningService {
     public WarningGenerateTodayResultDTO refreshTodayWarningsForTask() {
         LocalDate today = LocalDate.now();
 
-        warningMapper.deleteTodayWarningsByDate(today);
-
+        // 1. 先查天气，成功后再删旧数据
         WeatherDailySummary dailySummary = getWeatherDailySummaryMap(today, today).get(today);
         if (Objects.isNull(dailySummary)) {
             throw new ServiceException(WarningErrorCode.WEATHER_QUERY_FAILED);
         }
 
+        // 2. 查启用规则
         List<PreWarningRuleDO> enabledRules = getEnabledRules();
         if (CollectionUtils.isEmpty(enabledRules)) {
+            // 没有规则时，直接清空当天旧 TODAY 预警
+            warningMapper.deleteTodayWarningsByDate(today);
+
             WarningGenerateTodayResultDTO resultDTO = new WarningGenerateTodayResultDTO();
             resultDTO.setGeneratedCount(0);
             resultDTO.setSkippedCount(0);
@@ -372,27 +384,52 @@ public class WarningServiceImpl implements WarningService {
             return resultDTO;
         }
 
-        int generatedCount = 0;
+        // 3. 先在内存中构造要生成的新预警
+        List<WarningDO> matchedWarnings = new ArrayList<>();
         int skippedCount = 0;
 
         for (PreWarningRuleDO ruleDO : enabledRules) {
             try {
-                boolean matched = isRuleMatched(ruleDO, dailySummary);
+                validateRuleRelation(ruleDO);
 
+                boolean matched = isRuleMatched(ruleDO, dailySummary);
                 if (!matched) {
                     skippedCount++;
                     continue;
                 }
 
-                boolean generated = tryGenerateWarning(ruleDO, dailySummary, "TODAY");
-                if (generated) {
-                    generatedCount++;
-                } else {
-                    skippedCount++;
-                }
+                WarningDO warningDO = buildWarningDO(ruleDO, dailySummary, "TODAY");
+                matchedWarnings.add(warningDO);
             } catch (ServiceException e) {
-                log.error("定时当天预警生成跳过异常规则，ruleId={}, ruleName={}, reason={}",
+                log.warn("定时当天预警生成跳过异常规则，ruleId={}, ruleName={}, reason={}",
                         ruleDO.getId(), ruleDO.getRuleName(), e.getMessage());
+                skippedCount++;
+            } catch (Exception e) {
+                log.warn("定时当天预警生成跳过异常规则，ruleId={}, ruleName={}",
+                        ruleDO.getId(), ruleDO.getRuleName(), e);
+                skippedCount++;
+            }
+        }
+
+        // 4. 物理删除当天旧 TODAY 预警
+        int deleteRows = warningMapper.deleteTodayWarningsByDate(today);
+        log.info("定时刷新当天预警：已物理删除旧TODAY预警，warningDate={}, deleteRows={}", today, deleteRows);
+
+        // 5. 插入新预警
+        int generatedCount = 0;
+        for (WarningDO warningDO : matchedWarnings) {
+            try {
+                int rows = warningMapper.insertWarning(warningDO);
+                if (rows == 1 && Objects.nonNull(warningDO.getId())) {
+                    generatedCount++;
+                }
+            } catch (DuplicateKeyException e) {
+                log.warn("定时刷新当天预警插入冲突，cropId={}, pestId={}, ruleId={}, warningType={}, warningDate={}",
+                        warningDO.getCropId(),
+                        warningDO.getPestId(),
+                        warningDO.getRuleId(),
+                        warningDO.getWarningType(),
+                        warningDO.getWarningDate(), e);
                 skippedCount++;
             }
         }
@@ -420,12 +457,15 @@ public class WarningServiceImpl implements WarningService {
         LocalDate startDate = LocalDate.now().plusDays(1);
         LocalDate endDate = LocalDate.now().plusDays(days);
 
-        warningMapper.deleteForecastWarningsByDateRange(startDate, endDate);
-
+        // 1. 先查天气，成功后再删旧数据
         Map<LocalDate, WeatherDailySummary> weatherMap = getWeatherDailySummaryMap(startDate, endDate);
-        List<PreWarningRuleDO> enabledRules = getEnabledRules();
 
+        // 2. 查启用规则
+        List<PreWarningRuleDO> enabledRules = getEnabledRules();
         if (CollectionUtils.isEmpty(enabledRules)) {
+            // 没有规则时，直接清空范围内旧 FORECAST 预警
+            warningMapper.deleteForecastWarningsByDateRange(startDate, endDate);
+
             WarningGenerateForecastResultDTO resultDTO = new WarningGenerateForecastResultDTO();
             resultDTO.setGeneratedCount(0);
             resultDTO.setSkippedCount(0);
@@ -433,7 +473,8 @@ public class WarningServiceImpl implements WarningService {
             return resultDTO;
         }
 
-        int generatedCount = 0;
+        // 3. 先在内存中构造要生成的新预警
+        List<WarningDO> matchedWarnings = new ArrayList<>();
         int skippedCount = 0;
 
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
@@ -444,24 +485,49 @@ public class WarningServiceImpl implements WarningService {
 
             for (PreWarningRuleDO ruleDO : enabledRules) {
                 try {
-                    boolean matched = isRuleMatched(ruleDO, dailySummary);
+                    validateRuleRelation(ruleDO);
 
+                    boolean matched = isRuleMatched(ruleDO, dailySummary);
                     if (!matched) {
                         skippedCount++;
                         continue;
                     }
 
-                    boolean generated = tryGenerateWarning(ruleDO, dailySummary, "FORECAST");
-                    if (generated) {
-                        generatedCount++;
-                    } else {
-                        skippedCount++;
-                    }
+                    WarningDO warningDO = buildWarningDO(ruleDO, dailySummary, "FORECAST");
+                    matchedWarnings.add(warningDO);
                 } catch (ServiceException e) {
-                    log.error("定时多天预警生成跳过异常规则，ruleId={}, ruleName={}, reason={}",
-                            ruleDO.getId(), ruleDO.getRuleName(), e.getMessage());
+                    log.warn("定时多天预警生成跳过异常规则，ruleId={}, ruleName={}, warningDate={}, reason={}",
+                            ruleDO.getId(), ruleDO.getRuleName(), date, e.getMessage());
+                    skippedCount++;
+                } catch (Exception e) {
+                    log.warn("定时多天预警生成跳过异常规则，ruleId={}, ruleName={}, warningDate={}",
+                            ruleDO.getId(), ruleDO.getRuleName(), date, e);
                     skippedCount++;
                 }
+            }
+        }
+
+        // 4. 物理删除旧 FORECAST 预警
+        int deleteRows = warningMapper.deleteForecastWarningsByDateRange(startDate, endDate);
+        log.info("定时刷新多天预警：已物理删除旧FORECAST预警，startDate={}, endDate={}, deleteRows={}",
+                startDate, endDate, deleteRows);
+
+        // 5. 插入新预警
+        int generatedCount = 0;
+        for (WarningDO warningDO : matchedWarnings) {
+            try {
+                int rows = warningMapper.insertWarning(warningDO);
+                if (rows == 1 && Objects.nonNull(warningDO.getId())) {
+                    generatedCount++;
+                }
+            } catch (DuplicateKeyException e) {
+                log.warn("定时刷新多天预警插入冲突，cropId={}, pestId={}, ruleId={}, warningType={}, warningDate={}",
+                        warningDO.getCropId(),
+                        warningDO.getPestId(),
+                        warningDO.getRuleId(),
+                        warningDO.getWarningType(),
+                        warningDO.getWarningDate(), e);
+                skippedCount++;
             }
         }
 
@@ -471,7 +537,6 @@ public class WarningServiceImpl implements WarningService {
         resultDTO.setDays(days);
         return resultDTO;
     }
-
     // ==================== private 方法：分页转换 ====================
 
     private WarningPageQueryDO buildWarningPageQueryDO(WarningPageQueryDTO queryDTO) {
@@ -588,12 +653,31 @@ public class WarningServiceImpl implements WarningService {
         }
     }
 
+    // ==================== private 方法：规则关联校验 ====================
+
+    private void validateRuleRelation(PreWarningRuleDO ruleDO) {
+        CropDO cropDO = cropMapper.selectByIdDO(ruleDO.getCropId());
+        if (Objects.isNull(cropDO) || !Objects.equals(cropDO.getDeleteFlag(), 0)) {
+            String msg = String.format("预警规则【%s】(ID=%d)关联的作物不存在，请先修正规则后再重新生成",
+                    ruleDO.getRuleName(), ruleDO.getId());
+            throw new ServiceException(new ErrorCode(404, "WARNING_025", msg));
+        }
+
+        PestDO pestDO = pestMapper.selectById(ruleDO.getPestId());
+        if (Objects.isNull(pestDO) || !Objects.equals(pestDO.getDeleteFlag(), 0)) {
+            String msg = String.format("预警规则【%s】(ID=%d)关联的病虫害不存在，请先修正规则后再重新生成",
+                    ruleDO.getRuleName(), ruleDO.getId());
+            throw new ServiceException(new ErrorCode(404, "WARNING_026", msg));
+        }
+    }
+
     // ==================== private 方法：天气查询与汇总 ====================
 
     private Map<LocalDate, WeatherDailySummary> getWeatherDailySummaryMap(LocalDate startDate, LocalDate endDate) {
-        try {
-            String url = buildOpenMeteoUrl(startDate, endDate);
+        long startMillis = System.currentTimeMillis();
+        String url = buildOpenMeteoUrl(startDate, endDate);
 
+        try {
             HttpRequest request = HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(url))
@@ -601,6 +685,11 @@ public class WarningServiceImpl implements WarningService {
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            long costMillis = System.currentTimeMillis() - startMillis;
+            log.info("调用Open-Meteo天气接口成功，startDate={}, endDate={}, statusCode={}, costMs={}",
+                    startDate, endDate, response.statusCode(), costMillis);
+
             OpenMeteoForecastResponse responseObj =
                     objectMapper.readValue(response.body(), OpenMeteoForecastResponse.class);
 
@@ -612,10 +701,13 @@ public class WarningServiceImpl implements WarningService {
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            log.error("调用Open-Meteo天气接口异常，startDate={}, endDate={}", startDate, endDate, e);
+            long costMillis = System.currentTimeMillis() - startMillis;
+            log.error("调用Open-Meteo天气接口异常，startDate={}, endDate={}, costMs={}, url={}",
+                    startDate, endDate, costMillis, url, e);
             throw new ServiceException(WarningErrorCode.WEATHER_QUERY_FAILED);
         }
     }
+
 
     private String buildOpenMeteoUrl(LocalDate startDate, LocalDate endDate) {
         return OPEN_METEO_FORECAST_URL
@@ -768,6 +860,25 @@ public class WarningServiceImpl implements WarningService {
         return true;
     }
 
+
+    private WarningDO buildWarningDO(PreWarningRuleDO ruleDO,
+                                     WeatherDailySummary dailySummary,
+                                     String warningType) {
+        CropDO cropDO = cropMapper.selectByIdDO(ruleDO.getCropId());
+        PestDO pestDO = pestMapper.selectById(ruleDO.getPestId());
+
+        WarningDO warningDO = new WarningDO();
+        warningDO.setTitle(buildWarningTitle(cropDO.getName(), pestDO.getName(), ruleDO.getRiskLevel()));
+        warningDO.setCropId(ruleDO.getCropId());
+        warningDO.setPestId(ruleDO.getPestId());
+        warningDO.setRiskLevel(ruleDO.getRiskLevel());
+        warningDO.setWarningType(warningType);
+        warningDO.setWarningDate(dailySummary.getDate());
+        warningDO.setRuleId(ruleDO.getId());
+        warningDO.setDeleteFlag(0);
+        return warningDO;
+    }
+
     private boolean tryGenerateWarning(PreWarningRuleDO ruleDO,
                                        WeatherDailySummary dailySummary,
                                        String warningType) {
@@ -782,19 +893,8 @@ public class WarningServiceImpl implements WarningService {
             return false;
         }
 
-        CropDO cropDO = cropMapper.selectById(ruleDO.getCropId());
-        if (Objects.isNull(cropDO) || !Objects.equals(cropDO.getDeleteFlag(), 0)) {
-            String msg = String.format("预警规则【%s】(ID=%d)关联的作物不存在，请先修正规则后再重新生成",
-                    ruleDO.getRuleName(), ruleDO.getId());
-            throw new ServiceException(new ErrorCode(404, "WARNING_025", msg));
-        }
-
+        CropDO cropDO = cropMapper.selectByIdDO(ruleDO.getCropId());
         PestDO pestDO = pestMapper.selectById(ruleDO.getPestId());
-        if (Objects.isNull(pestDO) || !Objects.equals(pestDO.getDeleteFlag(), 0)) {
-            String msg = String.format("预警规则【%s】(ID=%d)关联的病虫害不存在，请先修正规则后再重新生成",
-                    ruleDO.getRuleName(), ruleDO.getId());
-            throw new ServiceException(new ErrorCode(404, "WARNING_026", msg));
-        }
 
         WarningDO warningDO = new WarningDO();
         warningDO.setTitle(buildWarningTitle(cropDO.getName(), pestDO.getName(), ruleDO.getRiskLevel()));

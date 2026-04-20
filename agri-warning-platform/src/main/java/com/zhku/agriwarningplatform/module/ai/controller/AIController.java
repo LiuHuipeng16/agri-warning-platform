@@ -4,31 +4,39 @@ import com.zhku.agriwarningplatform.common.errorcode.AIErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.util.JacksonUtils;
-import com.zhku.agriwarningplatform.module.ai.controller.param.*;
+import com.zhku.agriwarningplatform.common.util.JwtUtils;
+import com.zhku.agriwarningplatform.module.ai.controller.param.AIAssistantChatStreamParam;
+import com.zhku.agriwarningplatform.module.ai.controller.param.AIAssistantHistoryParam;
+import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatCreateParam;
+import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatStopParam;
+import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatStreamParam;
+import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatUpdateTitleParam;
 import com.zhku.agriwarningplatform.module.ai.controller.vo.AIChatMessageVO;
 import com.zhku.agriwarningplatform.module.ai.controller.vo.AIChatSessionItemVO;
 import com.zhku.agriwarningplatform.module.ai.service.AIService;
-import com.zhku.agriwarningplatform.module.ai.service.dto.*;
-import jdk.jfr.Registered;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
-
-/**
- * Created with IntelliJ IDEA.
- * Description:
- * User: 12290
- * Date: 2026-04-09
- * Time: 3:28
- */
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIAssistantChatReqDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatCreateReqDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatHistoryQueryDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatMessageDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatSessionItemDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatStopReqDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatStreamReqDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatUpdateTitleReqDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIWarningSuggestionReqDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.ArrayList;
@@ -49,19 +57,13 @@ public class AIController {
     public SseEmitter assistantChatStream(@Valid @RequestBody AIAssistantChatStreamParam param,
                                           HttpServletRequest request) {
         log.info("进入接口:AIController#assistantChatStream,param={}", JacksonUtils.writeValueAsString(param));
-        try {
-            validateAssistantChatStreamParam(param);
 
-            Long userId = getCurrentUserId(request);
+        validateAssistantChatStreamParam(param);
 
-            AIAssistantChatReqDTO reqDTO = convertToAIAssistantChatReqDTO(param, userId);
-            return aiService.assistantChatStream(reqDTO);
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("悬浮AI对话异常,param={}", JacksonUtils.writeValueAsString(param), e);
-            throw new ControllerException(AIErrorCode.AI_GENERATE_FAILED);
-        }
+        Long userId = getCurrentUserId(request);
+        AIAssistantChatReqDTO reqDTO = convertToAIAssistantChatReqDTO(param, userId);
+
+        return aiService.assistantChatStream(reqDTO);
     }
 
     /**
@@ -71,23 +73,17 @@ public class AIController {
     public CommonResult<List<AIChatMessageVO>> getAssistantHistory(@Valid @ModelAttribute AIAssistantHistoryParam param,
                                                                    HttpServletRequest request) {
         log.info("进入接口:AIController#getAssistantHistory,param={}", JacksonUtils.writeValueAsString(param));
-        try {
-            validateAssistantHistoryParam(param);
 
-            Long userId = getCurrentUserId(request);
+        validateAssistantHistoryParam(param);
 
-            AIChatHistoryQueryDTO queryDTO = new AIChatHistoryQueryDTO();
-            queryDTO.setChatId(param.getChatId());
-            queryDTO.setUserId(userId);
+        Long userId = getCurrentUserId(request);
 
-            List<AIChatMessageDTO> dtoList = aiService.getAssistantHistory(queryDTO);
-            return CommonResult.success(convertToAIChatMessageVOList(dtoList));
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取悬浮AI历史异常,param={}", JacksonUtils.writeValueAsString(param), e);
-            throw new ControllerException(AIErrorCode.CHAT_MESSAGE_QUERY_FAILED);
-        }
+        AIChatHistoryQueryDTO queryDTO = new AIChatHistoryQueryDTO();
+        queryDTO.setChatId(param.getChatId());
+        queryDTO.setUserId(userId);
+
+        List<AIChatMessageDTO> dtoList = aiService.getAssistantHistory(queryDTO);
+        return CommonResult.success(convertToAIChatMessageVOList(dtoList));
     }
 
     /**
@@ -97,19 +93,13 @@ public class AIController {
     public SseEmitter chatStream(@Valid @RequestBody AIChatStreamParam param,
                                  HttpServletRequest request) {
         log.info("进入接口:AIController#chatStream,param={}", JacksonUtils.writeValueAsString(param));
-        try {
-            validateAIChatStreamParam(param);
 
-            Long userId = getCurrentUserId(request);
+        validateAIChatStreamParam(param);
 
-            AIChatStreamReqDTO reqDTO = convertToAIChatStreamReqDTO(param, userId);
-            return aiService.chatStream(reqDTO);
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("独立AI对话异常,param={}", JacksonUtils.writeValueAsString(param), e);
-            throw new ControllerException(AIErrorCode.AI_GENERATE_FAILED);
-        }
+        Long userId = getCurrentUserId(request);
+        AIChatStreamReqDTO reqDTO = convertToAIChatStreamReqDTO(param, userId);
+
+        return aiService.chatStream(reqDTO);
     }
 
     /**
@@ -118,45 +108,42 @@ public class AIController {
     @GetMapping("/chat/list")
     public CommonResult<List<AIChatSessionItemVO>> getChatSessionList(HttpServletRequest request) {
         log.info("进入接口:AIController#getChatSessionList");
-        try {
-            Long userId = getCurrentUserId(request);
 
-            List<AIChatSessionItemDTO> dtoList = aiService.getChatSessionList(userId);
-            return CommonResult.success(convertToAIChatSessionItemVOList(dtoList));
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取AI会话列表异常", e);
-            throw new ControllerException(AIErrorCode.CHAT_MESSAGE_QUERY_FAILED);
-        }
+        Long userId = getCurrentUserId(request);
+        List<AIChatSessionItemDTO> dtoList = aiService.getChatSessionList(userId);
+
+        return CommonResult.success(convertToAIChatSessionItemVOList(dtoList));
     }
 
     /**
      * 获取 AI 会话历史
      */
     @GetMapping("/chat/history/{chatId}")
-    public CommonResult<List<AIChatMessageVO>> getChatHistory(@PathVariable("chatId") String chatId,
+    public CommonResult<List<AIChatMessageVO>> getChatHistory(@Valid @PathVariable("chatId") String chatId,
                                                               HttpServletRequest request) {
         log.info("进入接口:AIController#getChatHistory,chatId={}", chatId);
-        try {
-            if (!org.springframework.util.StringUtils.hasText(chatId)) {
-                throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
-            }
 
-            Long userId = getCurrentUserId(request);
-
-            AIChatHistoryQueryDTO queryDTO = new AIChatHistoryQueryDTO();
-            queryDTO.setChatId(chatId);
-            queryDTO.setUserId(userId);
-
-            List<AIChatMessageDTO> dtoList = aiService.getChatHistory(queryDTO);
-            return CommonResult.success(convertToAIChatMessageVOList(dtoList));
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("获取AI会话历史异常,chatId={}", chatId, e);
-            throw new ControllerException(AIErrorCode.CHAT_MESSAGE_QUERY_FAILED);
+        if (!StringUtils.hasText(chatId)) {
+            throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
         }
+
+        Long userId = getCurrentUserId(request);
+
+        AIChatHistoryQueryDTO queryDTO = new AIChatHistoryQueryDTO();
+        queryDTO.setChatId(chatId);
+        queryDTO.setUserId(userId);
+
+        List<AIChatMessageDTO> dtoList = aiService.getChatHistory(queryDTO);
+        return CommonResult.success(convertToAIChatMessageVOList(dtoList));
+    }
+
+    /**
+     * 获取 AI 会话历史(无chatId抛出异常版)
+     * @return
+     */
+    @GetMapping("/chat/history")
+    public CommonResult<Void> getChatHistoryWithoutId() {
+        throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
     }
 
     /**
@@ -166,19 +153,17 @@ public class AIController {
     public CommonResult<Boolean> createChatSession(@Valid @RequestBody AIChatCreateParam param,
                                                    HttpServletRequest request) {
         log.info("进入接口:AIController#createChatSession,param={}", JacksonUtils.writeValueAsString(param));
-        try {
-            validateAIChatCreateParam(param);
-
-            Long userId = getCurrentUserId(request);
-
-            AIChatCreateReqDTO reqDTO = convertToAIChatCreateReqDTO(param, userId);
-            return CommonResult.success(aiService.createChatSession(reqDTO));
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("新增AI会话异常,param={}", JacksonUtils.writeValueAsString(param), e);
-            throw new ControllerException(AIErrorCode.CHAT_SESSION_CREATE_FAILED);
+        if (param.getTitle() != null && param.getTitle().trim().isEmpty()) {
+            throw new ControllerException(
+                    AIErrorCode.TITLE_EMPTY
+            );
         }
+        validateAIChatCreateParam(param);
+
+        Long userId = getCurrentUserId(request);
+        AIChatCreateReqDTO reqDTO = convertToAIChatCreateReqDTO(param, userId);
+
+        return CommonResult.success(aiService.createChatSession(reqDTO));
     }
 
     /**
@@ -188,46 +173,38 @@ public class AIController {
     public CommonResult<Boolean> updateChatTitle(@Valid @RequestBody AIChatUpdateTitleParam param,
                                                  HttpServletRequest request) {
         log.info("进入接口:AIController#updateChatTitle,param={}", JacksonUtils.writeValueAsString(param));
-        try {
-            validateAIChatUpdateTitleParam(param);
-
-            Long userId = getCurrentUserId(request);
-
-            AIChatUpdateTitleReqDTO reqDTO = convertToAIChatUpdateTitleReqDTO(param, userId);
-            return CommonResult.success(aiService.updateChatTitle(reqDTO));
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("修改AI会话标题异常,param={}", JacksonUtils.writeValueAsString(param), e);
-            throw new ControllerException(AIErrorCode.CHAT_SESSION_UPDATE_FAILED);
+        if (param.getTitle() != null && param.getTitle().trim().isEmpty()) {
+            throw new ControllerException(
+                    AIErrorCode.TITLE_EMPTY
+            );
         }
+        validateAIChatUpdateTitleParam(param);
+
+        Long userId = getCurrentUserId(request);
+        AIChatUpdateTitleReqDTO reqDTO = convertToAIChatUpdateTitleReqDTO(param, userId);
+
+        return CommonResult.success(aiService.updateChatTitle(reqDTO));
     }
 
     /**
      * 删除 AI 会话
      */
     @DeleteMapping("/chat/delete/{chatId}")
-    public CommonResult<Boolean> deleteChatSession(@PathVariable("chatId") String chatId,
+    public CommonResult<Boolean> deleteChatSession(@Valid @PathVariable("chatId") String chatId,
                                                    HttpServletRequest request) {
         log.info("进入接口:AIController#deleteChatSession,chatId={}", chatId);
-        try {
-            if (!org.springframework.util.StringUtils.hasText(chatId)) {
-                throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
-            }
 
-            Long userId = getCurrentUserId(request);
-
-            AIChatHistoryQueryDTO queryDTO = new AIChatHistoryQueryDTO();
-            queryDTO.setChatId(chatId);
-            queryDTO.setUserId(userId);
-
-            return CommonResult.success(aiService.deleteChatSession(queryDTO));
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("删除AI会话异常,chatId={}", chatId, e);
-            throw new ControllerException(AIErrorCode.CHAT_SESSION_DELETE_FAILED);
+        if (!StringUtils.hasText(chatId)) {
+            throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
         }
+
+        Long userId = getCurrentUserId(request);
+
+        AIChatHistoryQueryDTO queryDTO = new AIChatHistoryQueryDTO();
+        queryDTO.setChatId(chatId);
+        queryDTO.setUserId(userId);
+
+        return CommonResult.success(aiService.deleteChatSession(queryDTO));
     }
 
     /**
@@ -237,101 +214,89 @@ public class AIController {
     public CommonResult<Boolean> stopChat(@Valid @RequestBody AIChatStopParam param,
                                           HttpServletRequest request) {
         log.info("进入接口:AIController#stopChat,param={}", JacksonUtils.writeValueAsString(param));
-        try {
-            validateAIChatStopParam(param);
 
-            Long userId = getCurrentUserId(request);
+        validateAIChatStopParam(param);
 
-            AIChatStopReqDTO reqDTO = new AIChatStopReqDTO();
-            reqDTO.setChatId(param.getChatId());
-            reqDTO.setUserId(userId);
+        Long userId = getCurrentUserId(request);
 
-            return CommonResult.success(aiService.stopChat(reqDTO));
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("停止AI输出异常,param={}", JacksonUtils.writeValueAsString(param), e);
-            throw new ControllerException(AIErrorCode.CHAT_STREAM_STOP_FAILED);
-        }
+        AIChatStopReqDTO reqDTO = new AIChatStopReqDTO();
+        reqDTO.setChatId(param.getChatId());
+        reqDTO.setUserId(userId);
+
+        return CommonResult.success(aiService.stopChat(reqDTO));
     }
 
     /**
      * 预警 AI 智能建议（流式）
      */
     @GetMapping("/warnings/{warningId}/suggestion/stream")
-    public SseEmitter generateWarningSuggestionStream(@PathVariable("warningId") Long warningId,
+    public SseEmitter generateWarningSuggestionStream(@Valid @PathVariable("warningId") Long warningId,
                                                       HttpServletRequest request) {
         log.info("进入接口:AIController#generateWarningSuggestionStream,warningId={}", warningId);
-        try {
-            if (warningId == null || warningId <= 0) {
-                throw new ControllerException(AIErrorCode.WARNING_ID_INVALID);
-            }
 
-            Long userId = getCurrentUserId(request);
-
-            AIWarningSuggestionReqDTO reqDTO = new AIWarningSuggestionReqDTO();
-            reqDTO.setWarningId(warningId);
-            reqDTO.setUserId(userId);
-
-            return aiService.generateWarningSuggestionStream(reqDTO);
-        } catch (ControllerException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("生成预警AI智能建议异常,warningId={}", warningId, e);
-            throw new ControllerException(AIErrorCode.AI_GENERATE_FAILED);
+        if (warningId == null || warningId <= 0) {
+            throw new ControllerException(AIErrorCode.WARNING_ID_INVALID);
         }
+
+        Long userId = getCurrentUserId(request);
+
+        AIWarningSuggestionReqDTO reqDTO = new AIWarningSuggestionReqDTO();
+        reqDTO.setWarningId(warningId);
+        reqDTO.setUserId(userId);
+
+        return aiService.generateWarningSuggestionStream(reqDTO);
     }
 
     // ==================== 参数校验 ====================
 
     private void validateAssistantChatStreamParam(AIAssistantChatStreamParam param) {
-        if (!org.springframework.util.StringUtils.hasText(param.getChatId())) {
+        if (!StringUtils.hasText(param.getChatId())) {
             throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
         }
-        if (!org.springframework.util.StringUtils.hasText(param.getPrompt())) {
+        if (!StringUtils.hasText(param.getPrompt())) {
             throw new ControllerException(AIErrorCode.PROMPT_EMPTY);
         }
         validateContextTypeAndId(param.getContextType(), param.getContextId());
     }
 
     private void validateAssistantHistoryParam(AIAssistantHistoryParam param) {
-        if (!org.springframework.util.StringUtils.hasText(param.getChatId())) {
+        if (!StringUtils.hasText(param.getChatId())) {
             throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
         }
     }
 
     private void validateAIChatStreamParam(AIChatStreamParam param) {
-        if (!org.springframework.util.StringUtils.hasText(param.getChatId())) {
+        if (!StringUtils.hasText(param.getChatId())) {
             throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
         }
-        if (!org.springframework.util.StringUtils.hasText(param.getPrompt())) {
+        if (!StringUtils.hasText(param.getPrompt())) {
             throw new ControllerException(AIErrorCode.PROMPT_EMPTY);
         }
     }
 
     private void validateAIChatCreateParam(AIChatCreateParam param) {
-        if (!org.springframework.util.StringUtils.hasText(param.getChatId())) {
+        if (!StringUtils.hasText(param.getChatId())) {
             throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
         }
     }
 
     private void validateAIChatUpdateTitleParam(AIChatUpdateTitleParam param) {
-        if (!org.springframework.util.StringUtils.hasText(param.getChatId())) {
+        if (!StringUtils.hasText(param.getChatId())) {
             throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
         }
-        if (!org.springframework.util.StringUtils.hasText(param.getTitle())) {
+        if (!StringUtils.hasText(param.getTitle())) {
             throw new ControllerException(AIErrorCode.TITLE_EMPTY);
         }
     }
 
     private void validateAIChatStopParam(AIChatStopParam param) {
-        if (!org.springframework.util.StringUtils.hasText(param.getChatId())) {
+        if (!StringUtils.hasText(param.getChatId())) {
             throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
         }
     }
 
     private void validateContextTypeAndId(String contextType, Long contextId) {
-        if (!org.springframework.util.StringUtils.hasText(contextType)) {
+        if (!StringUtils.hasText(contextType)) {
             return;
         }
         if (!"CROP".equals(contextType)
@@ -416,7 +381,7 @@ public class AIController {
     private Long getCurrentUserId(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
 
-        if (!org.springframework.util.StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
+        if (!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
             throw new ControllerException(AIErrorCode.AUTH_HEADER_INVALID);
         }
 

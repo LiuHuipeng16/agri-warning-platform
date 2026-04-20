@@ -12,7 +12,6 @@ import com.zhku.agriwarningplatform.common.errorcode.PreWarningRuleErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
-import com.zhku.agriwarningplatform.common.util.JacksonUtils;
 import com.zhku.agriwarningplatform.module.prewarningrule.controller.param.PreWarningRuleChangeStatusParam;
 import com.zhku.agriwarningplatform.module.prewarningrule.controller.param.PreWarningRuleCreateParam;
 import com.zhku.agriwarningplatform.module.prewarningrule.controller.param.PreWarningRuleOptionParam;
@@ -28,7 +27,6 @@ import com.zhku.agriwarningplatform.module.prewarningrule.service.dto.PreWarning
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/prewarningRules")
 public class PreWarningRuleController {
@@ -54,7 +51,6 @@ public class PreWarningRuleController {
 
     @GetMapping("/page")
     public CommonResult<PageResult<PreWarningRulePageVO>> page(@Valid @ModelAttribute PreWarningRulePageParam param) {
-        log.info("进入接口:PreWarningRuleController#page,param={}", JacksonUtils.writeValueAsString(param));
 
         if (param.getPageNum() == null) {
             throw new ControllerException(PreWarningRuleErrorCode.PAGE_NUM_EMPTY);
@@ -79,8 +75,6 @@ public class PreWarningRuleController {
 
     @GetMapping("/detail/{ruleId}")
     public CommonResult<PreWarningRuleDetailVO> detail(@PathVariable("ruleId") @Min(value = 1, message = "规则ID不合法") Long ruleId) {
-        log.info("进入接口:PreWarningRuleController#detail,ruleId={}",ruleId);
-
         if (ruleId == null) {
             throw new ControllerException(PreWarningRuleErrorCode.RULE_ID_EMPTY);
         }
@@ -94,14 +88,12 @@ public class PreWarningRuleController {
 
     @PostMapping("/create")
     public CommonResult<Long> create(@Valid @RequestBody PreWarningRuleCreateParam param) {
-        log.info("进入接口:PreWarningRuleController#create,param={}", JacksonUtils.writeValueAsString(param));
+
         return CommonResult.success(preWarningRuleService.create(param));
     }
 
     @PutMapping("/update")
     public CommonResult<Boolean> update(@Valid @RequestBody PreWarningRuleUpdateParam param) {
-        log.info("进入接口:PreWarningRuleController#update,param={}", JacksonUtils.writeValueAsString(param));
-
         if (param.getRuleId() == null) {
             throw new ControllerException(PreWarningRuleErrorCode.RULE_ID_EMPTY);
         }
@@ -114,7 +106,6 @@ public class PreWarningRuleController {
 
     @DeleteMapping("/delete/{ruleId}")
     public CommonResult<Boolean> delete(@PathVariable("ruleId") @Min(value = 1, message = "规则ID不合法") Long ruleId) {
-        log.info("进入接口:PreWarningRuleController#delete,ruleId={}",ruleId);
         if (ruleId == null) {
             throw new ControllerException(PreWarningRuleErrorCode.RULE_ID_EMPTY);
         }
@@ -127,7 +118,6 @@ public class PreWarningRuleController {
 
     @PutMapping("/changeStatus")
     public CommonResult<Boolean> changeStatus(@Valid @RequestBody PreWarningRuleChangeStatusParam param) {
-        log.info("进入接口:PreWarningRuleController#changeStatus,param={}", JacksonUtils.writeValueAsString(param));
 
         if (param.getRuleId() == null) {
             throw new ControllerException(PreWarningRuleErrorCode.RULE_ID_EMPTY);
@@ -141,7 +131,7 @@ public class PreWarningRuleController {
 
     @GetMapping("/options")
     public CommonResult<List<PreWarningRuleOptionVO>> options(@Valid @ModelAttribute PreWarningRuleOptionParam param){
-        log.info("进入接口:PreWarningRuleController#options,param={}", JacksonUtils.writeValueAsString(param));
+
         List<PreWarningRuleOptionDTO> dtoList = preWarningRuleService.options(param);
         return CommonResult.success(convertOptionVOList(dtoList));
     }

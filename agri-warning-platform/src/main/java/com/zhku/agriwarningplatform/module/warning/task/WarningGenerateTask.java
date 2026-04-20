@@ -80,4 +80,8 @@ public class WarningGenerateTask {
             warningGenerateLockSupport.unlock();
         }
     }
+    @Scheduled(cron = "0 * * * * ?")
+    public void generateNoonWarningsTest() {
+        executeGenerateTask("临时测试-每分钟执行");
+    }
 }

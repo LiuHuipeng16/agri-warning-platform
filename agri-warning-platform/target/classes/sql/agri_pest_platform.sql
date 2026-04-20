@@ -1,10 +1,10 @@
--- =========================================
+- =========================================
 -- 农业病虫害综合平台数据库初始化脚本
 -- 适用数据库：MySQL 8.0+
 -- 字符集：utf8mb4
 -- 排序规则：utf8mb4_general_ci
 -- =========================================
-drop DATABASE agri_pest_platform;
+drop DATABASE IF  EXISTS agri_pest_platform;
 CREATE DATABASE IF NOT EXISTS agri_pest_platform
 DEFAULT CHARACTER SET utf8mb4
 DEFAULT COLLATE utf8mb4_general_ci;
@@ -105,28 +105,7 @@ CREATE TABLE `crop_pest_rel` (
 
 
 -- =========================================
--- 4.5 ai_qa_record（AI问答记录表）
--- =========================================
-DROP TABLE IF EXISTS `ai_qa_record`;
-CREATE TABLE `ai_qa_record` (
-    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '问答记录唯一标识',
-    `user_id` BIGINT DEFAULT NULL COMMENT '提问用户ID，关联用户表',
-    `user_question` TEXT NOT NULL COMMENT '用户提问内容',
-    `ai_answer` LONGTEXT DEFAULT NULL COMMENT 'AI 回答内容',
-    `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '提问时间',
-    `delete_flag` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '删除标记：0未删除，1已删除',
-    `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-
-    PRIMARY KEY (`id`),
-    KEY `idx_ai_qa_record_user_id` (`user_id`),
-    KEY `idx_ai_qa_record_timestamp` (`timestamp`),
-    CONSTRAINT `fk_ai_qa_record_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
-    CONSTRAINT `chk_ai_qa_record_delete_flag` CHECK (`delete_flag` IN (0, 1))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='AI问答记录表';
-
--- =========================================
--- 4.6 pest_environment_conditions（适宜病虫害发生的环境条件表）
+-- 4.5 pest_environment_conditions（适宜病虫害发生的环境条件表）
 -- =========================================
 DROP TABLE IF EXISTS `pest_environment_conditions`;
 CREATE TABLE `pest_environment_conditions` (
@@ -146,7 +125,7 @@ CREATE TABLE `pest_environment_conditions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='适宜病虫害发生的环境条件表';
 
 -- =========================================
--- 4.7 prewarning_rules（预警规则表）
+-- 4.6 prewarning_rules（预警规则表）
 -- =========================================
 DROP TABLE IF EXISTS `prewarning_rules`;
 CREATE TABLE `prewarning_rules` (
@@ -184,7 +163,7 @@ CREATE TABLE `prewarning_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='预警规则表';
 
 -- =========================================
--- 4.8 warning（预警表）
+-- 4.7 warning（预警表）
 -- =========================================
 DROP TABLE IF EXISTS `warning`;
 CREATE TABLE `warning` (
@@ -218,7 +197,7 @@ CREATE TABLE `warning` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='预警表';
 
 -- =========================================
--- 4.9 lightweight_knowledge_base_enhanced_qa（轻量版知识库增强问答表）
+-- 4.8 lightweight_knowledge_base_enhanced_qa（轻量版知识库增强问答表）
 -- =========================================
 DROP TABLE IF EXISTS `lightweight_knowledge_base_enhanced_qa`;
 CREATE TABLE `lightweight_knowledge_base_enhanced_qa` (
@@ -241,3 +220,65 @@ CREATE TABLE `lightweight_knowledge_base_enhanced_qa` (
 
 SET FOREIGN_KEY_CHECKS = 1;
 
+-- =========================================
+-- 4.9 ai_chat_message（AI历史消息表）
+-- =========================================
+DROP TABLE IF EXISTS `ai_chat_message`;
+CREATE TABLE `ai_chat_message` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `chat_id` VARCHAR(64) NOT NULL COMMENT '会话ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `role` VARCHAR(20) NOT NULL COMMENT '消息角色：user / assistant',
+    `content` LONGTEXT NOT NULL COMMENT '消息内容',
+    `delete_flag` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '删除标记：0未删除，1已删除',
+    `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+
+    PRIMARY KEY (`id`),
+    KEY `idx_ai_chat_message_chat_id` (`chat_id`),
+    KEY `idx_ai_chat_message_user_id` (`user_id`),
+    KEY `idx_ai_chat_message_chat_id_gmt_create` (`chat_id`, `gmt_create`),
+    KEY `idx_ai_chat_message_delete_flag` (`delete_flag`),
+
+    CONSTRAINT `fk_ai_chat_message_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+    CONSTRAINT `chk_ai_chat_message_role` CHECK (`role` IN ('user', 'assistant')),
+    CONSTRAINT `chk_ai_chat_message_delete_flag` CHECK (`delete_flag` IN (0, 1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='AI聊天消息表（悬浮助手与独立AI共用）';
+
+-- =========================================
+-- 4.10 ai_chat_session（AI会话记录表）
+-- =========================================
+DROP TABLE IF EXISTS `ai_chat_session`;
+CREATE TABLE `ai_chat_session` (
+    `chat_id` VARCHAR(64) NOT NULL COMMENT '会话ID（前端生成）',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `session_type` VARCHAR(20) NOT NULL COMMENT '会话类型：CHAT',
+    `context_type` VARCHAR(20) DEFAULT NULL COMMENT '上下文类型：CROP / PEST / WARNING / NONE',
+    `context_id` BIGINT DEFAULT NULL COMMENT '上下文业务ID',
+    `title` VARCHAR(200) DEFAULT NULL COMMENT '会话标题',
+    `delete_flag` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '删除标记：0未删除，1已删除',
+    `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+
+    PRIMARY KEY (`chat_id`),
+    KEY `idx_ai_chat_session_user_id` (`user_id`),
+    KEY `idx_ai_chat_session_context_type_context_id` (`context_type`, `context_id`),
+    KEY `idx_ai_chat_session_delete_flag` (`delete_flag`),
+
+    CONSTRAINT `fk_ai_chat_session_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
+    CONSTRAINT `chk_ai_chat_session_session_type` CHECK (`session_type` IN ('CHAT')),
+    CONSTRAINT `chk_ai_chat_session_context_type` CHECK (`context_type` IS NULL OR `context_type` IN ('CROP', 'PEST', 'WARNING', 'NONE')),
+    CONSTRAINT `chk_ai_chat_session_delete_flag` CHECK (`delete_flag` IN (0, 1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='AI会话表（仅独立AI问答使用）';
+
+
+
+ALTER TABLE warning
+ADD UNIQUE KEY uk_warning_unique (
+    crop_id,
+    pest_id,
+    rule_id,
+    warning_type,
+    warning_date,
+    delete_flag
+);

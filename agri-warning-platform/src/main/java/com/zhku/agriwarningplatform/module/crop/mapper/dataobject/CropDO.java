@@ -1,11 +1,20 @@
-package com.zhku.agriwarningplatform.module.crop.vo;
+package com.zhku.agriwarningplatform.module.crop.mapper.dataobject;
+
+/**
+ * Created with IntelliJ IDEA.
+ * Description:
+ * User: 12290
+ * Date: 2026-04-14
+ * Time: 17:04
+ */
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class CropQueryRespVO {
+public class CropDO {
+
     /**
      * 作物ID
      */
@@ -22,30 +31,32 @@ public class CropQueryRespVO {
     private String category;
 
     /**
-     * 作物图片
-     */
-    private String imageUrl;
-
-    /**
-     * 作物介绍
+     * 作物简介
      */
     private String intro;
 
     /**
-     * 创建时间
-     */
-    private LocalDateTime gmtCreate;
-    /**
-     * 修改时间
-     */
-    private LocalDateTime gmtModified;
-    /**
-     * 作物描述
+     * 作物详细描述
      */
     private String description;
+
+    /**
+     * 作物图片地址
+     */
+    private String imageUrl;
+
     /**
      * 删除标记：0未删除，1已删除
      */
     private Integer deleteFlag;
 
+    /**
+     * 创建时间
+     */
+    private LocalDateTime gmtCreate;
+
+    /**
+     * 修改时间
+     */
+    private LocalDateTime gmtModified;
 }
