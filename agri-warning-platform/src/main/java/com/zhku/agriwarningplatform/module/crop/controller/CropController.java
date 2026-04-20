@@ -6,10 +6,7 @@ import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.common.util.AliyunOSSOperator;
 import com.zhku.agriwarningplatform.module.crop.service.CropService;
-import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
-import com.zhku.agriwarningplatform.module.crop.vo.FileRespVO;
+import com.zhku.agriwarningplatform.module.crop.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -41,7 +38,7 @@ public class CropController {
         return cropservice.pageQuery(cropQueryReqVO);
     }
     @GetMapping("/crops/detail/{id}")
-    public CommonResult<CropQueryRespVO> detail(@Validated @PathVariable Long id){
+    public CommonResult<DetailRespVO> detail(@Validated @PathVariable Long id){
         log.info("查询作物详情：{}", id);
         return CommonResult.success(cropservice.detail(id));
     }

@@ -4,13 +4,11 @@ import com.zhku.agriwarningplatform.common.errorcode.AuthErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginReqVO;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginRespVO;
-import com.zhku.agriwarningplatform.module.auth.vo.RegisterReqVO;
-import com.zhku.agriwarningplatform.module.auth.vo.UpdatePasswordReqVO;
+import com.zhku.agriwarningplatform.module.auth.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -27,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthService authService;
     @PostMapping("/auth/login")
-    public CommonResult<LoginRespVO> login(@RequestBody LoginReqVO loginReqVO){
+    public CommonResult<LoginRespVO> login(@Validated @RequestBody LoginReqVO loginReqVO){
         log.info("用户登录：{}", loginReqVO);
         LoginRespVO loginRespVO = authService.login(loginReqVO);
         if (loginRespVO == null){
@@ -36,10 +34,10 @@ public class AuthController {
         return CommonResult.success(loginRespVO);
     }
     @GetMapping("/auth/currentUser")
-    public CommonResult<LoginRespVO> currentUser(@RequestHeader("token") String token){
+    public CommonResult<LoginRespVO.UserInfoVO> currentUser(@Validated @RequestHeader("token") String token){
         log.info("获取当前用户：{}", token);
         LoginRespVO loginRespVO = authService.GetCurrentUser(token);
-        return CommonResult.success(loginRespVO);
+        return CommonResult.success(loginRespVO.getUserInfo());
     }
     @PostMapping("/auth/logout")
     public CommonResult<Boolean> logout(){
@@ -47,19 +45,19 @@ public class AuthController {
         return CommonResult.success(true);
         }
     @PutMapping("/auth/changePassword")
-    public CommonResult<Boolean> updatePassword(@RequestBody UpdatePasswordReqVO updatePasswordReqVO,@RequestHeader("token") String token){
+    public CommonResult<Boolean> updatePassword(@Validated @RequestBody UpdatePasswordReqVO updatePasswordReqVO,@RequestHeader("token") String token){
         log.info("修改密码：{}", updatePasswordReqVO);
         authService.updatePassword(updatePasswordReqVO, token);
         return CommonResult.success(true);
     }
     @PostMapping("/auth/register")
-    public CommonResult<LoginRespVO.UserInfoVO> register(@RequestBody RegisterReqVO registerReqVO){
-        LoginRespVO.UserInfoVO userInfoVO = authService.register(registerReqVO);
+    public CommonResult<RegisterRespVO> register(@Validated @RequestBody RegisterReqVO registerReqVO){
+        RegisterRespVO userInfoVO = authService.register(registerReqVO);
         return CommonResult.success(userInfoVO);
     }
     @PostMapping("/admin/users")
-    public CommonResult<LoginRespVO.UserInfoVO> createUser(@RequestBody RegisterReqVO registerReqVO){
-        LoginRespVO.UserInfoVO userInfoVO = authService.adminRegister(registerReqVO);
+    public CommonResult<CreateUserResp> createUser(@Validated @RequestBody CreateUserReq request){
+         CreateUserResp userInfoVO = authService.adminRegister(request);
         return CommonResult.success(userInfoVO);
     }
 }

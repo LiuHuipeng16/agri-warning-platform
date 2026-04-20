@@ -11,12 +11,16 @@ import com.zhku.agriwarningplatform.module.crop.service.CropService;
 import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
+import com.zhku.agriwarningplatform.module.crop.vo.DetailRespVO;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -34,7 +38,6 @@ public class CropServiceImpl implements CropService {
                 Page<CropQueryRespVO> page = PageHelper.startPage(
                         cropQueryReqVO.getPageNum(),
                         cropQueryReqVO.getPageSize());
-
         cropMapper.selectList(cropQueryReqVO);
         PageResult<CropQueryRespVO> pageResult = new PageResult<>();
         pageResult.setTotal((int)page.getTotal());
@@ -44,19 +47,17 @@ public class CropServiceImpl implements CropService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CropQueryRespVO detail(Long id) {
+    public DetailRespVO detail(@PathVariable @NotNull(message = "作物ID不能为空") @Min(value = 1, message = "作物ID必须大于0") Long id) {
         if (id == null){
             throw new ServiceException(CropErrorCode.CROP_ID_EMPTY);
         }
-        CropQueryRespVO cropQueryRespVO = cropMapper.detail(id);
+        DetailRespVO cropQueryRespVO = cropMapper.detail(id);
         if (cropQueryRespVO == null){
             throw new ServiceException(CropErrorCode.CROP_NOT_EXIST);
         }
         if (id <= 0){
             throw new ServiceException(CropErrorCode.CROP_ID_INVALID);
         }
-        cropQueryRespVO.setGmtCreate(null);
-        cropQueryRespVO.setGmtModified(null);
         return cropQueryRespVO;
     }
 

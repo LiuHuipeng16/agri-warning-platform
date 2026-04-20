@@ -37,18 +37,10 @@ public class LoginRespVO {
          * 用户名
          */
         private String username;
-
         /**
-         * 用户角色（ADMIN / USER）
+         * 角色
          */
-        private String password;
-
         private String role;
 
-        private Integer deleteFlag;
-
-        private LocalDateTime gmtCreate;
-
-        private LocalDateTime gmtModified;
     }
 }
