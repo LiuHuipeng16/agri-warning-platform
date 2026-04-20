@@ -17,6 +17,6 @@ public interface KnowledgeqaMapper {
 
     int update(KnowledgeqaReqVO reqVO);
 
-    @Update("update knowledgeqa set delete_flag = 1 where id = #{id}")
+    @Update("update lightweight_knowledge_base_enhanced_qa set delete_flag = 1 where id = #{id}")
     int updatedDeleteFlag(@Min(value = 1, message = "ID必须大于0") Long id);
 }

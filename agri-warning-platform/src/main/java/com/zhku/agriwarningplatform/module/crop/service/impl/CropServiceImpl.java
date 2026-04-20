@@ -7,11 +7,13 @@ import com.zhku.agriwarningplatform.common.exception.ServiceException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.module.crop.mapper.CropMapper;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
 import com.zhku.agriwarningplatform.module.crop.service.CropService;
 import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
 import com.zhku.agriwarningplatform.module.crop.vo.DetailRespVO;
+import com.zhku.agriwarningplatform.module.pest.mapper.CropPestRelMapper;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CropServiceImpl implements CropService {
     private final CropMapper cropMapper;
+    private final CropPestRelMapper cropPestRelMapper;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PageResult<CropQueryRespVO> pageQuery(CropQueryReqVO cropQueryReqVO) {
@@ -116,14 +119,44 @@ public class CropServiceImpl implements CropService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(Long id) {
         log.info("删除作物：{}", id);
-        if (id == null){
+
+        if (id == null) {
             throw new ServiceException(CropErrorCode.CROP_ID_EMPTY);
         }
+        if (id <= 0) {
+            throw new ServiceException(CropErrorCode.CROP_ID_INVALID);
+        }
+
+        CropDO cropDO = cropMapper.selectByIdDO(id);
+        if (cropDO == null) {
+            throw new ServiceException(CropErrorCode.CROP_NOT_EXIST);
+        }
+
+        Long cropPestRelCount = cropPestRelMapper.countByCropId(id);
+        if (cropPestRelCount != null && cropPestRelCount > 0) {
+            throw new ServiceException(CropErrorCode.CROP_HAS_PEST_REL);
+        }
+
+        Long ruleCount = cropMapper.countRuleByCropId(id);
+        if (ruleCount != null && ruleCount > 0) {
+            throw new ServiceException(CropErrorCode.CROP_HAS_RULE);
+        }
+
+        Long knowledgeCount = cropMapper.countKnowledgeByCropId(id);
+        if (knowledgeCount != null && knowledgeCount > 0) {
+            throw new ServiceException(CropErrorCode.CROP_HAS_KNOWLEDGE);
+        }
+
+        Long warningCount = cropMapper.countWarningByCropId(id);
+        if (warningCount != null && warningCount > 0) {
+            throw new ServiceException(CropErrorCode.CROP_HAS_WARNING);
+        }
+
         int rows = cropMapper.updateDeleteFlag(id);
-        if (rows != 1){
+        if (rows != 1) {
             throw new ServiceException(CropErrorCode.DELETE_CROP_FAILED);
         }
-        return rows > 0;
+        return true;
     }
 
     @Override

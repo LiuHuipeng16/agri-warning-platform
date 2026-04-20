@@ -1,6 +1,5 @@
 package com.zhku.agriwarningplatform.module.crop.mapper;
 
-import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
@@ -36,5 +35,12 @@ public interface CropMapper {
 
     @Select("select * from crop where id = #{id} and delete_flag=0")
     CropDO selectByIdDO(Long id);
+    @Select("select count(1) from prewarning_rules where crop_id = #{cropId} and delete_flag = 0")
+    Long countRuleByCropId(Long cropId);
 
+    @Select("select count(1) from lightweight_knowledge_base_enhanced_qa where crop_id = #{cropId} and delete_flag = 0")
+    Long countKnowledgeByCropId(Long cropId);
+
+    @Select("select count(1) from warning where crop_id = #{cropId} and delete_flag = 0")
+    Long countWarningByCropId(Long cropId);
 }

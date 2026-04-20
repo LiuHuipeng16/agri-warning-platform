@@ -284,20 +284,36 @@ public class PestServiceImpl implements PestService {
                 throw new ServiceException(PestErrorCode.PEST_NOT_EXIST);
             }
 
+            Long cropRelCount = cropPestRelMapper.countByPestId(id);
+            if (cropRelCount != null && cropRelCount > 0) {
+                throw new ServiceException(PestErrorCode.PEST_HAS_CROP_REL);
+            }
+
+            Long ruleCount = pestMapper.countRuleByPestId(id);
+            if (ruleCount != null && ruleCount > 0) {
+                throw new ServiceException(PestErrorCode.PEST_HAS_RULE);
+            }
+
+            Long knowledgeCount = pestMapper.countKnowledgeByPestId(id);
+            if (knowledgeCount != null && knowledgeCount > 0) {
+                throw new ServiceException(PestErrorCode.PEST_HAS_KNOWLEDGE);
+            }
+
+            Long warningCount = pestMapper.countWarningByPestId(id);
+            if (warningCount != null && warningCount > 0) {
+                throw new ServiceException(PestErrorCode.PEST_HAS_WARNING);
+            }
+
             int pestDelete = pestMapper.logicDeleteById(id);
             if (pestDelete <= 0) {
                 throw new ServiceException(PestErrorCode.PEST_DELETE_FAILED);
             }
-
-            cropPestRelMapper.logicDeleteByPestId(id);
-            pestEnvironmentMapper.logicDeleteByPestId(id);
 
             return Boolean.TRUE;
         } finally {
             lock.unlock();
         }
     }
-
     @Override
     public List<PestOptionDTO> options() {
         return pestMapper.selectOptions();

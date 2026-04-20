@@ -26,6 +26,7 @@ import com.zhku.agriwarningplatform.module.prewarningrule.service.PreWarningRule
 import com.zhku.agriwarningplatform.module.prewarningrule.service.dto.PreWarningRuleDTO;
 import com.zhku.agriwarningplatform.module.prewarningrule.service.dto.PreWarningRuleOptionDTO;
 import com.zhku.agriwarningplatform.module.prewarningrule.service.dto.PreWarningRulePageDTO;
+import com.zhku.agriwarningplatform.module.warning.mapper.WarningMapper;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +54,8 @@ public class PreWarningRuleServiceImpl implements PreWarningRuleService {
 
     @Resource
     private PestMapper pestMapper;
-
+    @Resource
+    private WarningMapper warningMapper;
     @Override
     public PreWarningRulePageDTO page(PreWarningRulePageParam param) {
         validateRiskLevel(param.getRiskLevel());
@@ -200,13 +202,17 @@ public class PreWarningRuleServiceImpl implements PreWarningRuleService {
             throw new ServiceException(PreWarningRuleErrorCode.RULE_NOT_EXIST);
         }
 
+        Long warningCount = warningMapper.countByRuleId(ruleId);
+        if (warningCount != null && warningCount > 0) {
+            throw new ServiceException(PreWarningRuleErrorCode.RULE_HAS_WARNING);
+        }
+
         int rows = preWarningRuleMapper.logicalDeleteById(ruleId);
         if (rows <= 0) {
             throw new ServiceException(PreWarningRuleErrorCode.DELETE_FAILED);
         }
         return Boolean.TRUE;
     }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean changeStatus(PreWarningRuleChangeStatusParam param) {

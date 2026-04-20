@@ -56,4 +56,13 @@ public interface PestMapper {
 
     PestDO selectByNameExcludeIdIncludingDeleted(@Param("name") String name,
                                                  @Param("excludeId") Long excludeId);
+
+    @org.apache.ibatis.annotations.Select("select count(1) from prewarning_rules where pest_id = #{pestId} and delete_flag = 0")
+    Long countRuleByPestId(@Param("pestId") Long pestId);
+
+    @org.apache.ibatis.annotations.Select("select count(1) from lightweight_knowledge_base_enhanced_qa where pest_id = #{pestId} and delete_flag = 0")
+    Long countKnowledgeByPestId(@Param("pestId") Long pestId);
+
+    @org.apache.ibatis.annotations.Select("select count(1) from warning where pest_id = #{pestId} and delete_flag = 0")
+    Long countWarningByPestId(@Param("pestId") Long pestId);
 }

@@ -60,4 +60,6 @@ public interface PreWarningRuleErrorCode {
     ErrorCode CHANGE_STATUS_FAILED = new ErrorCode(500, "PRE_WARNING_RULE_113", "修改预警规则状态失败");
 
     ErrorCode DATA_CONFLICT = new ErrorCode(409, "PRE_WARNING_RULE_114", "预警规则数据冲突");
+    ErrorCode RULE_HAS_WARNING =
+            new ErrorCode(409, "PRE_WARNING_RULE_115", "当前预警规则已关联预警记录，无法删除");
 }

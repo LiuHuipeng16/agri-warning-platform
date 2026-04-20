@@ -47,8 +47,18 @@ public interface PestErrorCode {
     ErrorCode PEST_ENVIRONMENT_NOT_EXIST =
             new ErrorCode(404, "PEST_104", "病虫害环境条件不存在");
     ErrorCode PEST_NAME_OCCUPIED_BY_DELETED =
-            new ErrorCode(409, "PEST_015", "该名称不可用，请更换名称");
+            new ErrorCode(409, "PEST_105", "该名称不可用，请更换名称");
+    ErrorCode PEST_HAS_CROP_REL =
+            new ErrorCode(409, "PEST_106", "当前病虫害已关联作物，无法删除");
 
+    ErrorCode PEST_HAS_RULE =
+            new ErrorCode(409, "PEST_107", "当前病虫害已关联预警规则，无法删除");
+
+    ErrorCode PEST_HAS_KNOWLEDGE =
+            new ErrorCode(409, "PEST_108", "当前病虫害已关联知识库数据，无法删除");
+
+    ErrorCode PEST_HAS_WARNING =
+            new ErrorCode(409, "PEST_109", "当前病虫害已关联预警记录，无法删除");
     /* =========================================================
        System ErrorCode
        系统执行失败

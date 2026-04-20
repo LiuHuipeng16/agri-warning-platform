@@ -761,13 +761,16 @@ public class AIServiceImpl implements AIService {
             return "";
         }
 
-        switch (contextType) {
-            case "CROP":
-                CropDO cropDO = aiMapper.getCropContextById(contextId);
-                if (cropDO == null) {
-                    throw new ServiceException(AIErrorCode.CROP_NOT_EXIST);
-                }
-                return """
+        try {
+            switch (contextType) {
+                case "CROP":
+                    CropDO cropDO = aiMapper.getCropContextById(contextId);
+                    if (cropDO == null) {
+                        log.warn("AI页面上下文对应的作物不存在，已降级为无上下文模式，contextType={}, contextId={}",
+                                contextType, contextId);
+                        return "";
+                    }
+                    return """
                         当前页面信息：
                         该页面为作物详情页面。
 
@@ -777,17 +780,20 @@ public class AIServiceImpl implements AIService {
                         作物简介：%s
                         作物描述：%s
                         """.formatted(
-                        getNullableString(cropDO.getName()),
-                        getNullableString(cropDO.getCategory()),
-                        getNullableString(cropDO.getIntro()),
-                        getNullableString(cropDO.getDescription())
-                );
-            case "PEST":
-                PestDO pestDO = aiMapper.getPestContextById(contextId);
-                if (pestDO == null) {
-                    throw new ServiceException(AIErrorCode.PEST_NOT_EXIST);
-                }
-                return """
+                            getNullableString(cropDO.getName()),
+                            getNullableString(cropDO.getCategory()),
+                            getNullableString(cropDO.getIntro()),
+                            getNullableString(cropDO.getDescription())
+                    );
+
+                case "PEST":
+                    PestDO pestDO = aiMapper.getPestContextById(contextId);
+                    if (pestDO == null) {
+                        log.warn("AI页面上下文对应的病虫害不存在，已降级为无上下文模式，contextType={}, contextId={}",
+                                contextType, contextId);
+                        return "";
+                    }
+                    return """
                         当前页面信息：
                         该页面为病虫害详情页面。
 
@@ -798,20 +804,25 @@ public class AIServiceImpl implements AIService {
                         描述：%s
                         防治措施：%s
                         """.formatted(
-                        getNullableString(pestDO.getName()),
-                        getNullableString(pestDO.getType()),
-                        getNullableString(pestDO.getSymptoms()),
-                        getNullableString(pestDO.getDescription()),
-                        getNullableString(pestDO.getPrevention())
-                );
-            case "WARNING":
-                WarningDO warningDO = aiMapper.getWarningContextById(contextId);
-                if (warningDO == null) {
-                    throw new ServiceException(AIErrorCode.WARNING_NOT_EXIST);
-                }
-                String cropName = getNullableString(aiMapper.getCropNameById(warningDO.getCropId()));
-                String pestName = getNullableString(aiMapper.getPestNameById(warningDO.getPestId()));
-                return """
+                            getNullableString(pestDO.getName()),
+                            getNullableString(pestDO.getType()),
+                            getNullableString(pestDO.getSymptoms()),
+                            getNullableString(pestDO.getDescription()),
+                            getNullableString(pestDO.getPrevention())
+                    );
+
+                case "WARNING":
+                    WarningDO warningDO = aiMapper.getWarningContextById(contextId);
+                    if (warningDO == null) {
+                        log.warn("AI页面上下文对应的预警不存在，已降级为无上下文模式，contextType={}, contextId={}",
+                                contextType, contextId);
+                        return "";
+                    }
+
+                    String cropName = getNullableString(aiMapper.getCropNameById(warningDO.getCropId()));
+                    String pestName = getNullableString(aiMapper.getPestNameById(warningDO.getPestId()));
+
+                    return """
                         当前页面信息：
                         该页面为农作物病虫害预警详情页面。
 
@@ -821,13 +832,19 @@ public class AIServiceImpl implements AIService {
                         风险等级：%s
                         预警日期：%s
                         """.formatted(
-                        cropName,
-                        pestName,
-                        getNullableString(warningDO.getRiskLevel()),
-                        warningDO.getWarningDate() == null ? "" : warningDO.getWarningDate().toString()
-                );
-            default:
-                return "";
+                            cropName,
+                            pestName,
+                            getNullableString(warningDO.getRiskLevel()),
+                            warningDO.getWarningDate() == null ? "" : warningDO.getWarningDate().toString()
+                    );
+
+                default:
+                    return "";
+            }
+        } catch (Exception e) {
+            log.warn("构建AI页面上下文异常，已降级为无上下文模式，contextType={}, contextId={}",
+                    contextType, contextId, e);
+            return "";
         }
     }
 
