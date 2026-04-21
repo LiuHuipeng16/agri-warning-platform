@@ -2,12 +2,13 @@ package com.zhku.agriwarningplatform.module.knowledgeqa.controller;
 
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
+import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaCreateParam;
+import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaUpdateParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.service.KnowledgeqaService;
-import com.zhku.agriwarningplatform.module.knowledgeqa.vo.KnowledgeqaReqVO;
-import com.zhku.agriwarningplatform.module.knowledgeqa.vo.KnowledgeqaRespVO;
+import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaReqVO;
+import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaRespVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,14 +32,14 @@ public class KnowledgeqaController {
         return knowledgeqaService.page(reqVO);
     }
     @PostMapping("/create")
-    public CommonResult<Long> create(@Validated @RequestBody KnowledgeqaReqVO reqVO){
-        log.info("新增知识库：{}", reqVO);
-        return knowledgeqaService.create(reqVO);
+    public CommonResult<Long> create(@Validated @RequestBody KnowledgeqaCreateParam param){
+        log.info("新增知识库：{}", param);
+        return knowledgeqaService.create(param);
     }
     @PutMapping("/update")
-    public CommonResult<Long> update(@Validated @RequestBody KnowledgeqaReqVO reqVO){
-        log.info("更新知识库：{}", reqVO);
-        return knowledgeqaService.update(reqVO);
+    public CommonResult<Long> update(@Validated @RequestBody KnowledgeqaUpdateParam param){
+        log.info("更新知识库：{}", param);
+        return knowledgeqaService.update(param);
     }
     @DeleteMapping("/delete/{id}")
     public CommonResult<Boolean> delete(@PathVariable Long id){

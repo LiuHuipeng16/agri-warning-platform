@@ -16,6 +16,7 @@ import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIWarningSuggest
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO;
 import com.zhku.agriwarningplatform.module.ai.service.AIService;
 import com.zhku.agriwarningplatform.module.ai.service.dto.*;
+import com.zhku.agriwarningplatform.module.ai.support.KnowledgeVectorDocumentBuilder;
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
 import com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO;
 import com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO;
@@ -35,7 +36,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import java.util.concurrent.atomic.AtomicBoolean;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -44,6 +45,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Service
@@ -64,6 +66,7 @@ public class AIServiceImpl implements AIService {
     private final AIMapper aiMapper;
     private final ChatClient chatClient;
     private final SimpleVectorStore simpleVectorStore;
+    private final KnowledgeVectorDocumentBuilder knowledgeVectorDocumentBuilder;
 
     /**
      * 单机开发 / 答辩演示场景下足够使用
@@ -358,6 +361,7 @@ public class AIServiceImpl implements AIService {
 
         return emitter;
     }
+
     @Override
     public List<AIChatSessionItemDTO> getChatSessionList(Long userId) {
         try {
@@ -577,30 +581,7 @@ public class AIServiceImpl implements AIService {
 
             List<Document> documents = new ArrayList<>();
             for (LightweightKnowledgeBaseEnhancedQaDO qaDO : qaDOList) {
-                String cropName = getNullableString(aiMapper.getCropNameById(qaDO.getCropId()));
-                String pestName = getNullableString(aiMapper.getPestNameById(qaDO.getPestId()));
-                String symptoms = getNullableString(aiMapper.getPestSymptomsById(qaDO.getPestId()));
-
-                String content = """
-                        作物：%s
-                        病虫害：%s
-                        问题：%s
-                        症状：%s
-                        答案：%s
-                        """.formatted(
-                        cropName,
-                        pestName,
-                        getNullableString(qaDO.getQuestion()),
-                        symptoms,
-                        getNullableString(qaDO.getAnswer())
-                );
-
-                Document document = new Document(content, Map.of(
-                        "id", String.valueOf(qaDO.getId()),
-                        "cropId", String.valueOf(qaDO.getCropId() == null ? 0L : qaDO.getCropId()),
-                        "pestId", String.valueOf(qaDO.getPestId() == null ? 0L : qaDO.getPestId())
-                ));
-                documents.add(document);
+                documents.add(knowledgeVectorDocumentBuilder.buildKnowledgeDocument(qaDO));
             }
 
             simpleVectorStore.add(documents);

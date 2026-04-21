@@ -1,4 +1,4 @@
-- =========================================
+-- - =========================================
 -- 农业病虫害综合平台数据库初始化脚本
 -- 适用数据库：MySQL 8.0+
 -- 字符集：utf8mb4
@@ -230,6 +230,7 @@ CREATE TABLE `ai_chat_message` (
     `user_id` BIGINT NOT NULL COMMENT '用户ID',
     `role` VARCHAR(20) NOT NULL COMMENT '消息角色：user / assistant',
     `content` LONGTEXT NOT NULL COMMENT '消息内容',
+    `message_status` VARCHAR(20) NOT NULL DEFAULT 'COMPLETED' COMMENT '消息状态：STREAMING / COMPLETED / STOPPED / FAILED',
     `delete_flag` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '删除标记：0未删除，1已删除',
     `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
@@ -239,11 +240,14 @@ CREATE TABLE `ai_chat_message` (
     KEY `idx_ai_chat_message_user_id` (`user_id`),
     KEY `idx_ai_chat_message_chat_id_gmt_create` (`chat_id`, `gmt_create`),
     KEY `idx_ai_chat_message_delete_flag` (`delete_flag`),
+    KEY `idx_ai_chat_message_status` (`message_status`),
 
     CONSTRAINT `fk_ai_chat_message_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`),
     CONSTRAINT `chk_ai_chat_message_role` CHECK (`role` IN ('user', 'assistant')),
+    CONSTRAINT `chk_ai_chat_message_status` CHECK (`message_status` IN ('STREAMING', 'COMPLETED', 'STOPPED', 'FAILED')),
     CONSTRAINT `chk_ai_chat_message_delete_flag` CHECK (`delete_flag` IN (0, 1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='AI聊天消息表（悬浮助手与独立AI共用）';
+
 
 -- =========================================
 -- 4.10 ai_chat_session（AI会话记录表）
@@ -260,7 +264,6 @@ CREATE TABLE `ai_chat_session` (
     `gmt_create` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `gmt_modified` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
 
-    PRIMARY KEY (`chat_id`),
     KEY `idx_ai_chat_session_user_id` (`user_id`),
     KEY `idx_ai_chat_session_context_type_context_id` (`context_type`, `context_id`),
     KEY `idx_ai_chat_session_delete_flag` (`delete_flag`),
@@ -282,3 +285,116 @@ ADD UNIQUE KEY uk_warning_unique (
     warning_date,
     delete_flag
 );
+
+
+ALTER TABLE ai_chat_session
+ADD UNIQUE KEY uk_ai_chat_session_user_chat (user_id, chat_id, delete_flag);
+
+
+INSERT INTO crop (id,name,category,intro,description,image_url,delete_flag)
+VALUES
+(1001,'番茄','蔬菜','常见经济作物','番茄是一种常见蔬菜','',0),
+(1002,'水稻','粮食','重要粮食作物','水稻是我国主要粮食作物','',0),
+(1003,'黄瓜','蔬菜','温室作物','黄瓜常见温室种植','',0),
+(1004,'测试删除作物','测试','用于删除测试','测试用','',0);
+
+INSERT INTO pest
+(id,name,type,description,symptoms,cause,prevention,risk_level,season,delete_flag)
+VALUES
+(2001,'番茄灰霉病','病害','常见真菌病害','果实腐烂','湿度高','加强通风','高','春',0),
+
+(2002,'水稻纹枯病','病害','水稻常见病害','叶片枯萎','高温高湿','合理密植','中','夏',0),
+
+(2003,'黄瓜蚜虫','虫害','蚜虫危害','叶片卷曲','虫害侵染','及时防治','低','夏',0),
+
+(2004,'测试删除病虫害','病害','删除测试','测试','测试','测试','低','春',0);
+
+
+INSERT INTO crop_pest_rel
+(crop_id,pest_id,delete_flag)
+VALUES
+(1001,2001,0),
+(1002,2002,0),
+(1003,2003,0);
+
+INSERT INTO lightweight_knowledge_base_enhanced_qa
+(id,question,answer,crop_id,pest_id,delete_flag)
+VALUES
+(7001,'番茄灰霉病如何防治','保持通风降低湿度',1001,2001,0),
+
+(7002,'水稻纹枯病怎么办','合理密植并喷药',1002,2002,0);
+
+INSERT INTO prewarning_rules
+(id,rule_name,crop_id,pest_id,
+min_temp,max_temp,
+min_humidity,max_humidity,
+min_precipitation,max_precipitation,
+min_wind_speed,max_wind_speed,
+risk_level,suggestion,rule_status,delete_flag)
+VALUES
+(5001,
+'番茄灰霉病今日预警',
+1001,
+2001,
+22,31,
+80,90,
+0,5,
+5,15,
+'高',
+'湿度偏高且有降雨，建议注意控湿通风',
+'ENABLED',
+0);
+
+
+INSERT INTO prewarning_rules
+(id,rule_name,crop_id,pest_id,
+min_temp,max_temp,
+min_humidity,max_humidity,
+min_precipitation,max_precipitation,
+min_wind_speed,max_wind_speed,
+risk_level,suggestion,rule_status,delete_flag)
+VALUES
+(5002,
+'番茄灰霉病强降雨预警',
+1001,
+2001,
+20,27,
+85,95,
+5,15,
+10,20,
+'高',
+'持续降雨环境适合灰霉病发生',
+'ENABLED',
+0);
+
+
+INSERT INTO prewarning_rules
+(id,rule_name,crop_id,pest_id,
+min_temp,max_temp,
+min_humidity,max_humidity,
+min_precipitation,max_precipitation,
+min_wind_speed,max_wind_speed,
+risk_level,suggestion,rule_status,delete_flag)
+VALUES
+(5003,
+'番茄轻度湿度预警',
+1001,
+2001,
+24,31,
+78,85,
+0,2,
+10,25,
+'中',
+'湿度较高注意观察病害',
+'ENABLED',
+0);
+
+
+INSERT INTO warning
+(id,title,crop_id,pest_id,rule_id,risk_level,warning_type,warning_date,delete_flag)
+VALUES
+(9001,'番茄灰霉病今日预警',1001,2001,5001,'高','TODAY','2026-04-20',0),
+
+(9002,'番茄灰霉病降雨预警',1001,2001,5002,'高','FORECAST','2026-04-23',0);
+
+

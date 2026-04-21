@@ -1,19 +1,17 @@
 server:
-  port: 8080
-  servlet:
-    context-path: /
+  address: 0.0.0.0
+
 
 spring:
   application:
     name: agri-warning-platform
 
-  profiles:
-    active: local
-
   servlet:
     multipart:
       max-file-size: 5MB
       max-request-size: 20MB
+  profiles:
+    active: local
 
   jackson:
     time-zone: Asia/Shanghai
@@ -21,9 +19,6 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/agri_pest_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: root
-    password: 123456
 
   data:
     redis:
@@ -32,30 +27,23 @@ spring:
       password:
       database: 0
       timeout: 5s
-  ai:
 
-      # ===============================
-      # DeepSeek 聊天模型（OpenAI兼容）
-      # ===============================
+  ai:
     openai:
       api-key: ${OPENAI_API_KEY}
       base-url: https://api.deepseek.com
-
       chat:
         options:
           model: deepseek-chat
           temperature: 0.7
 
-
-      # ===============================
-      # 阿里百炼 向量模型
-      # ===============================
     dashscope:
       api-key: ${DASHSCOPE_API_KEY}
       embedding:
         options:
           model: text-embedding-v4
           dimensions: 2048
+
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   configuration:
@@ -114,13 +102,9 @@ app:
     - /v3/api-docs/**
     - /webjars/**
 
-# ... existing code ...
-
 jwt:
   secret: agriWarningPlatformSecretKey2026ChangeThisInProduction
   expiration: 86400000
-
-# ... existing code ...
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml

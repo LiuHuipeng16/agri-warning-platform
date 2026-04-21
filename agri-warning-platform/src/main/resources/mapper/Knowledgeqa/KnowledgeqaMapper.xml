@@ -2,58 +2,83 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.zhku.agriwarningplatform.module.knowledgeqa.mapper.KnowledgeqaMapper">
-    <insert id="add" useGeneratedKeys="true" keyProperty="id">
+
+    <insert id="add" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         insert into lightweight_knowledge_base_enhanced_qa
         <trim prefix="(" suffix=")" suffixOverrides=",">
-                question,
-                answer,
-            <if test="cropId != null and cropId != ''">
+            question,
+            answer,
+            <if test="cropId != null">
                 crop_id,
             </if>
-            <if test="pestId != null and pestId != ''">
+            <if test="pestId != null">
                 pest_id,
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{question},
             #{answer},
-            <if test="cropId != null and cropId != ''">
+            <if test="cropId != null">
                 #{cropId},
             </if>
-            <if test="pestId != null and pestId != ''">
+            <if test="pestId != null">
                 #{pestId},
             </if>
         </trim>
     </insert>
-    <update id="update" useGeneratedKeys="true" keyProperty="id">
+
+    <update id="update">
         update lightweight_knowledge_base_enhanced_qa
         <set>
-                question = #{question},
-                answer = #{answer},
-            <if test="cropId != null and cropId != ''">
+            question = #{question},
+            answer = #{answer},
+            <if test="cropId != null">
                 crop_id = #{cropId},
             </if>
-            <if test="pestId != null and pestId != ''">
+            <if test="pestId != null">
                 pest_id = #{pestId},
             </if>
         </set>
-        where id = #{id} and delete_flag = 0
+        where id = #{id}
+        and delete_flag = 0
     </update>
 
-    <select id="page" resultType="com.zhku.agriwarningplatform.module.knowledgeqa.vo.KnowledgeqaRespVO">
-        select id, question, answer, crop_id, pest_id, gmt_create
+    <select id="page" resultType="com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaRespVO">
+        select
+        id,
+        question,
+        answer,
+        crop_id as cropId,
+        pest_id as pestId,
+        gmt_create as gmtCreate
         from lightweight_knowledge_base_enhanced_qa
         <where>
-            <if test="keyword != null and keyword !=''">
-                and question like concat('%' , #{keyword} , '%')
+            <if test="keyword != null and keyword != ''">
+                and question like concat('%', #{keyword}, '%')
             </if>
-            <if test="cropId != null and cropId != ''">
-                and crop_id =#{cropId}
+            <if test="cropId != null">
+                and crop_id = #{cropId}
             </if>
-            <if test="pestId != null and pestId !='' ">
+            <if test="pestId != null">
                 and pest_id = #{pestId}
             </if>
-                and delete_flag = 0
+            and delete_flag = 0
         </where>
     </select>
+
+    <select id="selectById"
+            resultType="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO">
+        select
+            id,
+            crop_id as cropId,
+            pest_id as pestId,
+            question,
+            answer,
+            delete_flag as deleteFlag,
+            gmt_create as gmtCreate,
+            gmt_modified as gmtModified
+        from lightweight_knowledge_base_enhanced_qa
+        where id = #{id}
+    </select>
+
 </mapper>
