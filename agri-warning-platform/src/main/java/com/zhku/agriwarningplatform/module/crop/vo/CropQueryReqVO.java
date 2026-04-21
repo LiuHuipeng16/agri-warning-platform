@@ -24,7 +24,6 @@ public class CropQueryReqVO extends PageParam {
      * 作物名称关键词（选填）
      * 示例：小麦
      */
-    @NotBlank(message = "作物名称不能为空")
     @Size(max = 50, message = "作物名称长度不能超过50个字符")
     private String name;
 
@@ -32,7 +31,6 @@ public class CropQueryReqVO extends PageParam {
      * 作物分类（选填）
      * 示例：粮食作物
      */
-    @NotBlank(message = "作物分类不能为空")
     @Size(max = 20, message = "作物分类长度不能超过20个字符")
     private String category;
     /**
