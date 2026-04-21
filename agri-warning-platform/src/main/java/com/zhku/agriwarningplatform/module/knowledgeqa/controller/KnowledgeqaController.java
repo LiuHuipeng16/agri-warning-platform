@@ -5,7 +5,7 @@ import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaCreateParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaUpdateParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.service.KnowledgeqaService;
-import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaReqVO;
+import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaReqParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaRespVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class KnowledgeqaController {
     private final KnowledgeqaService knowledgeqaService;
     @GetMapping("/page")
-    public PageResult<KnowledgeqaRespVO> page(@Validated KnowledgeqaReqVO reqVO){
+    public PageResult<KnowledgeqaRespVO> page(@Validated KnowledgeqaReqParam reqVO){
         log.info("分页查询：{}", reqVO);
 
         return knowledgeqaService.page(reqVO);
@@ -37,7 +37,7 @@ public class KnowledgeqaController {
         return knowledgeqaService.create(param);
     }
     @PutMapping("/update")
-    public CommonResult<Long> update(@Validated @RequestBody KnowledgeqaUpdateParam param){
+    public CommonResult<Boolean> update(@Validated @RequestBody KnowledgeqaUpdateParam param){
         log.info("更新知识库：{}", param);
         return knowledgeqaService.update(param);
     }

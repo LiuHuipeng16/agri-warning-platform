@@ -2,8 +2,6 @@ package com.zhku.agriwarningplatform.module.auth.mapper;
 
 import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
 import com.zhku.agriwarningplatform.module.auth.vo.CreateUserResp;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginReqVO;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginRespVO;
 import org.apache.ibatis.annotations.*;
 
 @Mapper

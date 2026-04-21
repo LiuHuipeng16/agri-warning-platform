@@ -5,6 +5,9 @@ import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.common.util.AliyunOSSOperator;
+import com.zhku.agriwarningplatform.module.crop.param.CropCreateParam;
+import com.zhku.agriwarningplatform.module.crop.param.CropQueryReqParam;
+import com.zhku.agriwarningplatform.module.crop.param.CropUpdateParam;
 import com.zhku.agriwarningplatform.module.crop.service.CropService;
 import com.zhku.agriwarningplatform.module.crop.vo.*;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +16,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -33,9 +35,9 @@ public class CropController {
     private final AliyunOSSOperator aliyunOSSOperator;
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024;
     @GetMapping("/crops/page")
-    public PageResult<CropQueryRespVO> page(@Validated CropQueryReqVO cropQueryReqVO){
-        log.info("查询作物：{}", cropQueryReqVO);
-        return cropservice.pageQuery(cropQueryReqVO);
+    public PageResult<CropQueryRespVO> page(@Validated CropQueryReqParam cropQueryReqParam){
+        log.info("查询作物：{}", cropQueryReqParam);
+        return cropservice.pageQuery(cropQueryReqParam);
     }
     @GetMapping("/crops/detail/{id}")
     public CommonResult<DetailRespVO> detail(@Validated @PathVariable Long id){
@@ -43,14 +45,14 @@ public class CropController {
         return CommonResult.success(cropservice.detail(id));
     }
     @PostMapping("/crops/create")
-    public CommonResult<Long> create(@Validated @RequestBody CropQueryReqVO cropQueryReqVO){
-        log.info("创建作物：{}", cropQueryReqVO);
-        return cropservice.create(cropQueryReqVO);
+    public CommonResult<Long> create(@Validated @RequestBody CropCreateParam cropQueryReqParam){
+        log.info("创建作物：{}", cropQueryReqParam);
+        return cropservice.create(cropQueryReqParam);
     }
     @PutMapping("/crops/update")
-    public CommonResult<Boolean> update(@Validated @RequestBody CropQueryReqVO cropQueryReqVO){
-        log.info("更新作物：{}", cropQueryReqVO.getId());
-        return CommonResult.success(cropservice.update(cropQueryReqVO));
+    public CommonResult<Boolean> update(@Validated @RequestBody CropUpdateParam cropQueryReqParam){
+        log.info("更新作物：{}", cropQueryReqParam.getId());
+        return CommonResult.success(cropservice.update(cropQueryReqParam));
     }
     @DeleteMapping("/crops/delete/{id}")
     public CommonResult<Boolean> delete(@PathVariable Long id){

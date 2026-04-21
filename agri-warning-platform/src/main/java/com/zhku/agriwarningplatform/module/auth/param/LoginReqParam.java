@@ -1,4 +1,4 @@
-package com.zhku.agriwarningplatform.module.auth.vo;
+package com.zhku.agriwarningplatform.module.auth.param;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginReqVO {
+public class LoginReqParam {
     /**
      * 用户名
      */

@@ -17,6 +17,7 @@ public class KnowledgeqaUpdateParam {
     /**
      * 主键
      */
+    @NotBlank(message = "主键不能为空")
     @Min(value = 1, message = "主键ID必须大于0")
     private Long id;
 

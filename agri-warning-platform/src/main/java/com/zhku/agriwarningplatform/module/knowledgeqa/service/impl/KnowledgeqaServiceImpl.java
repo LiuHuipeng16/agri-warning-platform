@@ -10,7 +10,7 @@ import com.zhku.agriwarningplatform.module.ai.mapper.AIMapper;
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaCreateParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaUpdateParam;
-import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaReqVO;
+import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaReqParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaRespVO;
 import com.zhku.agriwarningplatform.module.knowledgeqa.mapper.KnowledgeqaMapper;
 import com.zhku.agriwarningplatform.module.knowledgeqa.service.KnowledgeqaService;
@@ -38,7 +38,7 @@ public class KnowledgeqaServiceImpl implements KnowledgeqaService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public PageResult<KnowledgeqaRespVO> page(@Validated KnowledgeqaReqVO reqVO) {
+    public PageResult<KnowledgeqaRespVO> page(@Validated KnowledgeqaReqParam reqVO) {
         if (reqVO.getPageNum() == null || reqVO.getPageSize() == null) {
             throw new ServiceException(KnowledgeqaCode.PAGE_PARAM_ERROR);
         }
@@ -81,7 +81,7 @@ public class KnowledgeqaServiceImpl implements KnowledgeqaService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CommonResult<Long> update(KnowledgeqaUpdateParam param) {
+    public CommonResult<Boolean> update(KnowledgeqaUpdateParam param) {
         validateUpdateParam(param);
 
         LightweightKnowledgeBaseEnhancedQaDO oldDO = knowledgeqaMapper.selectById(param.getId());
@@ -111,7 +111,7 @@ public class KnowledgeqaServiceImpl implements KnowledgeqaService {
             throw new ServiceException(KnowledgeqaCode.UPDATE_KNOWLEDGEQA_FAILED);
         }
 
-        return CommonResult.success(param.getId());
+        return CommonResult.success(true);
     }
 
     @Override

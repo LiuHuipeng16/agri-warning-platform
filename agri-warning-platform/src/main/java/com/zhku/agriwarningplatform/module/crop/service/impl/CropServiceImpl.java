@@ -8,9 +8,11 @@ import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.module.crop.mapper.CropMapper;
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
+import com.zhku.agriwarningplatform.module.crop.param.CropCreateParam;
+import com.zhku.agriwarningplatform.module.crop.param.CropUpdateParam;
 import com.zhku.agriwarningplatform.module.crop.service.CropService;
 import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
+import com.zhku.agriwarningplatform.module.crop.param.CropQueryReqParam;
 import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
 import com.zhku.agriwarningplatform.module.crop.vo.DetailRespVO;
 import com.zhku.agriwarningplatform.module.pest.mapper.CropPestRelMapper;
@@ -34,14 +36,14 @@ public class CropServiceImpl implements CropService {
     private final CropPestRelMapper cropPestRelMapper;
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public PageResult<CropQueryRespVO> pageQuery(CropQueryReqVO cropQueryReqVO) {
-        if (cropQueryReqVO.getPageNum() == null || cropQueryReqVO.getPageSize() == null){
+    public PageResult<CropQueryRespVO> pageQuery(CropQueryReqParam cropQueryReqParam) {
+        if (cropQueryReqParam.getPageNum() == null || cropQueryReqParam.getPageSize() == null){
             throw new ServiceException(CropErrorCode.PAGE_PARAM_ERROR);
         }
                 Page<CropQueryRespVO> page = PageHelper.startPage(
-                        cropQueryReqVO.getPageNum(),
-                        cropQueryReqVO.getPageSize());
-        cropMapper.selectList(cropQueryReqVO);
+                        cropQueryReqParam.getPageNum(),
+                        cropQueryReqParam.getPageSize());
+        cropMapper.selectList(cropQueryReqParam);
         PageResult<CropQueryRespVO> pageResult = new PageResult<>();
         pageResult.setTotal((int)page.getTotal());
         pageResult.setRecords(page.getResult());
@@ -66,15 +68,15 @@ public class CropServiceImpl implements CropService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CommonResult<Long> create(CropQueryReqVO cropQueryReqVO) {
-        if (cropQueryReqVO.getName() == null || cropQueryReqVO.getName().isEmpty()){
+    public CommonResult<Long> create(CropCreateParam cropQueryReqParam) {
+        if (cropQueryReqParam.getName() == null || cropQueryReqParam.getName().isEmpty()){
             throw new ServiceException(CropErrorCode.CROP_NAME_EMPTY);
         }
-        if (cropQueryReqVO.getCategory() == null || cropQueryReqVO.getCategory().isEmpty()){
+        if (cropQueryReqParam.getCategory() == null || cropQueryReqParam.getCategory().isEmpty()){
             throw new ServiceException(CropErrorCode.CROP_CATEGORY_EMPTY);
         }
         CropQueryRespVO cropQueryRespVO = new CropQueryRespVO();
-        BeanUtils.copyProperties(cropQueryReqVO,cropQueryRespVO);
+        BeanUtils.copyProperties(cropQueryReqParam,cropQueryRespVO);
         if (cropMapper.selectByName(cropQueryRespVO.getName()) != null){
             throw new ServiceException(CropErrorCode.CROP_NAME_EXISTS);
         }
@@ -88,27 +90,27 @@ public class CropServiceImpl implements CropService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean update(CropQueryReqVO cropQueryReqVO) {
-        if (cropQueryReqVO.getId() == null){
+    public Boolean update(CropUpdateParam cropQueryReqParam) {
+        if (cropQueryReqParam.getId() == null){
             throw new ServiceException(CropErrorCode.CROP_ID_EMPTY);
         }
-        if (cropQueryReqVO.getId() <= 0){
+        if (cropQueryReqParam.getId() <= 0){
             throw new ServiceException(CropErrorCode.CROP_ID_INVALID);
         }
-        if (!StringUtils.hasText(cropQueryReqVO.getName())) {
+        if (!StringUtils.hasText(cropQueryReqParam.getName())) {
             throw new ServiceException(CropErrorCode.CROP_NAME_EMPTY);
         }
-        if (!StringUtils.hasText(cropQueryReqVO.getCategory())) {
+        if (!StringUtils.hasText(cropQueryReqParam.getCategory())) {
             throw new ServiceException(CropErrorCode.CROP_CATEGORY_EMPTY);
         }
-        CropQueryRespVO cropQueryRespVO = cropMapper.selectById(cropQueryReqVO.getId());
+        CropQueryRespVO cropQueryRespVO = cropMapper.selectById(cropQueryReqParam.getId());
         if (cropQueryRespVO == null){
             throw new ServiceException(CropErrorCode.CROP_NOT_EXIST);
         }
-        if (cropMapper.selectByName(cropQueryReqVO.getName()) != null && !cropQueryRespVO.getName().equals(cropQueryReqVO.getName())){
+        if (cropMapper.selectByName(cropQueryReqParam.getName()) != null && !cropQueryRespVO.getName().equals(cropQueryReqParam.getName())){
             throw new ServiceException(CropErrorCode.CROP_NAME_EXISTS);
         }
-        int rows = cropMapper.update(cropQueryReqVO);
+        int rows = cropMapper.update(cropQueryReqParam);
         if (rows != 1){
             throw new ServiceException(CropErrorCode.UPDATE_CROP_FAILED);
         }

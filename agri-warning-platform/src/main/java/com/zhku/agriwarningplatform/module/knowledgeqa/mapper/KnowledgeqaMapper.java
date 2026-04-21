@@ -3,7 +3,7 @@ package com.zhku.agriwarningplatform.module.knowledgeqa.mapper;
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaCreateParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaUpdateParam;
-import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaReqVO;
+import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaReqParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaRespVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Update;
@@ -13,7 +13,7 @@ import java.util.List;
 @Mapper
 public interface KnowledgeqaMapper {
 
-    List<KnowledgeqaRespVO> page(KnowledgeqaReqVO reqVO);
+    List<KnowledgeqaRespVO> page(KnowledgeqaReqParam reqVO);
 
     int add(KnowledgeqaCreateParam reqVO);
 

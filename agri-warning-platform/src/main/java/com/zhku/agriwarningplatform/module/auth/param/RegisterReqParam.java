@@ -1,4 +1,4 @@
-package com.zhku.agriwarningplatform.module.auth.vo;
+package com.zhku.agriwarningplatform.module.auth.param;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -8,7 +8,7 @@ import lombok.Data;
  * 注册请求VO
  */
 @Data
-public class RegisterReqVO {
+public class RegisterReqParam {
     /**
      * 用户名
      */
