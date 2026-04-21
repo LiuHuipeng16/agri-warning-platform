@@ -12,9 +12,9 @@ public interface KnowledgeqaCode {
     ErrorCode ID_NOT_NULL =
             new ErrorCode(400, "ID_NOT_NULL", "id不能为空");
     ErrorCode UPDATE_KNOWLEDGEQA_FAILED =
-            new ErrorCode(500, "UPDATE_KNOWLEDGEQA_FAILED", "更新知识问答失败");
+            new ErrorCode(404, "UPDATE_KNOWLEDGEQA_FAILED", "更新知识问答失败");
     ErrorCode DELETE_KNOWLEDGEQA_FAILED =
-            new ErrorCode(500, "DELETE_KNOWLEDGEQA_FAILED", "删除知识问答失败");
+            new ErrorCode(404, "DELETE_KNOWLEDGEQA_FAILED", "删除知识问答失败");
     ErrorCode PAGE_NOT_FOUND =
             new ErrorCode(404, "PAGE_NOT_FOUND", "页面不存在");
 }
