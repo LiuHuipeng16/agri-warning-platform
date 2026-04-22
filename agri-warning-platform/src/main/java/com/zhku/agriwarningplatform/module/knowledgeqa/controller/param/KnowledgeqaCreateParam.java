@@ -14,13 +14,6 @@ import lombok.Data;
  */
 @Data
 public class KnowledgeqaCreateParam {
-
-    /**
-     * 主键
-     */
-    @Min(value = 1, message = "主键ID必须大于0")
-    private Long id;
-
     /**
      * 问题
      */

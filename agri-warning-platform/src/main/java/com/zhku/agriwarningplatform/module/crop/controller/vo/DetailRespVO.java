@@ -8,7 +8,6 @@ import lombok.Data;
  * 对应接口：获取作物详情
  */
 @Data
-@AllArgsConstructor
 public class DetailRespVO {
     /**
      * 作物ID (long)

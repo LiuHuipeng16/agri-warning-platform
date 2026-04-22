@@ -3,6 +3,8 @@ package com.zhku.agriwarningplatform.module.auth.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
 import com.zhku.agriwarningplatform.module.auth.controller.vo.CreateUserResp;
+import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
+import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
 import org.apache.ibatis.annotations.*;
 
 @Mapper
@@ -24,5 +26,5 @@ public interface AuthMapper extends BaseMapper<UserDO> {
     @Select("select count(*) from user where ")
     Integer count();
 
-
+    AdminRegisterDO adminselectByUsername(@Param("username") String username);
 }

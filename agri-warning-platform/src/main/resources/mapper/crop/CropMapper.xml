@@ -24,7 +24,7 @@
         where id = #{id} and delete_flag = 0
     </update>
 
-    <select id="selectList" resultType="com.zhku.agriwarningplatform.module.crop.controller.vo.CropQueryRespVO">
+    <select id="selectList" resultType="com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropPageDO">
         select id, name, category, intro, image_url, gmt_create
         from crop
         <where>

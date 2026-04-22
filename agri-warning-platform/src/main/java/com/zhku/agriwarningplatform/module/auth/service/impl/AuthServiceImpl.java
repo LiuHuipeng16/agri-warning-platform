@@ -1,5 +1,4 @@
 package com.zhku.agriwarningplatform.module.auth.service.impl;
-import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhku.agriwarningplatform.common.enums.DeleteFlagEnum;
@@ -13,10 +12,15 @@ import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
 import com.zhku.agriwarningplatform.module.auth.controller.vo.*;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.AuthMapper;
+import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
+import com.zhku.agriwarningplatform.module.auth.param.CreateUserReqParam;
+import com.zhku.agriwarningplatform.module.auth.param.LoginReqParam;
+import com.zhku.agriwarningplatform.module.auth.param.RegisterReqParam;
+import com.zhku.agriwarningplatform.module.auth.param.UpdatePasswordReqParam;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthPageDTO;
-import jakarta.validation.constraints.NotBlank;
+import com.zhku.agriwarningplatform.module.auth.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,18 +39,18 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordUtils passwordUtils;
 
     @Transactional(rollbackFor = Exception.class)
-    public LoginRespVO login(LoginReqVO loginReqVO) {
-        if (!StringUtils.hasText(loginReqVO.getUsername())){
+    public LoginRespVO login(LoginReqParam loginReqParam) {
+        if (!StringUtils.hasText(loginReqParam.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
-        if (!StringUtils.hasText(loginReqVO.getPassword())){
+        if (!StringUtils.hasText(loginReqParam.getPassword())){
             throw new ServiceException(AuthErrorCode.PASSWORD_EMPTY);
         }
-        UserDO userInfo= authMapper.selectByUsername(loginReqVO.getUsername());
+        UserDO userInfo= authMapper.selectByUsername(loginReqParam.getUsername());
         if (userInfo == null){
             throw new ServiceException(AuthErrorCode.USER_NOT_EXIST);
         }
-        if (!passwordUtils.matches(loginReqVO.getPassword(), userInfo.getPassword())){
+        if (!passwordUtils.matches(loginReqParam.getPassword(), userInfo.getPassword())){
             throw new ServiceException(AuthErrorCode.PASSWORD_ERROR);
         }
 
@@ -81,11 +85,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updatePassword(UpdatePasswordReqVO updatePasswordReqVO, String token) {
-        if (!StringUtils.hasText(updatePasswordReqVO.getNewPassword())){
+    public void updatePassword(UpdatePasswordReqParam updatePasswordReqParam, String token) {
+        if (!StringUtils.hasText(updatePasswordReqParam.getNewPassword())){
             throw new ServiceException(AuthErrorCode.NEW_PASSWORD_EMPTY);
         }
-        if (!StringUtils.hasText(updatePasswordReqVO.getOldPassword())){
+        if (!StringUtils.hasText(updatePasswordReqParam.getOldPassword())){
             throw new ServiceException(AuthErrorCode.OLD_PASSWORD_EMPTY);
         }
         String username = JwtUtils.getUsernameFromToken(token);
@@ -96,10 +100,10 @@ public class AuthServiceImpl implements AuthService {
         if (userInfo== null){
             throw new ServiceException(AuthErrorCode.USER_NOT_EXIST);
         }
-        if (!passwordUtils.matches(updatePasswordReqVO.getOldPassword(), userInfo.getPassword())){
+        if (!passwordUtils.matches(updatePasswordReqParam.getOldPassword(), userInfo.getPassword())){
             throw new ServiceException(AuthErrorCode.PASSWORD_ERROR);
         }
-        int rows = authMapper.updatePassword(username, passwordUtils.encode(updatePasswordReqVO.getNewPassword()));
+        int rows = authMapper.updatePassword(username, passwordUtils.encode(updatePasswordReqParam.getNewPassword()));
         if (rows != 1){
             throw new ServiceException(AuthErrorCode.UPDATE_PASSWORD_FAILED);
         }
@@ -107,31 +111,31 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RegisterRespVO register(RegisterReqVO registerReqVO) {
-        if (!StringUtils.hasText(registerReqVO.getUsername())){
+    public RegisterRespVO register(RegisterReqParam registerReqParam) {
+        if (!StringUtils.hasText(registerReqParam.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
-        if (!StringUtils.hasText(registerReqVO.getPassword())){
+        if (!StringUtils.hasText(registerReqParam.getPassword())){
             throw new ServiceException(AuthErrorCode.PASSWORD_EMPTY);
         }
-        if (!StringUtils.hasText(registerReqVO.getConfirmPassword())){
+        if (!StringUtils.hasText(registerReqParam.getConfirmPassword())){
             throw new ServiceException(AuthErrorCode.CONFIRM_PASSWORD_EMPTY);
         }
-        if (!registerReqVO.getPassword().equals(registerReqVO.getConfirmPassword())){
+        if (!registerReqParam.getPassword().equals(registerReqParam.getConfirmPassword())){
             throw new ServiceException(AuthErrorCode.PASSWORD_NOT_MATCH);
         }
-        if (authMapper.selectByUsername(registerReqVO.getUsername()) != null){
+        if (authMapper.selectByUsername(registerReqParam.getUsername()) != null){
             throw new ServiceException(AuthErrorCode.USERNAME_EXISTS);
         }
-        authMapper.addUser(registerReqVO.getUsername(), passwordUtils.encode(registerReqVO.getPassword()), "USER");
-        UserDO userdo = authMapper.selectByUsername(registerReqVO.getUsername());
+        authMapper.addUser(registerReqParam.getUsername(), passwordUtils.encode(registerReqParam.getPassword()), "USER");
+        UserDO userdo = authMapper.selectByUsername(registerReqParam.getUsername());
 
         return new RegisterRespVO(userdo.getId(), userdo.getUsername(), userdo.getRole());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CreateUserResp adminRegister(CreateUserReq registerReqVO) {
+    public CreateUserRespVO adminRegister(CreateUserReqParam registerReqVO) {
         if (!StringUtils.hasText(registerReqVO.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
@@ -149,7 +153,9 @@ public class AuthServiceImpl implements AuthService {
             throw new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
         }
         authMapper.addUser(registerReqVO.getUsername(), passwordUtils.encode(registerReqVO.getPassword()), registerReqVO.getRole());
-        return authMapper.adminselectByUsername(registerReqVO.getUsername());
+
+        AdminRegisterDO adminRegisterDO = authMapper.adminselectByUsername(registerReqVO.getUsername());
+        return new CreateUserRespVO(adminRegisterDO.getId(), adminRegisterDO.getUsername(), adminRegisterDO.getRole());
     }
 
     @Override

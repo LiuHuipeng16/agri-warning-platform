@@ -1,37 +1,31 @@
-package com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo;
+package com.zhku.agriwarningplatform.module.knowledgeqa.mapper.dataobject;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class KnowledgeqaRespVO {
-
+public class KnowledgeqaPageDO {
     /**
-     * 主键
+     * id
      */
     private Long id;
-
     /**
      * 问题
      */
     private String question;
-
     /**
      * 回答
      */
     private String answer;
-
     /**
-     * 农作物id
+     * 作物id
      */
     private Long cropId;
-
     /**
      * 病害id
      */
     private Long pestId;
-
     /**
      * 创建时间
      */
