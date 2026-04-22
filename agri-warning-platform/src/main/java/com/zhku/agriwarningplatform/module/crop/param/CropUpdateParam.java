@@ -1,6 +1,7 @@
 package com.zhku.agriwarningplatform.module.crop.param;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -8,7 +9,7 @@ public class CropUpdateParam {
     /**
      * 作物id
      */
-    @NotBlank(message = "作物id不能为空")
+    @NotNull(message = "作物id不能为空")
     private Long id;
     /**
      * 作物名称

@@ -1,4 +1,5 @@
 package com.zhku.agriwarningplatform.module.auth.param;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;

@@ -1,6 +1,6 @@
 package com.zhku.agriwarningplatform.module.auth.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.zhku.agriwarningplatform.module.auth.controller.vo.AuthUpdateReqVO;
+import com.zhku.agriwarningplatform.module.auth.param.AuthUpdateReqParam;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
 import org.apache.ibatis.annotations.*;
@@ -27,7 +27,7 @@ public interface AuthMapper extends BaseMapper<UserDO> {
     Integer count();
 
     @Update("update user set username = #{username}, role = #{role} where id = #{id} and delete_flag = 0")
-    int updateUsernameAndRoleById(AuthUpdateReqVO authUpdateReqVO);
+    int updateUsernameAndRoleById(AuthUpdateReqParam authUpdateReqParam);
 
     @Delete("delete from user where id = #{id} and delete_flag = 0")
     int deleteUserById(Long id);

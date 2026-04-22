@@ -9,17 +9,16 @@ import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.common.util.JwtUtils;
 import com.zhku.agriwarningplatform.common.util.PasswordUtils;
 import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
-import com.zhku.agriwarningplatform.module.auth.controller.vo.*;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.AuthMapper;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
-import com.zhku.agriwarningplatform.module.auth.param.CreateUserReqParam;
-import com.zhku.agriwarningplatform.module.auth.param.LoginReqParam;
-import com.zhku.agriwarningplatform.module.auth.param.RegisterReqParam;
-import com.zhku.agriwarningplatform.module.auth.param.UpdatePasswordReqParam;
+import com.zhku.agriwarningplatform.module.auth.param.*;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthPageDTO;
+import com.zhku.agriwarningplatform.module.auth.vo.CreateUserRespVO;
+import com.zhku.agriwarningplatform.module.auth.vo.LoginRespVO;
+import com.zhku.agriwarningplatform.module.auth.vo.RegisterRespVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -197,8 +196,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Boolean update(AuthUpdateReqVO authUpdateReqVO) {
-        int rows =authMapper.updateUsernameAndRoleById(authUpdateReqVO);
+    public Boolean update(AuthUpdateReqParam authUpdateReqParam) {
+        int rows =authMapper.updateUsernameAndRoleById(authUpdateReqParam);
         if (rows != 1){
             throw new ServiceException(AuthErrorCode.UPDATE_USER_FAILED);
         }

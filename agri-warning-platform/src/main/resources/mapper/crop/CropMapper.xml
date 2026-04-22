@@ -24,20 +24,23 @@
         where id = #{id} and delete_flag = 0
     </update>
 
-    <select id="selectList" resultType="com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropPageDO">
+    <select id="selectList"
+            resultType="com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropPageDO">
         select id, name, category, intro, image_url, gmt_create
         from crop
         <where>
-        <if test="name != null and name != ''">
-            and name like concat('%',#{name},'%')
-        </if>
-        <if test="category != null and category != ''">
-            and category like concat('%',#{category},'%')
-        </if>
+            <if test="name != null and name.trim() != ''">
+                and name like concat('%', #{name}, '%')
+            </if>
+
+            <if test="category != null and category.trim() != ''">
+                and category like concat('%', #{category}, '%')
+            </if>
+            and delete_flag = 0
         </where>
         order by gmt_modified desc
     </select>
-    <select id="selectById" resultType="com.zhku.agriwarningplatform.module.crop.controller.vo.CropQueryRespVO">
+    <select id="selectById" resultType="com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO">
         SELECT
             id,
             name,
@@ -63,7 +66,7 @@
             delete_flag,
             gmt_create,
             gmt_modified
-        FROM agri_pest_platform.crop
+        FROM crop
         WHERE id = #{id}
           AND delete_flag = 0
     </select>

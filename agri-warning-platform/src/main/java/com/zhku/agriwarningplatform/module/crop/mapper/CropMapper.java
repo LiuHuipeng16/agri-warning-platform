@@ -5,8 +5,9 @@ import com.zhku.agriwarningplatform.module.crop.controller.vo.CropQueryRespVO;
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDetailDO;
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropPageDO;
-import com.zhku.agriwarningplatform.module.crop.param.CropQueryReqParam;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropUpdateDO;
 import com.zhku.agriwarningplatform.module.crop.param.CropUpdateParam;
+import com.zhku.agriwarningplatform.module.crop.param.CropQueryReqParam;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

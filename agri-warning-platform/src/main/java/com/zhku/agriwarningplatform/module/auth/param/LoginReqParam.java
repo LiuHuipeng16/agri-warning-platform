@@ -1,6 +1,4 @@
 package com.zhku.agriwarningplatform.module.auth.param;
-
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

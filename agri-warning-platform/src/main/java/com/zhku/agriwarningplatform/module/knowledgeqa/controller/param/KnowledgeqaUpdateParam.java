@@ -2,6 +2,7 @@ package com.zhku.agriwarningplatform.module.knowledgeqa.controller.param;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -17,7 +18,7 @@ public class KnowledgeqaUpdateParam {
     /**
      * 主键
      */
-    @NotBlank(message = "主键不能为空")
+    @NotNull(message = "主键不能为空")
     @Min(value = 1, message = "主键ID必须大于0")
     private Long id;
 
@@ -46,6 +47,5 @@ public class KnowledgeqaUpdateParam {
      */
     @Min(value = 1, message = "病虫害ID必须大于0")
     private Long pestId;
-
 
 }
