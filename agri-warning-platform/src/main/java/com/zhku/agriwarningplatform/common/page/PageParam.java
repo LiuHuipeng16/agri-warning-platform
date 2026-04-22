@@ -1,5 +1,6 @@
 package com.zhku.agriwarningplatform.common.page;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class PageParam {
     private Integer pageNum;
 
     @NotNull(message = "每页条数不能为空")
+    @Max(value = 100, message = "每页条数最大不能超过100")
     @Min(value = 1, message = "每页条数最小值为1")
     private Integer pageSize;
 

@@ -1,10 +1,10 @@
 package com.zhku.agriwarningplatform.module.crop.mapper;
 
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
-import com.zhku.agriwarningplatform.module.crop.vo.DetailRespVO;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.CropOptionVO;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.CropQueryReqVO;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.CropQueryRespVO;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.DetailRespVO;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

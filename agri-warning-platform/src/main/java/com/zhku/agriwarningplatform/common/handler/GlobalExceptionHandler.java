@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.reactive.resource.NoResourceFoundException;
 
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -55,6 +56,12 @@ public class GlobalExceptionHandler {
     public CommonResult<?> handleServiceException(ServiceException e) {
         log.error("ServiceException:{},{},{}", e.getCode(), e.getInternalCode(), e.getMessage(), e);
         return CommonResult.error(e.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public CommonResult<Void> handleNoResource(NoResourceFoundException e) {
+        log.error("接口不存在:", e);
+        return CommonResult.error(404, "接口不存在");
     }
 
     /**
@@ -203,7 +210,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseBody
     public CommonResult<Void> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-        log.error("数据库字段约束异常", e);
+        log.error("数据库字段约束异常:", e);
 
         String message = extractDataIntegrityViolationMessage(e);
         return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), message);

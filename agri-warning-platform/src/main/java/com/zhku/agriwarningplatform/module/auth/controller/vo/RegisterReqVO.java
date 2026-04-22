@@ -1,4 +1,4 @@
-package com.zhku.agriwarningplatform.module.auth.vo;
+package com.zhku.agriwarningplatform.module.auth.controller.vo;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

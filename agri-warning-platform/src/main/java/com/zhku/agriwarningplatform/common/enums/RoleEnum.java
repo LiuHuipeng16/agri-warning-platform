@@ -17,4 +17,12 @@ import lombok.AllArgsConstructor;
 public enum RoleEnum {
     ADMIN("管理员"),USER("普通用户");
     private String message;
+    public static boolean isValid(String message){
+        for(RoleEnum roleEnum:RoleEnum.values()){
+            if(roleEnum.name().equals(message)){
+                return true;
+            }
+        }
+        return false;
+    }
 }

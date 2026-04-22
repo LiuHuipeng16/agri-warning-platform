@@ -2,10 +2,10 @@ package com.zhku.agriwarningplatform.module.crop.service;
 
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
-import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropQueryReqVO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
-import com.zhku.agriwarningplatform.module.crop.vo.DetailRespVO;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.CropOptionVO;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.CropQueryReqVO;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.CropQueryRespVO;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.DetailRespVO;
 
 import java.util.List;
 

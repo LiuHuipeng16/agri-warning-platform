@@ -1,7 +1,7 @@
 package com.zhku.agriwarningplatform.common.util;
 
 import com.aliyun.oss.*;
-import com.zhku.agriwarningplatform.module.crop.vo.AliOssProperties;
+import com.zhku.agriwarningplatform.module.crop.controller.vo.AliOssProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;

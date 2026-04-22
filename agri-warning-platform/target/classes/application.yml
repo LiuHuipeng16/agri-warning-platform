@@ -10,8 +10,7 @@ spring:
     multipart:
       max-file-size: 5MB
       max-request-size: 20MB
-  profiles:
-    active: local
+
 
   jackson:
     time-zone: Asia/Shanghai

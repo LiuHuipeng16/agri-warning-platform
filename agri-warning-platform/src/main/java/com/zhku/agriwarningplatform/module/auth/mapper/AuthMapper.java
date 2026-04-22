@@ -1,13 +1,12 @@
 package com.zhku.agriwarningplatform.module.auth.mapper;
 
-import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
-import com.zhku.agriwarningplatform.module.auth.vo.CreateUserResp;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginReqVO;
-import com.zhku.agriwarningplatform.module.auth.vo.LoginRespVO;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
+import com.zhku.agriwarningplatform.module.auth.controller.vo.CreateUserResp;
 import org.apache.ibatis.annotations.*;
 
 @Mapper
-public interface AuthMapper {
+public interface AuthMapper extends BaseMapper<UserDO> {
     @Select("select id, username, password, role, delete_flag as deleteFlag, gmt_create as gmtCreate, gmt_modified as gmtModified " +
             "from user where username = #{username} and delete_flag = 0")
     UserDO selectByUsername(@Param("username") String username);
@@ -21,4 +20,9 @@ public interface AuthMapper {
 
     @Select("select id, username, role from user where username = #{username} and delete_flag = 0")
     CreateUserResp adminselectByUsername(@Param("username") String username);
+
+    @Select("select count(*) from user where ")
+    Integer count();
+
+
 }

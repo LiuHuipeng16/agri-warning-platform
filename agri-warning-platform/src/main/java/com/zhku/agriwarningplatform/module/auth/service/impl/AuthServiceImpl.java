@@ -1,18 +1,30 @@
 package com.zhku.agriwarningplatform.module.auth.service.impl;
+import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zhku.agriwarningplatform.common.enums.DeleteFlagEnum;
+import com.zhku.agriwarningplatform.common.enums.RoleEnum;
 import com.zhku.agriwarningplatform.common.errorcode.AuthErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ServiceException;
+import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.common.util.JwtUtils;
 import com.zhku.agriwarningplatform.common.util.PasswordUtils;
-import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
+import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
+import com.zhku.agriwarningplatform.module.auth.controller.vo.*;
+import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.AuthMapper;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
-import com.zhku.agriwarningplatform.module.auth.vo.*;
-import lombok.Data;
+import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
+import com.zhku.agriwarningplatform.module.auth.service.dto.AuthPageDTO;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -138,5 +150,82 @@ public class AuthServiceImpl implements AuthService {
         }
         authMapper.addUser(registerReqVO.getUsername(), passwordUtils.encode(registerReqVO.getPassword()), registerReqVO.getRole());
         return authMapper.adminselectByUsername(registerReqVO.getUsername());
+    }
+
+    @Override
+    public PageResult<AuthPageDTO> page(AuthPageParam param) {
+        //1.校验参数是否正常
+        checkPageListParam(param);
+        //2.调用mapper层
+        LambdaQueryWrapper<UserDO> queryWrapper = new LambdaQueryWrapper<UserDO>();
+        if (StringUtils.hasText(param.getUsername())) {
+            queryWrapper.like(UserDO::getUsername,param.getUsername());
+        }
+        if(StringUtils.hasText(param.getRole())){
+            queryWrapper.eq(UserDO::getRole,param.getRole());
+        }
+        queryWrapper.orderByDesc(UserDO::getGmtCreate).orderByDesc(UserDO::getId);;
+        Page<UserDO> page=new Page(param.getPageNum(),param.getPageSize());
+        queryWrapper.eq(UserDO::getDeleteFlag, DeleteFlagEnum.NOT_DELETED.getCode());
+        Page<UserDO> userDOPage=authMapper.selectPage(page,queryWrapper);
+        List<UserDO> listDO=userDOPage.getRecords();
+        List<AuthPageDTO> listDTO=convertToPageListDTO(listDO);
+        Long count=authMapper.selectCount(queryWrapper);
+        PageResult<AuthPageDTO> pageDTOPageResult=new PageResult<>();
+        pageDTOPageResult.setTotal(count.intValue());
+        pageDTOPageResult.setRecords(listDTO);
+        return pageDTOPageResult;
+    }
+
+    @Override
+    public AuthDetailDTO detail(Long id) {
+        LambdaQueryWrapper<UserDO> queryWrapper=new LambdaQueryWrapper();
+        queryWrapper.eq(UserDO::getDeleteFlag,
+                DeleteFlagEnum.NOT_DELETED.getCode())
+                .eq(UserDO::getId,id);
+        UserDO userDO=authMapper.selectOne(queryWrapper);
+        if(userDO==null){
+            throw new ServiceException(AuthErrorCode.USER_NOT_EXIST);
+        }
+        AuthDetailDTO authDetailDTO=convertToDetailDTO(userDO);
+        return authDetailDTO;
+    }
+
+
+
+    /**
+     * 私有方法-DO转DTO转换方法
+     */
+
+    private List<AuthPageDTO> convertToPageListDTO(List<UserDO> listDO) {
+        List<AuthPageDTO> listDTO=listDO.stream().map(userDO ->{
+            AuthPageDTO userDTO=new AuthPageDTO();
+            userDTO.setId(userDO.getId());
+            userDTO.setUsername(userDO.getUsername());
+            userDTO.setRole(userDO.getRole());
+            userDTO.setGmtCreate(userDO.getGmtCreate());
+            return userDTO;
+        }).collect(Collectors.toList());
+        return listDTO;
+    }
+
+    private AuthDetailDTO convertToDetailDTO(UserDO userDO) {
+        AuthDetailDTO authDetailDTO=new AuthDetailDTO();
+        authDetailDTO.setId(userDO.getId());
+        authDetailDTO.setUsername(userDO.getUsername());
+        authDetailDTO.setRole(userDO.getRole());
+        authDetailDTO.setGmtCreate(userDO.getGmtCreate());
+        authDetailDTO.setGmtModified(userDO.getGmtModified());
+        return authDetailDTO;
+    }
+
+    /**
+     * 私有方法-service层校验业务数据
+     */
+
+    private void checkPageListParam(AuthPageParam param) {
+        if(StringUtils.hasText(param.getRole())&&!RoleEnum.isValid(param.getRole())){
+            throw  new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
+        }
     }
 }

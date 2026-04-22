@@ -1,4 +1,4 @@
-package com.zhku.agriwarningplatform.module.auth.vo;
+package com.zhku.agriwarningplatform.module.auth.controller.vo;
 
 import lombok.Data;
 

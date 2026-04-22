@@ -1,4 +1,4 @@
-package com.zhku.agriwarningplatform.module.crop.vo;
+package com.zhku.agriwarningplatform.module.crop.controller.vo;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

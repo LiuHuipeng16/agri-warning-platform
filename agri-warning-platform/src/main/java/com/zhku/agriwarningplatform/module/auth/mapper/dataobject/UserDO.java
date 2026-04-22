@@ -1,10 +1,12 @@
-package com.zhku.agriwarningplatform.module.auth.domain;
+package com.zhku.agriwarningplatform.module.auth.mapper.dataobject;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
+@TableName("user")
 public class UserDO {
     private Long id;
     private String username;

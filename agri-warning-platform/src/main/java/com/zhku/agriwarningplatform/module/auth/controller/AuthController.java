@@ -1,15 +1,26 @@
 package com.zhku.agriwarningplatform.module.auth.controller;
+import java.time.LocalDateTime;
 
 import com.zhku.agriwarningplatform.common.errorcode.AuthErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
+import com.zhku.agriwarningplatform.common.result.PageResult;
+import com.zhku.agriwarningplatform.common.util.JacksonUtils;
+import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
+import com.zhku.agriwarningplatform.module.auth.controller.vo.*;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
-import com.zhku.agriwarningplatform.module.auth.vo.*;
+import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
+import com.zhku.agriwarningplatform.module.auth.service.dto.AuthPageDTO;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
  * Date: 2026-04-09
  * Time: 3:31
  */
+@Validated
 @Slf4j
 @RestController
 @RequestMapping("/api")
@@ -45,7 +57,7 @@ public class AuthController {
         return CommonResult.success(true);
         }
     @PutMapping("/auth/changePassword")
-    public CommonResult<Boolean> updatePassword(@Validated @RequestBody UpdatePasswordReqVO updatePasswordReqVO,@RequestHeader("token") String token){
+    public CommonResult<Boolean> updatePassword(@Validated @RequestBody UpdatePasswordReqVO updatePasswordReqVO, @RequestHeader("token") String token){
         log.info("修改密码：{}", updatePasswordReqVO);
         authService.updatePassword(updatePasswordReqVO, token);
         return CommonResult.success(true);
@@ -59,5 +71,52 @@ public class AuthController {
     public CommonResult<CreateUserResp> createUser(@Validated @RequestBody CreateUserReq request){
          CreateUserResp userInfoVO = authService.adminRegister(request);
         return CommonResult.success(userInfoVO);
+    }
+
+    @GetMapping("/admin/users/page")
+    public CommonResult<PageResult<AuthPageVO>> page(@Validated AuthPageParam param){
+        log.info("进入接口:AuthController#page,param={}", JacksonUtils.writeValueAsString(param));
+        PageResult<AuthPageDTO> authPageDTOPageResult=authService.page(param);
+        PageResult<AuthPageVO> authPageVOPageResult=new PageResult<>();
+        authPageVOPageResult.setTotal(authPageDTOPageResult.getTotal());
+        List<AuthPageVO> list=convertPageVOList(authPageDTOPageResult.getRecords());
+        authPageVOPageResult.setRecords(list);
+        return CommonResult.success(authPageVOPageResult);
+    }
+
+    @GetMapping("/admin/users/detail/{id}")
+    public CommonResult<AuthDetailVO> detail(
+            @Min (value = 1,message ="id必须大于等于1")@PathVariable Long id){
+        log.info("进入接口:AuthController#detail,id={}", id);
+        AuthDetailDTO authDetailDTO=authService.detail(id);
+        AuthDetailVO authDetailVO=convertDetailVO(authDetailDTO);
+        return CommonResult.success(authDetailVO);
+    }
+
+    /**
+     * 私有方法-DTO转VO转换方法
+     */
+
+    private List<AuthPageVO> convertPageVOList(List<AuthPageDTO> records) {
+        List<AuthPageVO> list=records.stream().map(
+                authPageDTO ->{
+                    AuthPageVO authPageVO=new AuthPageVO();
+                    authPageVO.setId(authPageDTO.getId());
+                    authPageVO.setUsername(authPageDTO.getUsername());
+                    authPageVO.setRole(authPageDTO.getRole());
+                    authPageVO.setGmtCreate(authPageDTO.getGmtCreate());
+                    return authPageVO;
+                }
+        ).collect(Collectors.toList());
+        return list;
+    }
+    private AuthDetailVO convertDetailVO(AuthDetailDTO authDetailDTO) {
+        AuthDetailVO authDetailVO=new AuthDetailVO();
+        authDetailVO.setId(authDetailDTO.getId());
+        authDetailVO.setUsername(authDetailDTO.getUsername());
+        authDetailVO.setRole(authDetailDTO.getRole());
+        authDetailVO.setGmtCreate(authDetailDTO.getGmtCreate());
+        authDetailVO.setGmtModified(authDetailDTO.getGmtModified());
+        return authDetailVO;
     }
 }

@@ -1,4 +1,4 @@
-package com.zhku.agriwarningplatform.module.crop.vo;
+package com.zhku.agriwarningplatform.module.crop.controller.vo;
 import com.zhku.agriwarningplatform.common.page.PageParam;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

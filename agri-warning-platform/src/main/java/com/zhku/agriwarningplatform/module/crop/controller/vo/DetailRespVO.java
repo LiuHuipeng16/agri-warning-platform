@@ -1,4 +1,4 @@
-package com.zhku.agriwarningplatform.module.crop.vo;
+package com.zhku.agriwarningplatform.module.crop.controller.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

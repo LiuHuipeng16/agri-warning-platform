@@ -12,7 +12,6 @@ import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIChatSessionDO;
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIWarningSuggestionContextDO;
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO;
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
-import com.zhku.agriwarningplatform.module.crop.vo.CropQueryRespVO;
 import com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO;
 import com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO;
 import org.apache.ibatis.annotations.Mapper;

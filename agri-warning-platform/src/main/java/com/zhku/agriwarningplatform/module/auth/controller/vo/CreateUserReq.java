@@ -1,4 +1,4 @@
-package com.zhku.agriwarningplatform.module.auth.vo;
+package com.zhku.agriwarningplatform.module.auth.controller.vo;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -14,6 +14,6 @@ public class CreateUserReq {
     @NotBlank(message = "密码不能为空")
     @Size(min = 6, max = 20, message = "密码长度必须在 6~20 位之间")
     private String password;
-    @NotBlank(message = "确认密码不能为空")
+    @NotBlank(message = "角色名不能为空")
     private String role;
 }
