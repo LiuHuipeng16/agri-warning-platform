@@ -2,12 +2,11 @@ package com.zhku.agriwarningplatform.module.crop.controller.vo;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 @Component
 @Data
-@ConfigurationProperties(prefix = "sky.alioss")
+@ConfigurationProperties(prefix = "aliyun.oss")
 public class AliOssProperties {
     private String endpoint;
     private String accessKeyId;

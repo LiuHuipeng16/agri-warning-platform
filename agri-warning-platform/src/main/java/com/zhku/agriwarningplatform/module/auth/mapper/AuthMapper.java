@@ -2,8 +2,6 @@ package com.zhku.agriwarningplatform.module.auth.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
-import com.zhku.agriwarningplatform.module.auth.controller.vo.CreateUserResp;
-import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
 import org.apache.ibatis.annotations.*;
 
@@ -20,11 +18,14 @@ public interface AuthMapper extends BaseMapper<UserDO> {
     @Insert("insert into user (username, password, role) values (#{username}, #{password}, #{role})")
     void addUser(@Param("username") String username, @Param("password") String encode, @Param("role") String role);
 
-    @Select("select id, username, role from user where username = #{username} and delete_flag = 0")
-    CreateUserResp adminselectByUsername(@Param("username") String username);
-
     @Select("select count(*) from user where ")
     Integer count();
-
+    @Select("""
+        SELECT id, username, role
+        FROM user
+        WHERE username = #{username}
+        AND delete_flag = 0
+        LIMIT 1
+        """)
     AdminRegisterDO adminselectByUsername(@Param("username") String username);
 }
