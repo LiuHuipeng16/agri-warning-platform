@@ -15,5 +15,5 @@ public interface AuthService {
 
     RegisterRespVO register(RegisterReqParam registerReqParam);
 
-    CreateUserResp adminRegister(CreateUserReqParam registerReqVO);
+    CreateUserRespVO adminRegister(CreateUserReqParam registerReqVO);
 }

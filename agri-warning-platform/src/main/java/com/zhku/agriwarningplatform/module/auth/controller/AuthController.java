@@ -59,8 +59,8 @@ public class AuthController {
         return CommonResult.success(userInfoVO);
     }
     @PostMapping("/admin/users")
-    public CommonResult<CreateUserResp> createUser(@Validated @RequestBody CreateUserReqParam request){
-         CreateUserResp userInfoVO = authService.adminRegister(request);
+    public CommonResult<CreateUserRespVO> createUser(@Validated @RequestBody CreateUserReqParam request){
+         CreateUserRespVO userInfoVO = authService.adminRegister(request);
         return CommonResult.success(userInfoVO);
     }
 }

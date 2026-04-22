@@ -1,22 +1,20 @@
-package com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo;
+package com.zhku.agriwarningplatform.module.knowledgeqa.mapper.dataobject;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
-public class KnowledgeqaRespVO {
-
+public class KnowledgeqaCreateDO {
     /**
-     * 主键
+     * id
      */
     private Long id;
-
     /**
      * 问题
      */
     private String question;
-
     /**
      * 回答
      */
@@ -28,12 +26,7 @@ public class KnowledgeqaRespVO {
     private Long cropId;
 
     /**
-     * 病害id
+     * 病虫害id
      */
     private Long pestId;
-
-    /**
-     * 创建时间
-     */
-    private LocalDateTime gmtCreate;
 }

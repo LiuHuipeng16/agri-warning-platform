@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class CreateUserResp {
+public class CreateUserRespVO {
     /**
      * 用户id
      */

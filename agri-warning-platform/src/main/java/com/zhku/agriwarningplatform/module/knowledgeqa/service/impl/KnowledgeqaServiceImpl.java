@@ -13,6 +13,9 @@ import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.Knowledg
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.param.KnowledgeqaReqParam;
 import com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaRespVO;
 import com.zhku.agriwarningplatform.module.knowledgeqa.mapper.KnowledgeqaMapper;
+import com.zhku.agriwarningplatform.module.knowledgeqa.mapper.dataobject.KnowledgeqaCreateDO;
+import com.zhku.agriwarningplatform.module.knowledgeqa.mapper.dataobject.KnowledgeqaPageDO;
+import com.zhku.agriwarningplatform.module.knowledgeqa.mapper.dataobject.KnowledgeqaUptateDO;
 import com.zhku.agriwarningplatform.module.knowledgeqa.service.KnowledgeqaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -43,8 +43,20 @@ public class KnowledgeqaServiceImpl implements KnowledgeqaService {
             throw new ServiceException(KnowledgeqaCode.PAGE_PARAM_ERROR);
         }
 
-        Page<KnowledgeqaRespVO> page = PageHelper.startPage(reqVO.getPageNum(), reqVO.getPageSize());
-        List<KnowledgeqaRespVO> records = knowledgeqaMapper.page(reqVO);
+        Page<KnowledgeqaPageDO> page = PageHelper.startPage(reqVO.getPageNum(), reqVO.getPageSize());
+        List<KnowledgeqaPageDO> doList = knowledgeqaMapper.page(reqVO);
+
+        List<KnowledgeqaRespVO> records = new ArrayList<>();
+        for (KnowledgeqaPageDO doItem : doList) {
+            KnowledgeqaRespVO vo = new KnowledgeqaRespVO();
+            vo.setId(doItem.getId());
+            vo.setQuestion(doItem.getQuestion());
+            vo.setAnswer(doItem.getAnswer());
+            vo.setCropId(doItem.getCropId());
+            vo.setPestId(doItem.getPestId());
+            vo.setGmtCreate(doItem.getGmtCreate());
+            records.add(vo);
+        }
 
         PageResult<KnowledgeqaRespVO> pageResult = new PageResult<>();
         pageResult.setTotal((int) page.getTotal());
@@ -56,51 +68,61 @@ public class KnowledgeqaServiceImpl implements KnowledgeqaService {
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Long> create(KnowledgeqaCreateParam param) {
         validateCreateParam(param);
-
-        int rows = knowledgeqaMapper.add(param);
-        if (rows != 1 || param.getId() == null) {
-            log.error("创建知识问答失败: id={}, rows={}", param.getId(), rows);
+        KnowledgeqaCreateDO createDO= new KnowledgeqaCreateDO();
+        createDO.setQuestion(param.getQuestion());
+        createDO.setAnswer(param.getAnswer());
+        createDO.setCropId(param.getCropId());
+        createDO.setPestId(param.getPestId());
+        int rows = knowledgeqaMapper.add(createDO);
+        if (rows != 1 || createDO.getId() == null) {
+            log.error("创建知识问答失败: id={}, rows={}", createDO.getId(), rows);
             throw new ServiceException(KnowledgeqaCode.CREATE_KNOWLEDGEQA_FAILED);
         }
 
-        LightweightKnowledgeBaseEnhancedQaDO qaDO = knowledgeqaMapper.selectById(param.getId());
+        LightweightKnowledgeBaseEnhancedQaDO qaDO = knowledgeqaMapper.selectById(createDO.getId());
         if (qaDO == null || !Objects.equals(qaDO.getDeleteFlag(), 0)) {
-            log.error("创建知识问答后查询完整数据失败: id={}", param.getId());
+            log.error("创建知识问答后查询完整数据失败: id={}", createDO.getId());
             throw new ServiceException(KnowledgeqaCode.CREATE_KNOWLEDGEQA_FAILED);
         }
 
         try {
             addKnowledgeToVectorStore(qaDO);
         } catch (Exception e) {
-            log.error("创建知识问答后同步向量库失败: id={}", param.getId(), e);
+            log.error("创建知识问答后同步向量库失败: id={}", createDO.getId(), e);
             throw new ServiceException(KnowledgeqaCode.CREATE_KNOWLEDGEQA_FAILED);
         }
 
-        return CommonResult.success(param.getId());
+        return CommonResult.success(createDO.getId());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public CommonResult<Boolean> update(KnowledgeqaUpdateParam param) {
         validateUpdateParam(param);
+        KnowledgeqaUptateDO updateDO= new KnowledgeqaUptateDO();
+        updateDO.setId(param.getId());
+        updateDO.setQuestion(param.getQuestion());
+        updateDO.setAnswer(param.getAnswer());
+        updateDO.setCropId(param.getCropId());
+        updateDO.setPestId(param.getPestId());
 
-        LightweightKnowledgeBaseEnhancedQaDO oldDO = knowledgeqaMapper.selectById(param.getId());
+        LightweightKnowledgeBaseEnhancedQaDO oldDO = knowledgeqaMapper.selectById(updateDO.getId());
         if (oldDO == null || !Objects.equals(oldDO.getDeleteFlag(), 0)) {
-            log.error("更新知识问答失败，原数据不存在或已删除: id={}", param.getId());
+            log.error("更新知识问答失败，原数据不存在或已删除: id={}", updateDO.getId());
             throw new ServiceException(KnowledgeqaCode.UPDATE_KNOWLEDGEQA_FAILED);
         }
 
         Document oldDocument = buildKnowledgeDocument(oldDO);
 
-        int rows = knowledgeqaMapper.update(param);
+        int rows = knowledgeqaMapper.update(updateDO);
         if (rows != 1) {
-            log.error("更新知识问答失败: id={}, rows={}", param.getId(), rows);
+            log.error("更新知识问答失败: id={}, rows={}", updateDO.getId(), rows);
             throw new ServiceException(KnowledgeqaCode.UPDATE_KNOWLEDGEQA_FAILED);
         }
 
-        LightweightKnowledgeBaseEnhancedQaDO newDO = knowledgeqaMapper.selectById(param.getId());
+        LightweightKnowledgeBaseEnhancedQaDO newDO = knowledgeqaMapper.selectById(updateDO.getId());
         if (newDO == null || !Objects.equals(newDO.getDeleteFlag(), 0)) {
-            log.error("更新知识问答后查询新数据失败: id={}", param.getId());
+            log.error("更新知识问答后查询新数据失败: id={}", updateDO.getId());
             throw new ServiceException(KnowledgeqaCode.UPDATE_KNOWLEDGEQA_FAILED);
         }
 

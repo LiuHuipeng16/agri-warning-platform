@@ -43,7 +43,7 @@
         and delete_flag = 0
     </update>
 
-    <select id="page" resultType="com.zhku.agriwarningplatform.module.knowledgeqa.controller.vo.KnowledgeqaRespVO">
+    <select id="page" resultType="com.zhku.agriwarningplatform.module.knowledgeqa.mapper.dataobject.KnowledgeqaPageDO">
         select
         id,
         question,

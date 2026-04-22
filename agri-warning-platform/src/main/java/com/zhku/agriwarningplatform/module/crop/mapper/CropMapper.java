@@ -1,6 +1,9 @@
 package com.zhku.agriwarningplatform.module.crop.mapper;
 
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDetailDO;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropPageDO;
+import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropUpdateDO;
 import com.zhku.agriwarningplatform.module.crop.param.CropUpdateParam;
 import com.zhku.agriwarningplatform.module.crop.vo.CropOptionVO;
 import com.zhku.agriwarningplatform.module.crop.param.CropQueryReqParam;
@@ -11,14 +14,14 @@ import org.apache.ibatis.annotations.*;
 import java.util.List;
 @Mapper
 public interface CropMapper {
-    List<CropQueryRespVO> selectList( CropQueryReqParam cropQueryReqParam);
+    List<CropPageDO> selectList(CropQueryReqParam cropQueryReqParam);
     @Select("select * from crop where id = #{id} and delete_flag=0")
-    DetailRespVO detail(Long id);
+    CropDetailDO detail(Long id);
 
     int addcrop(CropQueryRespVO cropQueryRespVO);
 
     @Select("select * from crop where name = #{name} and delete_flag=0")
-    CropQueryRespVO selectByName(String name);
+    CropDO selectByName(String name);
 
     @Select("select id from crop where name = #{name} and delete_flag=0")
     Long getIdByName(String name);
@@ -26,7 +29,7 @@ public interface CropMapper {
     int update(CropUpdateParam cropQueryReqParam);
 
     @Select("select * from crop where id = #{id} and delete_flag=0")
-    CropQueryRespVO selectById(Long id);
+    CropDO selectById(Long id);
 
     @Select("select id as value, name as label from crop where delete_flag=0")
     List<CropOptionVO> selectCropOptions();

@@ -1,7 +1,7 @@
 package com.zhku.agriwarningplatform.module.auth.mapper;
 
 import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
-import com.zhku.agriwarningplatform.module.auth.vo.CreateUserResp;
+import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
 import org.apache.ibatis.annotations.*;
 
 @Mapper
@@ -18,5 +18,5 @@ public interface AuthMapper {
     void addUser(@Param("username") String username, @Param("password") String encode, @Param("role") String role);
 
     @Select("select id, username, role from user where username = #{username} and delete_flag = 0")
-    CreateUserResp adminselectByUsername(@Param("username") String username);
+    AdminRegisterDO adminselectByUsername(@Param("username") String username);
 }

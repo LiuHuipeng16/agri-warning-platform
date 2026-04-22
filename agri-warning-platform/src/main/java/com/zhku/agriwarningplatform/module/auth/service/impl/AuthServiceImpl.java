@@ -5,6 +5,7 @@ import com.zhku.agriwarningplatform.common.util.JwtUtils;
 import com.zhku.agriwarningplatform.common.util.PasswordUtils;
 import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.AuthMapper;
+import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
 import com.zhku.agriwarningplatform.module.auth.param.CreateUserReqParam;
 import com.zhku.agriwarningplatform.module.auth.param.LoginReqParam;
 import com.zhku.agriwarningplatform.module.auth.param.RegisterReqParam;
@@ -122,7 +123,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CreateUserResp adminRegister(CreateUserReqParam registerReqVO) {
+    public CreateUserRespVO adminRegister(CreateUserReqParam registerReqVO) {
         if (!StringUtils.hasText(registerReqVO.getUsername())){
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
@@ -140,6 +141,8 @@ public class AuthServiceImpl implements AuthService {
             throw new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
         }
         authMapper.addUser(registerReqVO.getUsername(), passwordUtils.encode(registerReqVO.getPassword()), registerReqVO.getRole());
-        return authMapper.adminselectByUsername(registerReqVO.getUsername());
+
+        AdminRegisterDO adminRegisterDO = authMapper.adminselectByUsername(registerReqVO.getUsername());
+        return new CreateUserRespVO(adminRegisterDO.getId(), adminRegisterDO.getUsername(), adminRegisterDO.getRole());
     }
 }
