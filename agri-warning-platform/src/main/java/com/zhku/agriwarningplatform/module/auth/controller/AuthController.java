@@ -6,10 +6,7 @@ import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.common.util.JacksonUtils;
 import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
-import com.zhku.agriwarningplatform.module.auth.param.CreateUserReqParam;
-import com.zhku.agriwarningplatform.module.auth.param.LoginReqParam;
-import com.zhku.agriwarningplatform.module.auth.param.RegisterReqParam;
-import com.zhku.agriwarningplatform.module.auth.param.UpdatePasswordReqParam;
+import com.zhku.agriwarningplatform.module.auth.param.*;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthPageDTO;
@@ -97,7 +94,7 @@ public class AuthController {
     }
 
     @PutMapping("/admin/users/update")
-    public CommonResult<Boolean> update(@Validated @RequestBody AuthUpdateReqVO authUpdateReqVO){
+    public CommonResult<Boolean> update(@Validated @RequestBody AuthUpdateReqParam authUpdateReqVO){
         log.info("更新用户：{}", authUpdateReqVO);
         return CommonResult.success(authService.update(authUpdateReqVO));
     }
