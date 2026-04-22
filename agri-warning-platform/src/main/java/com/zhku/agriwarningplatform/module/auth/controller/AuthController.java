@@ -12,6 +12,7 @@ import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthPageDTO;
 import com.zhku.agriwarningplatform.module.auth.vo.*;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -100,13 +101,13 @@ public class AuthController {
     }
 
     @DeleteMapping("/admin/users/delete/{id}")
-    public CommonResult<Boolean> delete(@PathVariable @NotNull @Size(min = 1) Long id){
+    public CommonResult<Boolean> delete(@PathVariable @NotNull @Min(1) Long id){
         log.info("删除用户：{}", id);
         return CommonResult.success(authService.delete(id));
     }
 
     @DeleteMapping("/admin/users/batchDelete")
-    public CommonResult<Boolean> batchDelete(@RequestBody @NotNull @Size(min = 1) List<Long> ids){
+    public CommonResult<Boolean> batchDelete(@RequestBody @NotEmpty List<Long> ids){
         log.info("批量删除用户：{}", ids);
         return CommonResult.success(authService.batchDelete(ids));
     }
