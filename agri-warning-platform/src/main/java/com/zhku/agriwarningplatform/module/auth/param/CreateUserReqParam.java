@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:agri-warning-platform/src/main/java/com/zhku/agriwarningplatform/module/auth/controller/vo/CreateUserReq.java
-package com.zhku.agriwarningplatform.module.auth.controller.vo;
-========
 package com.zhku.agriwarningplatform.module.auth.param;
->>>>>>>> 4d46d3c30a88af68f3ea519d8b89fa9ac069c19c:agri-warning-platform/src/main/java/com/zhku/agriwarningplatform/module/auth/param/CreateUserReqParam.java
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

@@ -9,7 +9,10 @@ import com.zhku.agriwarningplatform.module.auth.param.CreateUserReqParam;
 import com.zhku.agriwarningplatform.module.auth.param.LoginReqParam;
 import com.zhku.agriwarningplatform.module.auth.param.RegisterReqParam;
 import com.zhku.agriwarningplatform.module.auth.param.UpdatePasswordReqParam;
-import com.zhku.agriwarningplatform.module.auth.vo.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import java.util.List;
 
 public interface AuthService {
     LoginRespVO login(LoginReqParam loginReqParam);
@@ -20,10 +23,15 @@ public interface AuthService {
 
     RegisterRespVO register(RegisterReqParam registerReqParam);
 
-    CreateUserResp adminRegister(CreateUserReq registerReqVO);
+    CreateUserRespVO adminRegister(CreateUserReqParam registerReqVO);
 
     PageResult<AuthPageDTO> page(AuthPageParam param);
 
     AuthDetailDTO detail(Long id);
-    CreateUserRespVO adminRegister(CreateUserReqParam registerReqVO);
+
+    Boolean update(AuthUpdateReqVO authUpdateReqVO);
+
+    Boolean delete(Long id);
+
+    Boolean batchDelete(@NotNull @Size(min = 1) List<Long> ids);
 }

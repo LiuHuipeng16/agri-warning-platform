@@ -15,6 +15,8 @@ import com.zhku.agriwarningplatform.module.auth.service.AuthService;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthPageDTO;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -92,6 +94,24 @@ public class AuthController {
         AuthDetailDTO authDetailDTO=authService.detail(id);
         AuthDetailVO authDetailVO=convertDetailVO(authDetailDTO);
         return CommonResult.success(authDetailVO);
+    }
+
+    @PutMapping("/admin/users/update")
+    public CommonResult<Boolean> update(@Validated @RequestBody AuthUpdateReqVO authUpdateReqVO){
+        log.info("更新用户：{}", authUpdateReqVO);
+        return CommonResult.success(authService.update(authUpdateReqVO));
+    }
+
+    @DeleteMapping("/admin/users/delete/{id}")
+    public CommonResult<Boolean> delete(@PathVariable @NotNull @Size(min = 1) Long id){
+        log.info("删除用户：{}", id);
+        return CommonResult.success(authService.delete(id));
+    }
+
+    @DeleteMapping("/admin/users/batchDelete")
+    public CommonResult<Boolean> batchDelete(@RequestBody @NotNull @Size(min = 1) List<Long> ids){
+        log.info("批量删除用户：{}", ids);
+        return CommonResult.success(authService.batchDelete(ids));
     }
 
     /**

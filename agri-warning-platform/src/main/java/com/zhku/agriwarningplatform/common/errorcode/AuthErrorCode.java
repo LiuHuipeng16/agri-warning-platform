@@ -127,5 +127,9 @@ public interface AuthErrorCode {
                 new ErrorCode(500, "STATS_001", "统计数据查询失败");
 
 
+    ErrorCode UPDATE_USER_FAILED =
+             new ErrorCode(400, "AUTH_007", "更新用户信息失败");
+    ErrorCode DELETE_USER_FAILED =
+             new ErrorCode(400, "AUTH_008", "删除用户失败");
 }
 

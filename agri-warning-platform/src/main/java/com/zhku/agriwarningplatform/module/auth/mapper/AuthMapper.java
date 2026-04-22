@@ -1,11 +1,11 @@
 package com.zhku.agriwarningplatform.module.auth.mapper;
-
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.zhku.agriwarningplatform.module.auth.controller.vo.AuthUpdateReqVO;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
-import com.zhku.agriwarningplatform.module.auth.controller.vo.CreateUserResp;
-import com.zhku.agriwarningplatform.module.auth.domain.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
 import org.apache.ibatis.annotations.*;
+
+import java.util.List;
 
 @Mapper
 public interface AuthMapper extends BaseMapper<UserDO> {
@@ -21,10 +21,22 @@ public interface AuthMapper extends BaseMapper<UserDO> {
     void addUser(@Param("username") String username, @Param("password") String encode, @Param("role") String role);
 
     @Select("select id, username, role from user where username = #{username} and delete_flag = 0")
-    CreateUserResp adminselectByUsername(@Param("username") String username);
+    AdminRegisterDO adminselectByUsername(@Param("username") String username);
 
     @Select("select count(*) from user where ")
     Integer count();
 
-    AdminRegisterDO adminselectByUsername(@Param("username") String username);
+    @Update("update user set username = #{username}, role = #{role} where id = #{id} and delete_flag = 0")
+    int updateUsernameAndRoleById(AuthUpdateReqVO authUpdateReqVO);
+
+    @Delete("delete from user where id = #{id} and delete_flag = 0")
+    int deleteUserById(Long id);
+
+    @Delete("<script>" +
+            "delete from user where id in " +
+            "<foreach item='item' index='index' collection='ids' open='(' separator=',' close=')'>" +
+            "#{item}" +
+            "</foreach>" +
+            "</script>")
+    int batchDelete(@Param("ids") List<Long> ids);
 }

@@ -20,7 +20,6 @@ import com.zhku.agriwarningplatform.module.auth.param.UpdatePasswordReqParam;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthPageDTO;
-import com.zhku.agriwarningplatform.module.auth.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -197,6 +196,32 @@ public class AuthServiceImpl implements AuthService {
         return authDetailDTO;
     }
 
+    @Override
+    public Boolean update(AuthUpdateReqVO authUpdateReqVO) {
+        int rows =authMapper.updateUsernameAndRoleById(authUpdateReqVO);
+        if (rows != 1){
+            throw new ServiceException(AuthErrorCode.UPDATE_USER_FAILED);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean delete(Long id) {
+        int rows =authMapper.deleteUserById(id);
+        if (rows != 1){
+            throw new ServiceException(AuthErrorCode.DELETE_USER_FAILED);
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean batchDelete(List<Long> ids) {
+        int rows =authMapper.batchDelete(ids);
+        if (rows != ids.size()){
+            throw new ServiceException(AuthErrorCode.DELETE_USER_FAILED);
+        }
+        return true;
+    }
 
 
     /**
