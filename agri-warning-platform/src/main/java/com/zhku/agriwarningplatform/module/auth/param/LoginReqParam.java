@@ -1,4 +1,5 @@
 package com.zhku.agriwarningplatform.module.auth.param;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,10 +14,12 @@ public class LoginReqParam {
     /**
      * 用户名
      */
+    @NotBlank
     private String username;
 
     /**
      * 密码
      */
+    @NotBlank
     private String password;
 }
