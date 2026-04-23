@@ -8,6 +8,7 @@ import com.zhku.agriwarningplatform.common.exception.ServiceException;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.common.util.JwtUtils;
 import com.zhku.agriwarningplatform.common.util.PasswordUtils;
+import com.zhku.agriwarningplatform.module.auth.controller.param.AuthBatchDeleteReqParam;
 import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.AuthMapper;
@@ -220,9 +221,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Boolean batchDelete(List<Long> ids) {
-        int rows =authMapper.batchDelete(ids);
-        if (rows != ids.size()){
+    public Boolean batchDelete(AuthBatchDeleteReqParam param) {
+        int rows =authMapper.batchDelete(param.getIds());
+        if (rows != param.getIds().size()){
             throw new ServiceException(AuthErrorCode.DELETE_USER_FAILED);
         }
         return true;

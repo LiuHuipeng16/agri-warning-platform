@@ -161,9 +161,9 @@ public class GlobalExceptionHandler {
      * @return 响应结果
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public CommonResult<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        log.warn("HttpMessageNotReadableException: 请求JSON格式错误", e);
-        return CommonResult.error(GlobalErrorCode.BAD_REQUEST.getCode(), "请求JSON格式错误");
+    public CommonResult<Void> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+        log.error("JSON解析异常", e);
+        return CommonResult.error(400, "请求JSON格式错误：" + e.getMostSpecificCause().getMessage());
     }
 
     /**

@@ -214,7 +214,21 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <profile.name>dev</profile.name>
+            </properties>
+        </profile>
 
+        <profile>
+            <id>local</id>
+            <properties>
+                <profile.name>local</profile.name>
+            </properties>
+        </profile>
+    </profiles>
     <build>
         <plugins>
             <plugin>

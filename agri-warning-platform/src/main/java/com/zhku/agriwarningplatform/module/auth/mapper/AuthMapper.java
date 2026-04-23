@@ -13,7 +13,6 @@ public interface AuthMapper extends BaseMapper<UserDO> {
             "from user where username = #{username} and delete_flag = 0")
     UserDO selectByUsername(@Param("username") String username);
 
-
     @Update("update user set password = #{password} where username = #{username} and delete_flag = 0")
     int updatePassword(@Param("username") String username, @Param("password") String encode);
 
@@ -29,12 +28,14 @@ public interface AuthMapper extends BaseMapper<UserDO> {
     @Update("update user set username = #{username}, role = #{role} where id = #{id} and delete_flag = 0")
     int updateUsernameAndRoleById(AuthUpdateReqParam authUpdateReqParam);
 
-    @Delete("delete from user where id = #{id} and delete_flag = 0")
+    @Update("update user set delete_flag = 1, gmt_modified = now() where id = #{id} and delete_flag = 0")
     int deleteUserById(Long id);
 
-    @Delete("<script>" +
-            "delete from user where id in " +
-            "<foreach item='item' index='index' collection='ids' open='(' separator=',' close=')'>" +
+    @Update("<script>" +
+            "update user " +
+            "set delete_flag = 1, gmt_modified = now() " +
+            "where delete_flag = 0 and id in " +
+            "<foreach item='item' collection='ids' open='(' separator=',' close=')'>" +
             "#{item}" +
             "</foreach>" +
             "</script>")

@@ -1,6 +1,7 @@
 package com.zhku.agriwarningplatform.module.auth.service;
 
 import com.zhku.agriwarningplatform.common.result.PageResult;
+import com.zhku.agriwarningplatform.module.auth.controller.param.AuthBatchDeleteReqParam;
 import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
 import com.zhku.agriwarningplatform.module.auth.param.*;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
@@ -32,5 +33,5 @@ public interface AuthService {
 
     Boolean delete(Long id);
 
-    Boolean batchDelete(@NotNull @Size(min = 1) List<Long> ids);
+    Boolean batchDelete(AuthBatchDeleteReqParam param);
 }

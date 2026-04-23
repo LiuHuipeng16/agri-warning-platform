@@ -43,6 +43,7 @@ spring:
           model: text-embedding-v4
           dimensions: 2048
 
+
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   configuration:

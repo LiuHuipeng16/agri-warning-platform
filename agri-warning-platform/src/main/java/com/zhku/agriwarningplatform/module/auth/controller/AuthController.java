@@ -5,6 +5,7 @@ import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.result.PageResult;
 import com.zhku.agriwarningplatform.common.util.JacksonUtils;
+import com.zhku.agriwarningplatform.module.auth.controller.param.AuthBatchDeleteReqParam;
 import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
 import com.zhku.agriwarningplatform.module.auth.param.*;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
@@ -107,9 +108,9 @@ public class AuthController {
     }
 
     @DeleteMapping("/admin/users/batchDelete")
-    public CommonResult<Boolean> batchDelete(@RequestBody @NotEmpty List<Long> ids){
-        log.info("批量删除用户：{}", ids);
-        return CommonResult.success(authService.batchDelete(ids));
+    public CommonResult<Boolean> batchDelete(@RequestBody @Validated AuthBatchDeleteReqParam param){
+        log.info("批量删除用户：{}", param);
+        return CommonResult.success(authService.batchDelete(param));
     }
 
     /**
