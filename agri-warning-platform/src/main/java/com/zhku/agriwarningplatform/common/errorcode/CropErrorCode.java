@@ -44,14 +44,14 @@ public interface CropErrorCode {
     ErrorCode CROP_OPTIONS_EMPTY =
             new ErrorCode(404, "CROP_OPTIONS_EMPTY", "作物选项为空");
     ErrorCode CROP_HAS_PEST_REL =
-            new ErrorCode(409, "CROP_005", "当前作物已关联病虫害，无法删除");
+            new ErrorCode(409, "CROP_005", "该作物已关联病虫害，无法删除，请先解除关联后再操作。");
 
     ErrorCode CROP_HAS_RULE =
-            new ErrorCode(409, "CROP_006", "当前作物已关联预警规则，无法删除");
+            new ErrorCode(409, "CROP_006", "该作物已关联预警规则，无法删除，请先解除关联后再操作。");
 
     ErrorCode CROP_HAS_KNOWLEDGE =
-            new ErrorCode(409, "CROP_007", "当前作物已关联知识库数据，无法删除");
+            new ErrorCode(409, "CROP_007", "该作物已关联知识库数据，无法删除，请先解除关联后再操作。");
 
     ErrorCode CROP_HAS_WARNING =
-            new ErrorCode(409, "CROP_008", "当前作物已关联预警记录，无法删除");
+            new ErrorCode(409, "CROP_008", "该作物已关联预警，无法删除，请先解除关联后再操作。");
 }

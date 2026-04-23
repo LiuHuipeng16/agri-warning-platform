@@ -61,5 +61,5 @@ public interface PreWarningRuleErrorCode {
 
     ErrorCode DATA_CONFLICT = new ErrorCode(409, "PRE_WARNING_RULE_114", "预警规则数据冲突");
     ErrorCode RULE_HAS_WARNING =
-            new ErrorCode(409, "PRE_WARNING_RULE_115", "当前预警规则已关联预警记录，无法删除");
+            new ErrorCode(409, "PRE_WARNING_RULE_115", "该预警规则已关联预警，无法删除，请先解除关联后再操作。");
 }
