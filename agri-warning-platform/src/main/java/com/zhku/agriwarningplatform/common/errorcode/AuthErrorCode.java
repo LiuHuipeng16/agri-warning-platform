@@ -131,5 +131,7 @@ public interface AuthErrorCode {
              new ErrorCode(400, "AUTH_007", "更新用户信息失败");
     ErrorCode DELETE_USER_FAILED =
              new ErrorCode(400, "AUTH_008", "删除用户失败");
+    ErrorCode USER_ID_INVALID =
+             new ErrorCode(400, "AUTH_009", "用户ID无效");
 }
 

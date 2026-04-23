@@ -197,6 +197,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Boolean update(AuthUpdateReqParam authUpdateReqParam) {
+        if (!RoleEnum.isValid(authUpdateReqParam.getRole())){
+            throw new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
+        }
+        if (authUpdateReqParam.getId() <= 0) {
+            throw new ServiceException(AuthErrorCode.USER_ID_INVALID);
+        }
         int rows =authMapper.updateUsernameAndRoleById(authUpdateReqParam);
         if (rows != 1){
             throw new ServiceException(AuthErrorCode.UPDATE_USER_FAILED);
