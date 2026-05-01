@@ -42,4 +42,10 @@ public interface AIErrorCode {
     ErrorCode CHAT_SESSION_ACCESS_DENIED = new ErrorCode(403, "AI_115", "无权访问该AI会话");
     ErrorCode TOKEN_PARSE_FAILED = new ErrorCode(401, "AI_116", "Token解析失败");
     ErrorCode CONTEXT_BUILD_FAILED = new ErrorCode(500, "AI_117", "上下文信息构建失败");
+    ErrorCode IMAGE_EMPTY = new ErrorCode(400, "AI_118", "图片不能为空");
+    ErrorCode IMAGE_COUNT_INVALID = new ErrorCode(400, "AI_119", "图片数量必须为1到3张");
+    ErrorCode IMAGE_TYPE_NOT_SUPPORT = new ErrorCode(400, "AI_120", "仅支持JPG、JPEG、PNG、WEBP格式图片");
+    ErrorCode IMAGE_SIZE_TOO_LARGE = new ErrorCode(400, "AI_121", "单张图片大小不能超过5MB");
+    ErrorCode IMAGE_UPLOAD_FAILED = new ErrorCode(500, "AI_122", "图片上传失败");
+    ErrorCode IMAGE_ANALYSIS_FAILED = new ErrorCode(500, "AI_123", "图片识别失败");
 }

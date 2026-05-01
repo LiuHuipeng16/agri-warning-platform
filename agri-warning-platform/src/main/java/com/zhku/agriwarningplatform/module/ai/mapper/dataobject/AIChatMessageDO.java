@@ -7,48 +7,36 @@ import java.time.LocalDateTime;
 @Data
 public class AIChatMessageDO {
 
-    /**
-     * 主键ID
-     */
     private Long id;
 
-    /**
-     * 会话ID
-     */
     private String chatId;
 
-    /**
-     * 用户ID
-     */
     private Long userId;
 
-    /**
-     * 消息角色：user / assistant
-     */
     private String role;
 
-    /**
-     * 消息内容
-     */
     private String content;
 
     /**
-     * 消息状态：STREAMING / COMPLETED / STOPPED / FAILED
+     * 消息类型：TEXT / IMAGE_TEXT
      */
+    private String messageType;
+
+    /**
+     * 图片URL列表，JSON数组字符串
+     */
+    private String imageUrls;
+
+    /**
+     * 图片识别结果
+     */
+    private String imageAnalysis;
+
     private String messageStatus;
 
-    /**
-     * 删除标记：0未删除，1已删除
-     */
     private Integer deleteFlag;
 
-    /**
-     * 创建时间
-     */
     private LocalDateTime gmtCreate;
 
-    /**
-     * 修改时间
-     */
     private LocalDateTime gmtModified;
 }

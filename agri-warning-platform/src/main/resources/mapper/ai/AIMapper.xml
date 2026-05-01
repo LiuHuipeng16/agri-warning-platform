@@ -24,6 +24,9 @@
         <result property="userId" column="user_id"/>
         <result property="role" column="role"/>
         <result property="content" column="content"/>
+        <result property="messageType" column="message_type"/>
+        <result property="imageUrls" column="image_urls"/>
+        <result property="imageAnalysis" column="image_analysis"/>
         <result property="messageStatus" column="message_status"/>
         <result property="deleteFlag" column="delete_flag"/>
         <result property="gmtCreate" column="gmt_create"/>
@@ -113,7 +116,6 @@
           AND delete_flag = 0
         ORDER BY gmt_modified DESC, gmt_create DESC
     </select>
-
     <insert id="insertChatSession">
         INSERT INTO ai_chat_session (
             chat_id,
@@ -130,6 +132,29 @@
                      #{contextType},
                      #{contextId},
                      #{title},
+                     #{deleteFlag}
+                 )
+    </insert>
+    <insert id="insertChatMessage" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO ai_chat_message (
+            chat_id,
+            user_id,
+            role,
+            content,
+            message_type,
+            image_urls,
+            image_analysis,
+            message_status,
+            delete_flag
+        ) VALUES (
+                     #{chatId},
+                     #{userId},
+                     #{role},
+                     #{content},
+                     #{messageType},
+                     #{imageUrls},
+                     #{imageAnalysis},
+                     #{messageStatus},
                      #{deleteFlag}
                  )
     </insert>
@@ -158,24 +183,6 @@
 
     <!-- ==================== 消息表（悬浮助手 + 独立AI） ==================== -->
 
-    <insert id="insertChatMessage" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-        INSERT INTO ai_chat_message (
-            chat_id,
-            user_id,
-            role,
-            content,
-            message_status,
-            delete_flag
-        ) VALUES (
-                     #{chatId},
-                     #{userId},
-                     #{role},
-                     #{content},
-                     #{messageStatus},
-                     #{deleteFlag}
-                 )
-    </insert>
-
     <select id="getChatMessageHistoryByChatId" resultMap="AIChatMessageResultMap">
         SELECT
             id,
@@ -183,6 +190,9 @@
             user_id,
             role,
             content,
+            message_type,
+            image_urls,
+            image_analysis,
             message_status,
             delete_flag,
             gmt_create,
@@ -193,7 +203,6 @@
           AND delete_flag = 0
         ORDER BY gmt_create ASC, id ASC
     </select>
-
     <select id="getRecentChatMessagesByChatId" resultMap="AIChatMessageResultMap">
         SELECT
             id,
@@ -201,6 +210,9 @@
             user_id,
             role,
             content,
+            message_type,
+            image_urls,
+            image_analysis,
             message_status,
             delete_flag,
             gmt_create,
@@ -375,6 +387,9 @@
             user_id,
             role,
             content,
+            message_type,
+            image_urls,
+            image_analysis,
             message_status,
             delete_flag,
             gmt_create,

@@ -68,4 +68,9 @@ public interface AIService {
      * 初始化知识库到向量库
      */
     void initKnowledgeBaseToVectorStore();
+
+    /**
+     * 独立AI图文对话（流式）
+     */
+    SseEmitter chatImageStream(AIChatImageStreamReqDTO reqDTO);
 }

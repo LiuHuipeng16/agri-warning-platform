@@ -1,4 +1,5 @@
 package com.zhku.agriwarningplatform.module.auth.service.impl;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zhku.agriwarningplatform.common.enums.DeleteFlagEnum;
@@ -10,9 +11,9 @@ import com.zhku.agriwarningplatform.common.util.JwtUtils;
 import com.zhku.agriwarningplatform.common.util.PasswordUtils;
 import com.zhku.agriwarningplatform.module.auth.controller.param.AuthBatchDeleteReqParam;
 import com.zhku.agriwarningplatform.module.auth.controller.param.AuthPageParam;
-import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
 import com.zhku.agriwarningplatform.module.auth.mapper.AuthMapper;
 import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.AdminRegisterDO;
+import com.zhku.agriwarningplatform.module.auth.mapper.dataobject.UserDO;
 import com.zhku.agriwarningplatform.module.auth.param.*;
 import com.zhku.agriwarningplatform.module.auth.service.AuthService;
 import com.zhku.agriwarningplatform.module.auth.service.dto.AuthDetailDTO;
@@ -33,23 +34,29 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
     private final AuthMapper authMapper;
     private final JwtUtils jwtUtils;
     private final PasswordUtils passwordUtils;
 
     @Transactional(rollbackFor = Exception.class)
     public LoginRespVO login(LoginReqParam loginReqParam) {
-        if (!StringUtils.hasText(loginReqParam.getUsername())){
+
+        if (!StringUtils.hasText(loginReqParam.getUsername())) {
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
-        if (!StringUtils.hasText(loginReqParam.getPassword())){
+
+        if (!StringUtils.hasText(loginReqParam.getPassword())) {
             throw new ServiceException(AuthErrorCode.PASSWORD_EMPTY);
         }
-        UserDO userInfo= authMapper.selectByUsername(loginReqParam.getUsername());
-        if (userInfo == null){
+
+        UserDO userInfo = authMapper.selectByUsername(loginReqParam.getUsername());
+
+        if (userInfo == null) {
             throw new ServiceException(AuthErrorCode.USER_NOT_EXIST);
         }
-        if (!passwordUtils.matches(loginReqParam.getPassword(), userInfo.getPassword())){
+
+        if (!passwordUtils.matches(loginReqParam.getPassword(), userInfo.getPassword())) {
             throw new ServiceException(AuthErrorCode.PASSWORD_ERROR);
         }
 
@@ -66,203 +73,256 @@ public class AuthServiceImpl implements AuthService {
                 userInfo.getUsername(),
                 userInfo.getRole()
         ));
+
         return loginRespVO;
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public LoginRespVO GetCurrentUser(String token) {
-        Long userId = JwtUtils.getUserIdFromToken(token);
-        String username = JwtUtils.getUsernameFromToken(token);
-        String role = JwtUtils.getRoleFromToken(token);
-        LoginRespVO loginRespVO= new LoginRespVO();
-        LoginRespVO.UserInfoVO userInfo = new LoginRespVO.UserInfoVO(userId, username, role);
-        loginRespVO.setUserInfo(userInfo);
-        return loginRespVO;
 
+        Long userId = jwtUtils.getUserIdFromToken(token);
+        String username = jwtUtils.getUsernameFromToken(token);
+        String role = jwtUtils.getRoleFromToken(token);
+
+        LoginRespVO loginRespVO = new LoginRespVO();
+        loginRespVO.setUserInfo(new LoginRespVO.UserInfoVO(userId, username, role));
+
+        return loginRespVO;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updatePassword(UpdatePasswordReqParam updatePasswordReqParam, String token) {
-        if (!StringUtils.hasText(updatePasswordReqParam.getNewPassword())){
+    public void updatePassword(UpdatePasswordReqParam param, String token) {
+
+        if (!StringUtils.hasText(param.getNewPassword())) {
             throw new ServiceException(AuthErrorCode.NEW_PASSWORD_EMPTY);
         }
-        if (!StringUtils.hasText(updatePasswordReqParam.getOldPassword())){
+
+        if (!StringUtils.hasText(param.getOldPassword())) {
             throw new ServiceException(AuthErrorCode.OLD_PASSWORD_EMPTY);
         }
-        String username = JwtUtils.getUsernameFromToken(token);
-        if (username== null){
+
+        String username = jwtUtils.getUsernameFromToken(token);
+
+        if (username == null) {
             throw new ServiceException(AuthErrorCode.TOKEN_INVALID);
         }
+
         UserDO userInfo = authMapper.selectByUsername(username);
-        if (userInfo== null){
+
+        if (userInfo == null) {
             throw new ServiceException(AuthErrorCode.USER_NOT_EXIST);
         }
-        if (!passwordUtils.matches(updatePasswordReqParam.getOldPassword(), userInfo.getPassword())){
+
+        if (!passwordUtils.matches(param.getOldPassword(), userInfo.getPassword())) {
             throw new ServiceException(AuthErrorCode.PASSWORD_ERROR);
         }
-        int rows = authMapper.updatePassword(username, passwordUtils.encode(updatePasswordReqParam.getNewPassword()));
-        if (rows != 1){
+
+        int rows = authMapper.updatePassword(
+                username,
+                passwordUtils.encode(param.getNewPassword())
+        );
+
+        if (rows != 1) {
             throw new ServiceException(AuthErrorCode.UPDATE_PASSWORD_FAILED);
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public RegisterRespVO register(RegisterReqParam registerReqParam) {
-        if (!StringUtils.hasText(registerReqParam.getUsername())){
+    public RegisterRespVO register(RegisterReqParam param) {
+
+        if (!StringUtils.hasText(param.getUsername())) {
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
-        if (!StringUtils.hasText(registerReqParam.getPassword())){
+
+        if (!StringUtils.hasText(param.getPassword())) {
             throw new ServiceException(AuthErrorCode.PASSWORD_EMPTY);
         }
-        if (!StringUtils.hasText(registerReqParam.getConfirmPassword())){
+
+        if (!StringUtils.hasText(param.getConfirmPassword())) {
             throw new ServiceException(AuthErrorCode.CONFIRM_PASSWORD_EMPTY);
         }
-        if (!registerReqParam.getPassword().equals(registerReqParam.getConfirmPassword())){
+
+        if (!param.getPassword().equals(param.getConfirmPassword())) {
             throw new ServiceException(AuthErrorCode.PASSWORD_NOT_MATCH);
         }
-        if (authMapper.selectByUsername(registerReqParam.getUsername()) != null){
+
+        if (authMapper.selectByUsername(param.getUsername()) != null) {
             throw new ServiceException(AuthErrorCode.USERNAME_EXISTS);
         }
-        authMapper.addUser(registerReqParam.getUsername(), passwordUtils.encode(registerReqParam.getPassword()), "USER");
-        UserDO userdo = authMapper.selectByUsername(registerReqParam.getUsername());
 
-        return new RegisterRespVO(userdo.getId(), userdo.getUsername(), userdo.getRole());
+        authMapper.addUser(
+                param.getUsername(),
+                passwordUtils.encode(param.getPassword()),
+                "USER"
+        );
+
+        UserDO user = authMapper.selectByUsername(param.getUsername());
+
+        return new RegisterRespVO(user.getId(), user.getUsername(), user.getRole());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CreateUserRespVO adminRegister(CreateUserReqParam registerReqVO) {
-        if (!StringUtils.hasText(registerReqVO.getUsername())){
+    public CreateUserRespVO adminRegister(CreateUserReqParam param) {
+
+        if (!StringUtils.hasText(param.getUsername())) {
             throw new ServiceException(AuthErrorCode.USERNAME_EMPTY);
         }
-        if (!StringUtils.hasText(registerReqVO.getPassword())){
+
+        if (!StringUtils.hasText(param.getPassword())) {
             throw new ServiceException(AuthErrorCode.PASSWORD_EMPTY);
         }
-        if (!StringUtils.hasText(registerReqVO.getRole())){
+
+        if (!StringUtils.hasText(param.getRole())) {
             throw new ServiceException(AuthErrorCode.ROle_EMPTY);
         }
-        if (authMapper.selectByUsername(registerReqVO.getUsername()) != null){
+
+        if (authMapper.selectByUsername(param.getUsername()) != null) {
             throw new ServiceException(AuthErrorCode.USERNAME_EXISTS);
         }
-        String role = registerReqVO.getRole();
-        if (!"USER".equals(role) && !"ADMIN".equals(role)){
+
+        if (!"USER".equals(param.getRole()) && !"ADMIN".equals(param.getRole())) {
             throw new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
         }
-        authMapper.addUser(registerReqVO.getUsername(), passwordUtils.encode(registerReqVO.getPassword()), registerReqVO.getRole());
 
-        AdminRegisterDO adminRegisterDO = authMapper.adminselectByUsername(registerReqVO.getUsername());
-        return new CreateUserRespVO(adminRegisterDO.getId(), adminRegisterDO.getUsername(), adminRegisterDO.getRole());
+        authMapper.addUser(
+                param.getUsername(),
+                passwordUtils.encode(param.getPassword()),
+                param.getRole()
+        );
+
+        AdminRegisterDO user = authMapper.adminselectByUsername(param.getUsername());
+
+        return new CreateUserRespVO(user.getId(), user.getUsername(), user.getRole());
     }
 
     @Override
     public PageResult<AuthPageDTO> page(AuthPageParam param) {
-        //1.校验参数是否正常
+
         checkPageListParam(param);
-        //2.调用mapper层
-        LambdaQueryWrapper<UserDO> queryWrapper = new LambdaQueryWrapper<UserDO>();
+
+        LambdaQueryWrapper<UserDO> queryWrapper = new LambdaQueryWrapper<>();
+
         if (StringUtils.hasText(param.getUsername())) {
-            queryWrapper.like(UserDO::getUsername,param.getUsername());
+            queryWrapper.like(UserDO::getUsername, param.getUsername());
         }
-        if(StringUtils.hasText(param.getRole())){
-            queryWrapper.eq(UserDO::getRole,param.getRole());
+
+        if (StringUtils.hasText(param.getRole())) {
+            queryWrapper.eq(UserDO::getRole, param.getRole());
         }
-        queryWrapper.orderByDesc(UserDO::getGmtCreate).orderByDesc(UserDO::getId);;
-        Page<UserDO> page=new Page(param.getPageNum(),param.getPageSize());
+
         queryWrapper.eq(UserDO::getDeleteFlag, DeleteFlagEnum.NOT_DELETED.getCode());
-        Page<UserDO> userDOPage=authMapper.selectPage(page,queryWrapper);
-        List<UserDO> listDO=userDOPage.getRecords();
-        List<AuthPageDTO> listDTO=convertToPageListDTO(listDO);
-        Long count=authMapper.selectCount(queryWrapper);
-        PageResult<AuthPageDTO> pageDTOPageResult=new PageResult<>();
-        pageDTOPageResult.setTotal(count.intValue());
-        pageDTOPageResult.setRecords(listDTO);
-        return pageDTOPageResult;
+        queryWrapper.orderByDesc(UserDO::getGmtCreate).orderByDesc(UserDO::getId);
+
+        Page<UserDO> page = new Page<>(param.getPageNum(), param.getPageSize());
+
+        Page<UserDO> userPage = authMapper.selectPage(page, queryWrapper);
+
+        List<AuthPageDTO> listDTO = convertToPageListDTO(userPage.getRecords());
+
+        PageResult<AuthPageDTO> result = new PageResult<>();
+        result.setTotal((int) userPage.getTotal());
+        result.setRecords(listDTO);
+
+        return result;
     }
 
     @Override
     public AuthDetailDTO detail(Long id) {
-        LambdaQueryWrapper<UserDO> queryWrapper=new LambdaQueryWrapper();
-        queryWrapper.eq(UserDO::getDeleteFlag,
-                DeleteFlagEnum.NOT_DELETED.getCode())
-                .eq(UserDO::getId,id);
-        UserDO userDO=authMapper.selectOne(queryWrapper);
-        if(userDO==null){
+
+        LambdaQueryWrapper<UserDO> wrapper = new LambdaQueryWrapper<>();
+
+        wrapper.eq(UserDO::getDeleteFlag, DeleteFlagEnum.NOT_DELETED.getCode())
+                .eq(UserDO::getId, id);
+
+        UserDO user = authMapper.selectOne(wrapper);
+
+        if (user == null) {
             throw new ServiceException(AuthErrorCode.USER_NOT_EXIST);
         }
-        AuthDetailDTO authDetailDTO=convertToDetailDTO(userDO);
-        return authDetailDTO;
+
+        return convertToDetailDTO(user);
     }
 
     @Override
-    public Boolean update(AuthUpdateReqParam authUpdateReqParam) {
-        if (!RoleEnum.isValid(authUpdateReqParam.getRole())){
+    public Boolean update(AuthUpdateReqParam param) {
+
+        if (!RoleEnum.isValid(param.getRole())) {
             throw new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
         }
-        if (authUpdateReqParam.getId() <= 0) {
+
+        if (param.getId() <= 0) {
             throw new ServiceException(AuthErrorCode.USER_ID_INVALID);
         }
-        int rows =authMapper.updateUsernameAndRoleById(authUpdateReqParam);
-        if (rows != 1){
+
+        int rows = authMapper.updateUsernameAndRoleById(param);
+
+        if (rows != 1) {
             throw new ServiceException(AuthErrorCode.UPDATE_USER_FAILED);
         }
+
         return true;
     }
 
     @Override
     public Boolean delete(Long id) {
-        int rows =authMapper.deleteUserById(id);
-        if (rows != 1){
+
+        int rows = authMapper.deleteUserById(id);
+
+        if (rows != 1) {
             throw new ServiceException(AuthErrorCode.DELETE_USER_FAILED);
         }
+
         return true;
     }
 
     @Override
     public Boolean batchDelete(AuthBatchDeleteReqParam param) {
-        int rows =authMapper.batchDelete(param.getIds());
-        if (rows != param.getIds().size()){
+
+        int rows = authMapper.batchDelete(param.getIds());
+
+        if (rows != param.getIds().size()) {
             throw new ServiceException(AuthErrorCode.DELETE_USER_FAILED);
         }
+
         return true;
     }
 
-
-    /**
-     * 私有方法-DO转DTO转换方法
-     */
-
     private List<AuthPageDTO> convertToPageListDTO(List<UserDO> listDO) {
-        List<AuthPageDTO> listDTO=listDO.stream().map(userDO ->{
-            AuthPageDTO userDTO=new AuthPageDTO();
-            userDTO.setId(userDO.getId());
-            userDTO.setUsername(userDO.getUsername());
-            userDTO.setRole(userDO.getRole());
-            userDTO.setGmtCreate(userDO.getGmtCreate());
-            return userDTO;
+
+        return listDO.stream().map(user -> {
+
+            AuthPageDTO dto = new AuthPageDTO();
+
+            dto.setId(user.getId());
+            dto.setUsername(user.getUsername());
+            dto.setRole(user.getRole());
+            dto.setGmtCreate(user.getGmtCreate());
+
+            return dto;
+
         }).collect(Collectors.toList());
-        return listDTO;
     }
 
-    private AuthDetailDTO convertToDetailDTO(UserDO userDO) {
-        AuthDetailDTO authDetailDTO=new AuthDetailDTO();
-        authDetailDTO.setId(userDO.getId());
-        authDetailDTO.setUsername(userDO.getUsername());
-        authDetailDTO.setRole(userDO.getRole());
-        authDetailDTO.setGmtCreate(userDO.getGmtCreate());
-        authDetailDTO.setGmtModified(userDO.getGmtModified());
-        return authDetailDTO;
-    }
+    private AuthDetailDTO convertToDetailDTO(UserDO user) {
 
-    /**
-     * 私有方法-service层校验业务数据
-     */
+        AuthDetailDTO dto = new AuthDetailDTO();
+
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setRole(user.getRole());
+        dto.setGmtCreate(user.getGmtCreate());
+        dto.setGmtModified(user.getGmtModified());
+
+        return dto;
+    }
 
     private void checkPageListParam(AuthPageParam param) {
-        if(StringUtils.hasText(param.getRole())&&!RoleEnum.isValid(param.getRole())){
-            throw  new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
+
+        if (StringUtils.hasText(param.getRole()) && !RoleEnum.isValid(param.getRole())) {
+            throw new ServiceException(AuthErrorCode.ROLE_NOT_EXIST);
         }
     }
 }

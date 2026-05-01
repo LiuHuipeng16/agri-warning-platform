@@ -290,6 +290,10 @@ ADD UNIQUE KEY uk_warning_unique (
 ALTER TABLE ai_chat_session
 ADD UNIQUE KEY uk_ai_chat_session_user_chat (user_id, chat_id, delete_flag);
 
+ALTER TABLE ai_chat_message
+ADD COLUMN message_type VARCHAR(20) NOT NULL DEFAULT 'TEXT' COMMENT '消息类型：TEXT普通文本 / IMAGE_TEXT图文消息' AFTER content,
+ADD COLUMN image_urls TEXT DEFAULT NULL COMMENT '图片URL列表，JSON数组字符串' AFTER message_type,
+ADD COLUMN image_analysis TEXT DEFAULT NULL COMMENT '图片识别结果' AFTER image_urls;
 
 INSERT INTO crop (id,name,category,intro,description,image_url,delete_flag)
 VALUES

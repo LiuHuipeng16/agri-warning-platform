@@ -32,6 +32,10 @@ public class CropQueryRespVO {
     private String intro;
 
     /**
+     *
+     */
+    private String description;
+    /**
      * 创建时间
      */
     private LocalDateTime gmtCreate;

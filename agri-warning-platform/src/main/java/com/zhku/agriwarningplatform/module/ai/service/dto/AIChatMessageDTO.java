@@ -1,24 +1,28 @@
 package com.zhku.agriwarningplatform.module.ai.service.dto;
 
-/**
- * Created with IntelliJ IDEA.
- * Description:
- * User: 12290
- * Date: 2026-04-18
- * Time: 22:27
- */
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class AIChatMessageDTO {
 
-    /**
-     * 消息角色：user / assistant
-     */
     private String role;
 
-    /**
-     * 消息内容
-     */
     private String content;
+
+    /**
+     * 消息类型：TEXT / IMAGE_TEXT
+     */
+    private String messageType;
+
+    /**
+     * 图片地址列表，普通文本消息为null
+     */
+    private List<String> imageUrls;
+
+    /**
+     * 图片识别结果，普通文本消息为null
+     */
+    private String imageAnalysis;
 }

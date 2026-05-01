@@ -28,6 +28,7 @@ spring:
       timeout: 5s
 
   ai:
+    # 文本大模型：DeepSeek
     openai:
       api-key: ${OPENAI_API_KEY}
       base-url: https://api.deepseek.com
@@ -36,8 +37,18 @@ spring:
           model: deepseek-chat
           temperature: 0.7
 
+    # 阿里百炼：多模态 + 向量模型
     dashscope:
       api-key: ${DASHSCOPE_API_KEY}
+
+      # 多模态模型：用于图文识别
+      chat:
+        options:
+          model: qwen3.6-flash
+          multi-model: true
+          temperature: 0.7
+
+      # 向量模型：用于RAG知识库检索
       embedding:
         options:
           model: text-embedding-v4

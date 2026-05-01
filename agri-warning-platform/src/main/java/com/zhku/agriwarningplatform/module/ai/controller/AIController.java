@@ -4,7 +4,6 @@ import com.zhku.agriwarningplatform.common.errorcode.AIErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.util.JacksonUtils;
-import com.zhku.agriwarningplatform.common.util.JwtUtils;
 import com.zhku.agriwarningplatform.module.ai.controller.param.AIAssistantChatStreamParam;
 import com.zhku.agriwarningplatform.module.ai.controller.param.AIAssistantHistoryParam;
 import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatCreateParam;
@@ -27,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,7 +38,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
+import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatImageStreamParam;
+import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatImageStreamReqDTO;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -102,6 +105,26 @@ public class AIController {
         return aiService.chatStream(reqDTO);
     }
 
+    /**
+     * 独立 AI 图文对话（流式）
+     */
+    @PostMapping(value = "/chat/image/stream", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public SseEmitter chatImageStream(@Valid AIChatImageStreamParam param,
+                                      HttpServletRequest request) {
+
+        log.info("进入接口:AIController#chatImageStream, chatId={}, prompt={}",
+                param.getChatId(), param.getPrompt());
+
+        Long userId = getCurrentUserId(request);
+
+        AIChatImageStreamReqDTO reqDTO = new AIChatImageStreamReqDTO();
+        reqDTO.setChatId(param.getChatId());
+        reqDTO.setPrompt(param.getPrompt());
+        reqDTO.setImages(param.getImages());
+        reqDTO.setUserId(userId);
+
+        return aiService.chatImageStream(reqDTO);
+    }
     /**
      * 获取 AI 会话列表
      */
@@ -273,6 +296,41 @@ public class AIController {
             throw new ControllerException(AIErrorCode.PROMPT_EMPTY);
         }
     }
+    private void validateAIChatImageStreamParam(String chatId, String prompt, MultipartFile[] images) {
+        if (!StringUtils.hasText(chatId)) {
+            throw new ControllerException(AIErrorCode.CHAT_ID_EMPTY);
+        }
+        if (!StringUtils.hasText(prompt)) {
+            throw new ControllerException(AIErrorCode.PROMPT_EMPTY);
+        }
+        if (images == null || images.length == 0) {
+            throw new ControllerException(AIErrorCode.IMAGE_EMPTY);
+        }
+        if (images.length > 3) {
+            throw new ControllerException(AIErrorCode.IMAGE_COUNT_INVALID);
+        }
+
+        for (MultipartFile image : images) {
+            if (image == null || image.isEmpty()) {
+                throw new ControllerException(AIErrorCode.IMAGE_EMPTY);
+            }
+            if (image.getSize() > 5 * 1024 * 1024) {
+                throw new ControllerException(AIErrorCode.IMAGE_SIZE_TOO_LARGE);
+            }
+
+            String contentType = image.getContentType();
+            if (!isAllowedImageType(contentType)) {
+                throw new ControllerException(AIErrorCode.IMAGE_TYPE_NOT_SUPPORT);
+            }
+        }
+    }
+
+    private boolean isAllowedImageType(String contentType) {
+        return "image/jpeg".equals(contentType)
+                || "image/jpg".equals(contentType)
+                || "image/png".equals(contentType)
+                || "image/webp".equals(contentType);
+    }
 
     private void validateAIChatCreateParam(AIChatCreateParam param) {
         if (!StringUtils.hasText(param.getChatId())) {
@@ -352,12 +410,20 @@ public class AIController {
         }
 
         List<AIChatMessageVO> voList = new ArrayList<>();
+
         for (AIChatMessageDTO dto : dtoList) {
             AIChatMessageVO vo = new AIChatMessageVO();
             vo.setRole(dto.getRole());
             vo.setContent(dto.getContent());
+
+            // 关键：这三个之前漏了
+            vo.setMessageType(dto.getMessageType());
+            vo.setImageUrls(dto.getImageUrls());
+            vo.setImageAnalysis(dto.getImageAnalysis());
+
             voList.add(vo);
         }
+
         return voList;
     }
 
@@ -379,19 +445,24 @@ public class AIController {
     // ==================== Token解析 ====================
 
     private Long getCurrentUserId(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
+        Object userIdObj = request.getAttribute("userId");
 
-        if (!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
-            throw new ControllerException(AIErrorCode.AUTH_HEADER_INVALID);
-        }
-
-        String token = authHeader.substring(7);
-        Long userId = JwtUtils.getUserIdFromToken(token);
-
-        if (userId == null) {
+        if (userIdObj == null) {
             throw new ControllerException(AIErrorCode.TOKEN_PARSE_FAILED);
         }
 
-        return userId;
+        if (userIdObj instanceof Long) {
+            return (Long) userIdObj;
+        }
+
+        if (userIdObj instanceof Integer) {
+            return ((Integer) userIdObj).longValue();
+        }
+
+        if (userIdObj instanceof String) {
+            return Long.valueOf((String) userIdObj);
+        }
+
+        throw new ControllerException(AIErrorCode.TOKEN_PARSE_FAILED);
     }
 }
