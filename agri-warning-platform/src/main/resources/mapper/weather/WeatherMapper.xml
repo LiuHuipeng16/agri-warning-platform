@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhku.agriwarningplatform.module.weather.mapper.WeatherMapper">
+
+    <resultMap id="weatherForecastRiskResultMap"
+               type="com.zhku.agriwarningplatform.module.weather.mapper.dataobject.WeatherForecastRiskDO">
+        <result property="date" column="warning_date"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="riskScore" column="risk_score"/>
+        <result property="highRiskCount" column="high_risk_count"/>
+        <result property="warningCount" column="warning_count"/>
+    </resultMap>
+
+    <select id="listForecastRiskStats" resultMap="weatherForecastRiskResultMap">
+        SELECT
+            DATE_FORMAT(w.warning_date, '%Y-%m-%d') AS warning_date,
+            CASE
+                WHEN MAX(w.risk_score) >= 80 THEN '高'
+                WHEN MAX(w.risk_score) >= 60 THEN '中'
+                WHEN MAX(w.risk_score) IS NULL THEN NULL
+                ELSE '低'
+                END AS risk_level,
+            IFNULL(MAX(w.risk_score), 0) AS risk_score,
+            SUM(CASE WHEN w.risk_level = '高' THEN 1 ELSE 0 END) AS high_risk_count,
+            COUNT(1) AS warning_count
+        FROM warning w
+        WHERE w.delete_flag = 0
+          AND w.warning_date BETWEEN #{startDate} AND #{endDate}
+        GROUP BY w.warning_date
+        ORDER BY w.warning_date ASC
+    </select>
+
+</mapper>

@@ -13,6 +13,11 @@
         <result property="cropId" column="crop_id"/>
         <result property="pestId" column="pest_id"/>
         <result property="riskLevel" column="risk_level"/>
+
+        <result property="riskScore" column="risk_score"/>
+        <result property="riskScoreDetail" column="risk_score_detail"/>
+        <result property="matchDetail" column="match_detail"/>
+
         <result property="warningType" column="warning_type"/>
         <result property="warningDate" column="warning_date"/>
         <result property="ruleId" column="rule_id"/>
@@ -20,7 +25,6 @@
         <result property="gmtCreate" column="gmt_create"/>
         <result property="gmtModified" column="gmt_modified"/>
     </resultMap>
-
     <resultMap id="WarningListItemDOResultMap" type="com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningListItemDO">
         <id property="id" column="id"/>
         <result property="title" column="title"/>
@@ -52,18 +56,20 @@
 
     <sql id="BaseWarningColumns">
         w.id,
-        w.title,
-        w.crop_id,
-        w.pest_id,
-        w.risk_level,
-        w.warning_type,
-        w.warning_date,
-        w.rule_id,
-        w.delete_flag,
-        w.gmt_create,
-        w.gmt_modified
+    w.title,
+    w.crop_id,
+    w.pest_id,
+    w.risk_level,
+    w.risk_score,
+    w.risk_score_detail,
+    w.match_detail,
+    w.warning_type,
+    w.warning_date,
+    w.rule_id,
+    w.delete_flag,
+    w.gmt_create,
+    w.gmt_modified
     </sql>
-
     <sql id="WarningListColumns">
         w.id,
         w.title,
@@ -239,13 +245,20 @@
 
     <!-- ==================== 插入预警 ==================== -->
 
-    <insert id="insertWarning" parameterType="com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO"
-            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    <insert id="insertWarning"
+            parameterType="com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+
         INSERT INTO warning (
             title,
             crop_id,
             pest_id,
             risk_level,
+            risk_score,
+            risk_score_detail,
+            match_detail,
             warning_type,
             warning_date,
             rule_id,
@@ -255,11 +268,15 @@
                      #{cropId},
                      #{pestId},
                      #{riskLevel},
+                     #{riskScore},
+                     #{riskScoreDetail},
+                     #{matchDetail},
                      #{warningType},
                      #{warningDate},
                      #{ruleId},
                      #{deleteFlag}
                  )
+
     </insert>
 
     <!-- ==================== 定时任务刷新时清理旧预警（物理删除） ==================== -->
@@ -276,5 +293,18 @@
           AND warning_date <![CDATA[>=]]> #{startDate}
           AND warning_date <![CDATA[<=]]> #{endDate}
     </delete>
+    <select id="selectRiskInfoById"
+            resultMap="WarningDOResultMap">
 
+        SELECT
+        <include refid="BaseWarningColumns"/>
+
+        FROM warning w
+
+        WHERE w.id = #{id}
+        AND w.delete_flag = 0
+
+        LIMIT 1
+
+    </select>
 </mapper>

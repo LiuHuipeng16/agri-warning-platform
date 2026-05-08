@@ -73,4 +73,14 @@ public interface AIService {
      * 独立AI图文对话（流式）
      */
     SseEmitter chatImageStream(AIChatImageStreamReqDTO reqDTO);
+
+    /**
+     * AI预警解释（流式）
+     */
+    SseEmitter generateWarningExplanationStream(AIWarningExplanationReqDTO reqDTO);
+
+    /**
+     * 未来农业风险趋势分析（流式）
+     */
+    SseEmitter generateRiskReportStream(AIRiskReportReqDTO reqDTO);
 }

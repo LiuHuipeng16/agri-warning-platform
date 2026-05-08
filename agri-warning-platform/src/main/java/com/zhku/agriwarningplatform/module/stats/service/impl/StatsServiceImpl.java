@@ -1,24 +1,18 @@
 package com.zhku.agriwarningplatform.module.stats.service.impl;
 
-/**
- * Created with IntelliJ IDEA.
- * Description:
- * User: 12290
- * Date: 2026-04-14
- * Time: 17:02
- */
-
 import com.zhku.agriwarningplatform.common.errorcode.StatsErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ServiceException;
 import com.zhku.agriwarningplatform.module.stats.mapper.StatsMapper;
 import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.CropPestCountStatsDO;
 import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.HighRiskPestStatsDO;
+import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.HighRiskPestTopStatsDO;
 import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.PestTypeDistributionStatsDO;
 import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.SeasonTrendStatsDO;
 import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.StatsDashboardDO;
 import com.zhku.agriwarningplatform.module.stats.service.StatsService;
 import com.zhku.agriwarningplatform.module.stats.service.dto.CropPestCountStatsDTO;
 import com.zhku.agriwarningplatform.module.stats.service.dto.HighRiskPestStatsDTO;
+import com.zhku.agriwarningplatform.module.stats.service.dto.HighRiskPestTopStatsDTO;
 import com.zhku.agriwarningplatform.module.stats.service.dto.PestTypeDistributionStatsDTO;
 import com.zhku.agriwarningplatform.module.stats.service.dto.SeasonTrendStatsDTO;
 import com.zhku.agriwarningplatform.module.stats.service.dto.StatsDashboardDTO;
@@ -121,12 +115,36 @@ public class StatsServiceImpl implements StatsService {
         }
     }
 
+    @Override
+    public List<HighRiskPestTopStatsDTO> listHighRiskPestTopStats(Integer limit) {
+        try {
+            List<HighRiskPestTopStatsDO> statsDOList = statsMapper.listHighRiskPestTopStats(limit);
+            if (statsDOList == null || statsDOList.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            List<HighRiskPestTopStatsDTO> resultList = new java.util.ArrayList<>();
+            for (int i = 0; i < statsDOList.size(); i++) {
+                HighRiskPestTopStatsDTO dto = convertToHighRiskPestTopStatsDTO(statsDOList.get(i));
+                dto.setRank(i + 1);
+                resultList.add(dto);
+            }
+            return resultList;
+        } catch (Exception e) {
+            log.error("获取高风险病虫害排行异常，limit={}", limit, e);
+            throw new ServiceException(StatsErrorCode.HIGH_RISK_PESTS_QUERY_FAILED);
+        }
+    }
+
     private StatsDashboardDTO convertToStatsDashboardDTO(StatsDashboardDO statsDashboardDO) {
         StatsDashboardDTO statsDashboardDTO = new StatsDashboardDTO();
         statsDashboardDTO.setCropCount(statsDashboardDO.getCropCount());
         statsDashboardDTO.setPestCount(statsDashboardDO.getPestCount());
         statsDashboardDTO.setWarningCount(statsDashboardDO.getWarningCount());
         statsDashboardDTO.setAiQaCount(statsDashboardDO.getAiQaCount());
+        statsDashboardDTO.setHighRiskCount(statsDashboardDO.getHighRiskCount());
+        statsDashboardDTO.setAiImageConsultCount(statsDashboardDO.getAiImageConsultCount());
+        statsDashboardDTO.setFeedbackAccuracyRate(statsDashboardDO.getFeedbackAccuracyRate());
         return statsDashboardDTO;
     }
 
@@ -155,6 +173,15 @@ public class StatsServiceImpl implements StatsService {
         SeasonTrendStatsDTO statsDTO = new SeasonTrendStatsDTO();
         statsDTO.setSeason(statsDO.getSeason());
         statsDTO.setCount(statsDO.getCount());
+        return statsDTO;
+    }
+
+    private HighRiskPestTopStatsDTO convertToHighRiskPestTopStatsDTO(HighRiskPestTopStatsDO statsDO) {
+        HighRiskPestTopStatsDTO statsDTO = new HighRiskPestTopStatsDTO();
+        statsDTO.setPestId(statsDO.getPestId());
+        statsDTO.setPestName(statsDO.getPestName());
+        statsDTO.setWarningCount(statsDO.getWarningCount());
+        statsDTO.setAvgRiskScore(statsDO.getAvgRiskScore());
         return statsDTO;
     }
 }

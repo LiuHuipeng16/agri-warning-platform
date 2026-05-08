@@ -118,6 +118,10 @@ public class WeatherController {
             vo.setMaxWindSpeed(dto.getMaxWindSpeed());
             vo.setWeatherDesc(dto.getWeatherDesc());
             vo.setUpdateTime(dto.getUpdateTime());
+            vo.setRiskLevel(dto.getRiskLevel());
+            vo.setRiskScore(dto.getRiskScore());
+            vo.setHighRiskCount(dto.getHighRiskCount());
+            vo.setWarningCount(dto.getWarningCount());
             voList.add(vo);
         }
 

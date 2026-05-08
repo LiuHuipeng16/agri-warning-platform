@@ -203,6 +203,54 @@ public class WarningController {
         return CommonResult.success(resultVO);
     }
 
+    /**
+     * 获取预警风险评分详情
+     *
+     * @param warningId 预警ID
+     * @return 风险评分详情
+     */
+    @GetMapping("/riskScore/{warningId}")
+    public CommonResult<WarningRiskScoreVO> getWarningRiskScore(
+            @PathVariable("warningId")
+            @Min(value = 1, message = "预警ID必须大于等于1")
+            Long warningId) {
+
+        log.info("进入接口:WarningController#getWarningRiskScore,warningId={}", warningId);
+
+        if (Objects.isNull(warningId) || warningId < 1) {
+            throw new ControllerException(WarningErrorCode.WARNING_ID_INVALID);
+        }
+
+        WarningRiskScoreDTO resultDTO = warningService.getWarningRiskScore(warningId);
+        WarningRiskScoreVO resultVO = convertToWarningRiskScoreVO(resultDTO);
+
+        return CommonResult.success(resultVO);
+    }
+
+    /**
+     * 获取预警规则命中依据
+     *
+     * @param warningId 预警ID
+     * @return 命中依据详情
+     */
+    @GetMapping("/matchDetail/{warningId}")
+    public CommonResult<WarningMatchDetailVO> getWarningMatchDetail(
+            @PathVariable("warningId")
+            @Min(value = 1, message = "预警ID必须大于等于1")
+            Long warningId) {
+
+        log.info("进入接口:WarningController#getWarningMatchDetail,warningId={}", warningId);
+
+        if (Objects.isNull(warningId) || warningId < 1) {
+            throw new ControllerException(WarningErrorCode.WARNING_ID_INVALID);
+        }
+
+        WarningMatchDetailDTO resultDTO = warningService.getWarningMatchDetail(warningId);
+        WarningMatchDetailVO resultVO = convertToWarningMatchDetailVO(resultDTO);
+
+        return CommonResult.success(resultVO);
+    }
+
     // ==================== private 校验方法 ====================
 
     private void validateWarningPageParam(WarningPageParam param) {
@@ -378,6 +426,66 @@ public class WarningController {
         resultVO.setSkippedCount(resultDTO.getSkippedCount());
         resultVO.setDays(resultDTO.getDays());
         return resultVO;
+    }
+    private WarningRiskScoreVO convertToWarningRiskScoreVO(
+            WarningRiskScoreDTO dto) {
+
+        WarningRiskScoreVO vo = new WarningRiskScoreVO();
+
+        vo.setWarningId(dto.getWarningId());
+        vo.setTitle(dto.getTitle());
+        vo.setRiskScore(dto.getRiskScore());
+        vo.setRiskLevel(dto.getRiskLevel());
+
+        List<WarningRiskScoreVO.ScoreDetail> detailList = new ArrayList<>();
+
+        if (dto.getScoreDetails() != null) {
+            for (WarningRiskScoreDTO.ScoreDetailDTO itemDTO : dto.getScoreDetails()) {
+
+                WarningRiskScoreVO.ScoreDetail itemVO =
+                        new WarningRiskScoreVO.ScoreDetail();
+
+                itemVO.setFactor(itemDTO.getFactor());
+                itemVO.setScore(itemDTO.getScore());
+                itemVO.setMaxScore(itemDTO.getMaxScore());
+
+                detailList.add(itemVO);
+            }
+        }
+
+        vo.setScoreDetails(detailList);
+
+        return vo;
+    }
+    private WarningMatchDetailVO convertToWarningMatchDetailVO(WarningMatchDetailDTO dto) {
+        WarningMatchDetailVO vo = new WarningMatchDetailVO();
+
+        vo.setWarningId(dto.getWarningId());
+        vo.setTitle(dto.getTitle());
+        vo.setRuleId(dto.getRuleId());
+        vo.setRuleName(dto.getRuleName());
+
+        List<WarningMatchDetailVO.MatchDetail> detailList = new ArrayList<>();
+
+        if (dto.getMatchDetails() != null) {
+            for (WarningMatchDetailDTO.MatchDetailDTO itemDTO : dto.getMatchDetails()) {
+                WarningMatchDetailVO.MatchDetail itemVO = new WarningMatchDetailVO.MatchDetail();
+
+                itemVO.setMetric(itemDTO.getMetric());
+                itemVO.setActualValue(itemDTO.getActualValue());
+                itemVO.setUnit(itemDTO.getUnit());
+                itemVO.setMinValue(itemDTO.getMinValue());
+                itemVO.setMaxValue(itemDTO.getMaxValue());
+                itemVO.setOperator(itemDTO.getOperator());
+                itemVO.setMatched(itemDTO.getMatched());
+
+                detailList.add(itemVO);
+            }
+        }
+
+        vo.setMatchDetails(detailList);
+
+        return vo;
     }
 
     private String trimToNull(String value) {

@@ -119,4 +119,12 @@ public interface WarningMapper extends BaseMapper<WarningDO> {
 
     @org.apache.ibatis.annotations.Select("select count(1) from warning where rule_id = #{ruleId} and delete_flag = 0")
     Long countByRuleId(@Param("ruleId") Long ruleId);
+
+    /**
+     * 查询预警风险评分与命中依据信息
+     *
+     * @param id 预警ID
+     * @return 预警DO
+     */
+    WarningDO selectRiskInfoById(@Param("id") Long id);
 }

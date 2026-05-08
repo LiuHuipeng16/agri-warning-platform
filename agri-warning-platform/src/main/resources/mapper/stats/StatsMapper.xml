@@ -2,65 +2,142 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.zhku.agriwarningplatform.module.stats.mapper.StatsMapper">
+
+    <!-- ==================== ResultMap ==================== -->
 
     <resultMap id="statsDashboardResultMap"
                type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.StatsDashboardDO">
+
         <result property="cropCount" column="crop_count"/>
         <result property="pestCount" column="pest_count"/>
         <result property="warningCount" column="warning_count"/>
         <result property="aiQaCount" column="ai_qa_count"/>
+        <result property="highRiskCount" column="high_risk_count"/>
+        <result property="aiImageConsultCount" column="ai_image_consult_count"/>
+        <result property="feedbackAccuracyRate" column="feedback_accuracy_rate"/>
     </resultMap>
 
     <resultMap id="cropPestCountStatsResultMap"
                type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.CropPestCountStatsDO">
+
         <result property="cropName" column="crop_name"/>
         <result property="count" column="count"/>
     </resultMap>
 
     <resultMap id="pestTypeDistributionStatsResultMap"
                type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.PestTypeDistributionStatsDO">
+
         <result property="name" column="name"/>
         <result property="value" column="value"/>
     </resultMap>
 
     <resultMap id="highRiskPestStatsResultMap"
                type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.HighRiskPestStatsDO">
+
         <result property="pestName" column="pest_name"/>
         <result property="riskLevel" column="risk_level"/>
     </resultMap>
 
     <resultMap id="seasonTrendStatsResultMap"
                type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.SeasonTrendStatsDO">
+
         <result property="season" column="season"/>
         <result property="count" column="count"/>
     </resultMap>
 
-    <select id="getDashboardStats" resultMap="statsDashboardResultMap">
+    <resultMap id="highRiskPestTopStatsResultMap"
+               type="com.zhku.agriwarningplatform.module.stats.mapper.dataobject.HighRiskPestTopStatsDO">
+
+        <result property="pestId" column="pest_id"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="warningCount" column="warning_count"/>
+        <result property="avgRiskScore" column="avg_risk_score"/>
+    </resultMap>
+
+    <resultMap id="weatherForecastRiskResultMap"
+               type="com.zhku.agriwarningplatform.module.weather.mapper.dataobject.WeatherForecastRiskDO">
+
+        <result property="date" column="warning_date"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="riskScore" column="risk_score"/>
+        <result property="highRiskCount" column="high_risk_count"/>
+        <result property="warningCount" column="warning_count"/>
+    </resultMap>
+
+    <!-- ==================== dashboard ==================== -->
+
+    <select id="getDashboardStats"
+            resultMap="statsDashboardResultMap">
+
         SELECT
             (
                 SELECT COUNT(1)
                 FROM crop
                 WHERE delete_flag = 0
             ) AS crop_count,
+
             (
                 SELECT COUNT(1)
                 FROM pest
                 WHERE delete_flag = 0
             ) AS pest_count,
+
             (
                 SELECT COUNT(1)
                 FROM warning
                 WHERE delete_flag = 0
             ) AS warning_count,
+
             (
                 SELECT COUNT(1)
-                FROM ai_qa_record
+                FROM ai_chat_message
                 WHERE delete_flag = 0
-            ) AS ai_qa_count
+            ) AS ai_qa_count,
+
+            (
+                SELECT COUNT(1)
+                FROM warning
+                WHERE delete_flag = 0
+                  AND risk_level = '高'
+            ) AS high_risk_count,
+
+            (
+                SELECT COUNT(1)
+                FROM ai_chat_message
+                WHERE delete_flag = 0
+                  AND message_type = 'IMAGE_TEXT'
+            ) AS ai_image_consult_count,
+
+            (
+                SELECT
+                    IFNULL(
+                            ROUND(
+                                    (
+                                        SUM(
+                                                CASE
+                                                    WHEN feedback_result = 'YES' THEN 1
+                                                    ELSE 0
+                                                    END
+                                        )
+                                            / COUNT(1)
+                                        ) * 100,
+                                    1
+                            ),
+                            0
+                    )
+                FROM feedback
+                WHERE delete_flag = 0
+            ) AS feedback_accuracy_rate
+
     </select>
 
-    <select id="listCropPestCountStats" resultMap="cropPestCountStatsResultMap">
+    <!-- ==================== 作物病虫害统计 ==================== -->
+
+    <select id="listCropPestCountStats"
+            resultMap="cropPestCountStatsResultMap">
+
         SELECT
             c.name AS crop_name,
             COUNT(DISTINCT cpr.pest_id) AS count
@@ -74,9 +151,14 @@
         WHERE c.delete_flag = 0
         GROUP BY c.id, c.name
         ORDER BY count DESC, c.id ASC
+
     </select>
 
-    <select id="listPestTypeDistributionStats" resultMap="pestTypeDistributionStatsResultMap">
+    <!-- ==================== 病虫害类型统计 ==================== -->
+
+    <select id="listPestTypeDistributionStats"
+            resultMap="pestTypeDistributionStatsResultMap">
+
         SELECT
             p.type AS name,
             COUNT(1) AS value
@@ -85,19 +167,30 @@
           AND p.type IS NOT NULL
         GROUP BY p.type
         ORDER BY value DESC
+
     </select>
 
-    <select id="listHighRiskPestStats" resultMap="highRiskPestStatsResultMap">
+    <!-- ==================== 高风险病虫害分布 ==================== -->
+
+    <select id="listHighRiskPestStats"
+            resultMap="highRiskPestStatsResultMap">
+
         SELECT
             p.name AS pest_name,
             p.risk_level
         FROM pest p
         WHERE p.delete_flag = 0
           AND p.risk_level = '高'
-        ORDER BY p.gmt_create DESC, p.id DESC
+        ORDER BY p.gmt_create DESC,
+                 p.id DESC
+
     </select>
 
-    <select id="listSeasonTrendStats" resultMap="seasonTrendStatsResultMap">
+    <!-- ==================== 季节趋势统计 ==================== -->
+
+    <select id="listSeasonTrendStats"
+            resultMap="seasonTrendStatsResultMap">
+
         SELECT
             p.season,
             COUNT(1) AS count
@@ -106,8 +199,7 @@
           AND p.season IS NOT NULL
           AND p.season != ''
         GROUP BY p.season
-        ORDER BY
-            CASE p.season
+        ORDER BY CASE p.season
             WHEN '春' THEN 1
             WHEN '夏' THEN 2
             WHEN '秋' THEN 3
@@ -115,6 +207,65 @@
             WHEN '全年' THEN 5
             ELSE 6
         END
+
+    </select>
+
+    <!-- ==================== 高风险病虫害排行 ==================== -->
+
+    <select id="listHighRiskPestTopStats"
+            resultMap="highRiskPestTopStatsResultMap">
+
+        SELECT
+            w.pest_id,
+            p.name AS pest_name,
+            COUNT(1) AS warning_count,
+            ROUND(AVG(w.risk_score), 1) AS avg_risk_score
+        FROM warning w
+                 INNER JOIN pest p
+                            ON w.pest_id = p.id
+                                AND p.delete_flag = 0
+        WHERE w.delete_flag = 0
+          AND w.risk_level = '高'
+        GROUP BY w.pest_id, p.name
+        ORDER BY warning_count DESC,
+                 avg_risk_score DESC,
+                 w.pest_id ASC
+            LIMIT #{limit}
+
+    </select>
+
+    <!-- ==================== 天气风险统计 ==================== -->
+
+    <select id="listWeatherForecastRiskStats"
+            resultMap="weatherForecastRiskResultMap">
+
+        SELECT
+            DATE_FORMAT(w.warning_date, '%Y-%m-%d') AS warning_date,
+
+            CASE
+                WHEN MAX(w.risk_score) >= 80 THEN '高'
+                WHEN MAX(w.risk_score) >= 60 THEN '中'
+                WHEN MAX(w.risk_score) IS NULL THEN NULL
+                ELSE '低'
+                END AS risk_level,
+
+            IFNULL(MAX(w.risk_score), 0) AS risk_score,
+
+            SUM(
+                    CASE
+                        WHEN w.risk_level = '高' THEN 1
+                        ELSE 0
+                        END
+            ) AS high_risk_count,
+
+            COUNT(1) AS warning_count
+
+        FROM warning w
+        WHERE w.delete_flag = 0
+          AND w.warning_date BETWEEN #{startDate} AND #{endDate}
+        GROUP BY w.warning_date
+        ORDER BY w.warning_date ASC
+
     </select>
 
 </mapper>

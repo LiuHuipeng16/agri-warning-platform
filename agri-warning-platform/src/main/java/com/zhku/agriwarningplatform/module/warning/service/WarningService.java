@@ -1,13 +1,7 @@
 package com.zhku.agriwarningplatform.module.warning.service;
 
 import com.zhku.agriwarningplatform.common.result.PageResult;
-import com.zhku.agriwarningplatform.module.warning.service.dto.ForecastWarningDTO;
-import com.zhku.agriwarningplatform.module.warning.service.dto.TodayWarningDTO;
-import com.zhku.agriwarningplatform.module.warning.service.dto.WarningDetailDTO;
-import com.zhku.agriwarningplatform.module.warning.service.dto.WarningGenerateForecastResultDTO;
-import com.zhku.agriwarningplatform.module.warning.service.dto.WarningGenerateTodayResultDTO;
-import com.zhku.agriwarningplatform.module.warning.service.dto.WarningPageItemDTO;
-import com.zhku.agriwarningplatform.module.warning.service.dto.WarningPageQueryDTO;
+import com.zhku.agriwarningplatform.module.warning.service.dto.*;
 
 import java.util.List;
 
@@ -108,4 +102,20 @@ public interface WarningService {
      * @return 生成结果
      */
     WarningGenerateForecastResultDTO refreshForecastWarningsForTask(Integer days);
+
+    /**
+     * 获取预警风险评分详情
+     *
+     * @param warningId 预警ID
+     * @return 风险评分详情
+     */
+    WarningRiskScoreDTO getWarningRiskScore(Long warningId);
+
+    /**
+     * 获取预警规则命中依据
+     *
+     * @param warningId 预警ID
+     * @return 命中依据详情
+     */
+    WarningMatchDetailDTO getWarningMatchDetail(Long warningId);
 }

@@ -1,15 +1,9 @@
 package com.zhku.agriwarningplatform.module.stats.mapper;
 
-/**
- * Created with IntelliJ IDEA.
- * Description:
- * User: 12290
- * Date: 2026-04-14
- * Time: 16:55
- */
 import com.zhku.agriwarningplatform.module.stats.mapper.dataobject.*;
+import com.zhku.agriwarningplatform.module.weather.mapper.dataobject.WeatherForecastRiskDO;
 import org.apache.ibatis.annotations.Mapper;
-import org.reactivestreams.Publisher;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -53,4 +47,24 @@ public interface StatsMapper {
      * @return 季节高发趋势统计列表
      */
     List<SeasonTrendStatsDO> listSeasonTrendStats();
+
+    /**
+     * 获取高风险病虫害排行
+     *
+     * @param limit 返回数量
+     * @return 高风险病虫害排行
+     */
+    List<HighRiskPestTopStatsDO> listHighRiskPestTopStats(@Param("limit") Integer limit);
+
+    /**
+     * 获取天气预报每日风险概览
+     *
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 风险概览列表
+     */
+    List<WeatherForecastRiskDO> listWeatherForecastRiskStats(
+            @Param("startDate") String startDate,
+            @Param("endDate") String endDate
+    );
 }

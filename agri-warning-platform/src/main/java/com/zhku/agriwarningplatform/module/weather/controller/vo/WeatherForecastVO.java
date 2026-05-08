@@ -1,12 +1,5 @@
 package com.zhku.agriwarningplatform.module.weather.controller.vo;
 
-/**
- * Created with IntelliJ IDEA.
- * Description:
- * User: 12290
- * Date: 2026-04-16
- * Time: 21:41
- */
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -56,6 +49,26 @@ public class WeatherForecastVO {
      * 天气描述
      */
     private String weatherDesc;
+
+    /**
+     * 当日综合风险等级
+     */
+    private String riskLevel;
+
+    /**
+     * 当日综合风险指数
+     */
+    private Integer riskScore;
+
+    /**
+     * 当日高风险预警数量
+     */
+    private Integer highRiskCount;
+
+    /**
+     * 当日预警总数量
+     */
+    private Integer warningCount;
 
     /**
      * 更新时间

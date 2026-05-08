@@ -52,7 +52,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.zhku.agriwarningplatform.module.warning.service.dto.WarningMatchDetailDTO;
+import com.zhku.agriwarningplatform.module.warning.service.dto.WarningRiskScoreDTO;
 /**
  * 预警 Service 实现类
  */
@@ -101,7 +103,9 @@ public class WarningServiceImpl implements WarningService {
         this.cropMapper = cropMapper;
         this.pestMapper = pestMapper;
         this.warningGenerateLockSupport = warningGenerateLockSupport;
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(java.time.Duration.ofSeconds(15))
+                .build();
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
@@ -227,10 +231,21 @@ public class WarningServiceImpl implements WarningService {
 
         try {
             LocalDate today = LocalDate.now();
-            WeatherDailySummary dailySummary = getWeatherDailySummaryMap(today, today).get(today);
+            WeatherDailySummary dailySummary;
 
-            if (Objects.isNull(dailySummary)) {
-                throw new ServiceException(WarningErrorCode.WEATHER_QUERY_FAILED);
+            try {
+                dailySummary = getWeatherDailySummaryMap(today, today).get(today);
+            } catch (Exception e) {
+                log.error("定时刷新当天预警获取天气失败，跳过本次任务", e);
+
+                WarningGenerateTodayResultDTO resultDTO =
+                        new WarningGenerateTodayResultDTO();
+
+                resultDTO.setGeneratedCount(0);
+                resultDTO.setSkippedCount(0);
+                resultDTO.setWarningDate(today);
+
+                return resultDTO;
             }
 
             List<PreWarningRuleDO> enabledRules = getEnabledRules();
@@ -536,6 +551,101 @@ public class WarningServiceImpl implements WarningService {
         resultDTO.setDays(days);
         return resultDTO;
     }
+
+    @Override
+    public WarningRiskScoreDTO getWarningRiskScore(Long warningId) {
+        try {
+            WarningDO warningDO = warningMapper.selectRiskInfoById(warningId);
+            if (Objects.isNull(warningDO)) {
+                throw new ServiceException(WarningErrorCode.WARNING_NOT_EXIST);
+            }
+
+            if (Objects.nonNull(warningDO.getRiskScore())
+                    && warningDO.getRiskScoreDetail() != null
+                    && !warningDO.getRiskScoreDetail().isBlank()) {
+                return buildWarningRiskScoreDTOFromCache(warningDO);
+            }
+
+            PreWarningRuleDO ruleDO = preWarningRuleMapper.selectById(warningDO.getRuleId());
+            if (Objects.isNull(ruleDO) || !Objects.equals(ruleDO.getDeleteFlag(), 0)) {
+                throw new ServiceException(WarningErrorCode.PREWARNING_RULE_NOT_EXIST);
+            }
+
+            PestDO pestDO = pestMapper.selectById(warningDO.getPestId());
+            if (Objects.isNull(pestDO) || !Objects.equals(pestDO.getDeleteFlag(), 0)) {
+                throw new ServiceException(WarningErrorCode.PEST_NOT_EXIST);
+            }
+
+            WeatherDailySummary dailySummary = getWeatherDailySummaryMap(
+                    warningDO.getWarningDate(),
+                    warningDO.getWarningDate()
+            ).get(warningDO.getWarningDate());
+
+            if (Objects.isNull(dailySummary)) {
+                throw new ServiceException(WarningErrorCode.WEATHER_QUERY_FAILED);
+            }
+
+            List<WarningRiskScoreDTO.ScoreDetailDTO> scoreDetails =
+                    buildRiskScoreDetailDTOList(ruleDO, dailySummary, pestDO);
+
+            WarningRiskScoreDTO dto = new WarningRiskScoreDTO();
+            dto.setWarningId(warningDO.getId());
+            dto.setTitle(warningDO.getTitle());
+            dto.setRiskScore(calculateTotalRiskScore(scoreDetails));
+            dto.setRiskLevel(warningDO.getRiskLevel());
+            dto.setScoreDetails(scoreDetails);
+
+            return dto;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("查询预警风险评分详情异常，warningId={}", warningId, e);
+            throw new ServiceException(WarningErrorCode.WARNING_RISK_SCORE_QUERY_FAILED);
+        }
+    }
+
+    @Override
+    public WarningMatchDetailDTO getWarningMatchDetail(Long warningId) {
+        try {
+            WarningDO warningDO = warningMapper.selectRiskInfoById(warningId);
+            if (Objects.isNull(warningDO)) {
+                throw new ServiceException(WarningErrorCode.WARNING_NOT_EXIST);
+            }
+
+            if (warningDO.getMatchDetail() != null && !warningDO.getMatchDetail().isBlank()) {
+                return buildWarningMatchDetailDTOFromCache(warningDO);
+            }
+
+            PreWarningRuleDO ruleDO = preWarningRuleMapper.selectById(warningDO.getRuleId());
+            if (Objects.isNull(ruleDO) || !Objects.equals(ruleDO.getDeleteFlag(), 0)) {
+                throw new ServiceException(WarningErrorCode.PREWARNING_RULE_NOT_EXIST);
+            }
+
+            WeatherDailySummary dailySummary = getWeatherDailySummaryMap(
+                    warningDO.getWarningDate(),
+                    warningDO.getWarningDate()
+            ).get(warningDO.getWarningDate());
+
+            if (Objects.isNull(dailySummary)) {
+                throw new ServiceException(WarningErrorCode.WEATHER_QUERY_FAILED);
+            }
+
+            WarningMatchDetailDTO dto = new WarningMatchDetailDTO();
+            dto.setWarningId(warningDO.getId());
+            dto.setTitle(warningDO.getTitle());
+            dto.setRuleId(ruleDO.getId());
+            dto.setRuleName(ruleDO.getRuleName());
+            dto.setMatchDetails(buildMatchDetailDTOList(ruleDO, dailySummary));
+
+            return dto;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("查询预警规则命中依据异常，warningId={}", warningId, e);
+            throw new ServiceException(WarningErrorCode.WARNING_MATCH_DETAIL_QUERY_FAILED);
+        }
+    }
+
     // ==================== private 方法：分页转换 ====================
 
     private WarningPageQueryDO buildWarningPageQueryDO(WarningPageQueryDTO queryDTO) {
@@ -680,7 +790,7 @@ public class WarningServiceImpl implements WarningService {
             HttpRequest request = HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(url))
-                    .timeout(java.time.Duration.ofSeconds(10))
+                    .timeout(java.time.Duration.ofSeconds(30))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -866,11 +976,20 @@ public class WarningServiceImpl implements WarningService {
         CropDO cropDO = cropMapper.selectByIdDO(ruleDO.getCropId());
         PestDO pestDO = pestMapper.selectById(ruleDO.getPestId());
 
+        List<WarningRiskScoreDTO.ScoreDetailDTO> scoreDetails =
+                buildRiskScoreDetailDTOList(ruleDO, dailySummary, pestDO);
+
+        List<WarningMatchDetailDTO.MatchDetailDTO> matchDetails =
+                buildMatchDetailDTOList(ruleDO, dailySummary);
+
         WarningDO warningDO = new WarningDO();
         warningDO.setTitle(buildWarningTitle(cropDO.getName(), pestDO.getName(), ruleDO.getRiskLevel()));
         warningDO.setCropId(ruleDO.getCropId());
         warningDO.setPestId(ruleDO.getPestId());
         warningDO.setRiskLevel(ruleDO.getRiskLevel());
+        warningDO.setRiskScore(calculateTotalRiskScore(scoreDetails));
+        warningDO.setRiskScoreDetail(writeJson(scoreDetails));
+        warningDO.setMatchDetail(writeJson(matchDetails));
         warningDO.setWarningType(warningType);
         warningDO.setWarningDate(dailySummary.getDate());
         warningDO.setRuleId(ruleDO.getId());
@@ -892,18 +1011,7 @@ public class WarningServiceImpl implements WarningService {
             return false;
         }
 
-        CropDO cropDO = cropMapper.selectByIdDO(ruleDO.getCropId());
-        PestDO pestDO = pestMapper.selectById(ruleDO.getPestId());
-
-        WarningDO warningDO = new WarningDO();
-        warningDO.setTitle(buildWarningTitle(cropDO.getName(), pestDO.getName(), ruleDO.getRiskLevel()));
-        warningDO.setCropId(ruleDO.getCropId());
-        warningDO.setPestId(ruleDO.getPestId());
-        warningDO.setRiskLevel(ruleDO.getRiskLevel());
-        warningDO.setWarningType(warningType);
-        warningDO.setWarningDate(dailySummary.getDate());
-        warningDO.setRuleId(ruleDO.getId());
-        warningDO.setDeleteFlag(0);
+        WarningDO warningDO = buildWarningDO(ruleDO, dailySummary, warningType);
 
         try {
             int rows = warningMapper.insertWarning(warningDO);
@@ -943,7 +1051,328 @@ public class WarningServiceImpl implements WarningService {
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
     }
+    private WarningRiskScoreDTO buildWarningRiskScoreDTOFromCache(WarningDO warningDO) {
+        try {
+            List<WarningRiskScoreDTO.ScoreDetailDTO> scoreDetails =
+                    objectMapper.readValue(
+                            warningDO.getRiskScoreDetail(),
+                            new TypeReference<List<WarningRiskScoreDTO.ScoreDetailDTO>>() {
+                            }
+                    );
 
+            WarningRiskScoreDTO dto = new WarningRiskScoreDTO();
+            dto.setWarningId(warningDO.getId());
+            dto.setTitle(warningDO.getTitle());
+            dto.setRiskScore(warningDO.getRiskScore());
+            dto.setRiskLevel(warningDO.getRiskLevel());
+            dto.setScoreDetails(scoreDetails == null ? new ArrayList<>() : scoreDetails);
+
+            return dto;
+        } catch (Exception e) {
+            log.error("解析预警风险评分明细JSON异常，warningId={}, json={}",
+                    warningDO.getId(), warningDO.getRiskScoreDetail(), e);
+            throw new ServiceException(WarningErrorCode.WARNING_RISK_SCORE_DETAIL_INVALID);
+        }
+    }
+
+    private WarningMatchDetailDTO buildWarningMatchDetailDTOFromCache(WarningDO warningDO) {
+        try {
+            PreWarningRuleDO ruleDO = preWarningRuleMapper.selectById(warningDO.getRuleId());
+            if (Objects.isNull(ruleDO) || !Objects.equals(ruleDO.getDeleteFlag(), 0)) {
+                throw new ServiceException(WarningErrorCode.PREWARNING_RULE_NOT_EXIST);
+            }
+
+            List<WarningMatchDetailDTO.MatchDetailDTO> matchDetails =
+                    objectMapper.readValue(
+                            warningDO.getMatchDetail(),
+                            new TypeReference<List<WarningMatchDetailDTO.MatchDetailDTO>>() {
+                            }
+                    );
+
+            WarningMatchDetailDTO dto = new WarningMatchDetailDTO();
+            dto.setWarningId(warningDO.getId());
+            dto.setTitle(warningDO.getTitle());
+            dto.setRuleId(ruleDO.getId());
+            dto.setRuleName(ruleDO.getRuleName());
+            dto.setMatchDetails(matchDetails == null ? new ArrayList<>() : matchDetails);
+
+            return dto;
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("解析预警规则命中依据JSON异常，warningId={}, json={}",
+                    warningDO.getId(), warningDO.getMatchDetail(), e);
+            throw new ServiceException(WarningErrorCode.WARNING_MATCH_DETAIL_INVALID);
+        }
+    }
+
+    private List<WarningRiskScoreDTO.ScoreDetailDTO> buildRiskScoreDetailDTOList(PreWarningRuleDO ruleDO,
+                                                                                 WeatherDailySummary dailySummary,
+                                                                                 PestDO pestDO) {
+        List<WarningRiskScoreDTO.ScoreDetailDTO> list = new ArrayList<>();
+
+        list.add(buildScoreDetail("温度", calculateTemperatureScore(ruleDO, dailySummary), 25));
+        list.add(buildScoreDetail("湿度", calculateSingleMetricScore(
+                dailySummary.getAvgHumidity(),
+                ruleDO.getMinHumidity(),
+                ruleDO.getMaxHumidity(),
+                30
+        ), 30));
+        list.add(buildScoreDetail("降水", calculateSingleMetricScore(
+                dailySummary.getPrecipitation(),
+                ruleDO.getMinPrecipitation(),
+                ruleDO.getMaxPrecipitation(),
+                20
+        ), 20));
+        list.add(buildScoreDetail("风速", calculateSingleMetricScore(
+                dailySummary.getMaxWindSpeed(),
+                ruleDO.getMinWindSpeed(),
+                ruleDO.getMaxWindSpeed(),
+                10
+        ), 10));
+        list.add(buildScoreDetail("季节", calculateSeasonScore(pestDO, dailySummary), 15));
+
+        return list;
+    }
+
+    private WarningRiskScoreDTO.ScoreDetailDTO buildScoreDetail(String factor,
+                                                                Integer score,
+                                                                Integer maxScore) {
+        WarningRiskScoreDTO.ScoreDetailDTO dto = new WarningRiskScoreDTO.ScoreDetailDTO();
+        dto.setFactor(factor);
+        dto.setScore(score);
+        dto.setMaxScore(maxScore);
+        return dto;
+    }
+
+    private Integer calculateTemperatureScore(PreWarningRuleDO ruleDO, WeatherDailySummary dailySummary) {
+        if (Objects.isNull(ruleDO.getMinTemp()) && Objects.isNull(ruleDO.getMaxTemp())) {
+            return 0;
+        }
+
+        boolean matched = true;
+
+        if (Objects.nonNull(ruleDO.getMinTemp())
+                && dailySummary.getTempMin().compareTo(ruleDO.getMinTemp()) < 0) {
+            matched = false;
+        }
+
+        if (Objects.nonNull(ruleDO.getMaxTemp())
+                && dailySummary.getTempMax().compareTo(ruleDO.getMaxTemp()) > 0) {
+            matched = false;
+        }
+
+        return matched ? 25 : 0;
+    }
+
+    private Integer calculateSingleMetricScore(BigDecimal actualValue,
+                                               BigDecimal minValue,
+                                               BigDecimal maxValue,
+                                               Integer maxScore) {
+        if (Objects.isNull(minValue) && Objects.isNull(maxValue)) {
+            return 0;
+        }
+
+        if (Objects.isNull(actualValue)) {
+            return 0;
+        }
+
+        boolean matched = true;
+
+        if (Objects.nonNull(minValue) && actualValue.compareTo(minValue) < 0) {
+            matched = false;
+        }
+
+        if (Objects.nonNull(maxValue) && actualValue.compareTo(maxValue) > 0) {
+            matched = false;
+        }
+
+        return matched ? maxScore : 0;
+    }
+
+    private Integer calculateSeasonScore(PestDO pestDO, WeatherDailySummary dailySummary) {
+        if (Objects.isNull(pestDO)
+                || pestDO.getSeason() == null
+                || pestDO.getSeason().isBlank()
+                || Objects.isNull(dailySummary)
+                || Objects.isNull(dailySummary.getDate())) {
+            return 0;
+        }
+
+        String currentSeason = getSeasonByMonth(dailySummary.getDate().getMonthValue());
+
+        if ("全年".equals(pestDO.getSeason()) || pestDO.getSeason().contains(currentSeason)) {
+            return 15;
+        }
+
+        return 0;
+    }
+
+    private String getSeasonByMonth(Integer month) {
+        if (month == null) {
+            return "";
+        }
+
+        if (month >= 3 && month <= 5) {
+            return "春";
+        }
+
+        if (month >= 6 && month <= 8) {
+            return "夏";
+        }
+
+        if (month >= 9 && month <= 11) {
+            return "秋";
+        }
+
+        return "冬";
+    }
+
+    private Integer calculateTotalRiskScore(List<WarningRiskScoreDTO.ScoreDetailDTO> scoreDetails) {
+        if (CollectionUtils.isEmpty(scoreDetails)) {
+            return 0;
+        }
+
+        int total = 0;
+        for (WarningRiskScoreDTO.ScoreDetailDTO detailDTO : scoreDetails) {
+            if (detailDTO.getScore() != null) {
+                total += detailDTO.getScore();
+            }
+        }
+
+        if (total < 0) {
+            return 0;
+        }
+
+        return Math.min(total, 100);
+    }
+
+    private List<WarningMatchDetailDTO.MatchDetailDTO> buildMatchDetailDTOList(PreWarningRuleDO ruleDO,
+                                                                               WeatherDailySummary dailySummary) {
+        List<WarningMatchDetailDTO.MatchDetailDTO> list = new ArrayList<>();
+
+        list.add(buildTemperatureMatchDetail(ruleDO, dailySummary));
+        list.add(buildNormalMatchDetail(
+                "湿度",
+                dailySummary.getAvgHumidity(),
+                "%",
+                ruleDO.getMinHumidity(),
+                ruleDO.getMaxHumidity()
+        ));
+        list.add(buildNormalMatchDetail(
+                "降水",
+                dailySummary.getPrecipitation(),
+                "mm",
+                ruleDO.getMinPrecipitation(),
+                ruleDO.getMaxPrecipitation()
+        ));
+        list.add(buildNormalMatchDetail(
+                "风速",
+                dailySummary.getMaxWindSpeed(),
+                "m/s",
+                ruleDO.getMinWindSpeed(),
+                ruleDO.getMaxWindSpeed()
+        ));
+
+        return list;
+    }
+
+    private WarningMatchDetailDTO.MatchDetailDTO buildTemperatureMatchDetail(PreWarningRuleDO ruleDO,
+                                                                             WeatherDailySummary dailySummary) {
+        WarningMatchDetailDTO.MatchDetailDTO dto = new WarningMatchDetailDTO.MatchDetailDTO();
+
+        dto.setMetric("温度");
+        dto.setActualValue(calculateAverageValue(dailySummary.getTempMin(), dailySummary.getTempMax()));
+        dto.setUnit("℃");
+        dto.setMinValue(ruleDO.getMinTemp());
+        dto.setMaxValue(ruleDO.getMaxTemp());
+        dto.setOperator(resolveOperator(ruleDO.getMinTemp(), ruleDO.getMaxTemp()));
+
+        if ("IGNORE".equals(dto.getOperator())) {
+            dto.setMatched(null);
+        } else {
+            boolean matched = true;
+
+            if (Objects.nonNull(ruleDO.getMinTemp())
+                    && dailySummary.getTempMin().compareTo(ruleDO.getMinTemp()) < 0) {
+                matched = false;
+            }
+
+            if (Objects.nonNull(ruleDO.getMaxTemp())
+                    && dailySummary.getTempMax().compareTo(ruleDO.getMaxTemp()) > 0) {
+                matched = false;
+            }
+
+            dto.setMatched(matched);
+        }
+
+        return dto;
+    }
+
+    private WarningMatchDetailDTO.MatchDetailDTO buildNormalMatchDetail(String metric,
+                                                                        BigDecimal actualValue,
+                                                                        String unit,
+                                                                        BigDecimal minValue,
+                                                                        BigDecimal maxValue) {
+        WarningMatchDetailDTO.MatchDetailDTO dto = new WarningMatchDetailDTO.MatchDetailDTO();
+
+        dto.setMetric(metric);
+        dto.setActualValue(actualValue);
+        dto.setUnit(unit);
+        dto.setMinValue(minValue);
+        dto.setMaxValue(maxValue);
+        dto.setOperator(resolveOperator(minValue, maxValue));
+
+        if ("IGNORE".equals(dto.getOperator())) {
+            dto.setMatched(null);
+        } else {
+            dto.setMatched(isBetween(actualValue, minValue, maxValue));
+        }
+
+        return dto;
+    }
+
+    private String resolveOperator(BigDecimal minValue, BigDecimal maxValue) {
+        if (Objects.isNull(minValue) && Objects.isNull(maxValue)) {
+            return "IGNORE";
+        }
+
+        if (Objects.nonNull(minValue) && Objects.nonNull(maxValue)) {
+            return "BETWEEN";
+        }
+
+        if (Objects.nonNull(minValue)) {
+            return "GTE";
+        }
+
+        return "LTE";
+    }
+
+    private BigDecimal calculateAverageValue(BigDecimal minValue, BigDecimal maxValue) {
+        if (Objects.isNull(minValue) && Objects.isNull(maxValue)) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        if (Objects.isNull(minValue)) {
+            return maxValue.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        if (Objects.isNull(maxValue)) {
+            return minValue.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        return minValue.add(maxValue)
+                .divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+    }
+
+    private String writeJson(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (Exception e) {
+            log.error("对象序列化JSON异常，object={}", object, e);
+            throw new ServiceException(WarningErrorCode.WARNING_CREATE_FAILED);
+        }
+    }
     // ==================== private static class ====================
 
     /**

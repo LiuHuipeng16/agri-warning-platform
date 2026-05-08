@@ -8,8 +8,10 @@ package com.zhku.agriwarningplatform.module.weather.service;
  * Time: 20:28
  */
 
+import com.zhku.agriwarningplatform.module.weather.mapper.dataobject.WeatherForecastRiskDO;
 import com.zhku.agriwarningplatform.module.weather.service.dto.WeatherForecastDTO;
 import com.zhku.agriwarningplatform.module.weather.service.dto.WeatherTodayDTO;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -33,4 +35,6 @@ public interface WeatherService {
      * @return 多天天气预报
      */
     List<WeatherForecastDTO> getForecastWeather(Integer days);
+
+
 }

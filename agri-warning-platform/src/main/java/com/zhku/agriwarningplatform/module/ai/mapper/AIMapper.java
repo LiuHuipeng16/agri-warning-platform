@@ -7,16 +7,14 @@ package com.zhku.agriwarningplatform.module.ai.mapper;
  * Date: 2026-04-14
  * Time: 11:17
  */
-import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIChatMessageDO;
-import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIChatSessionDO;
-import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIWarningSuggestionContextDO;
-import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.LightweightKnowledgeBaseEnhancedQaDO;
+import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.*;
 import com.zhku.agriwarningplatform.module.crop.mapper.dataobject.CropDO;
 import com.zhku.agriwarningplatform.module.pest.mapper.dataobject.PestDO;
 import com.zhku.agriwarningplatform.module.warning.mapper.dataobject.WarningDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -141,4 +139,20 @@ public interface AIMapper {
      */
     AIChatMessageDO getLastAssistantMessageByChatId(@Param("chatId") String chatId,
                                                     @Param("userId") Long userId);
+
+    /**
+     * 查询AI预警解释上下文
+     */
+    AIWarningExplanationContextDO getWarningExplanationContextByWarningId(@Param("warningId") Long warningId);
+
+    /**
+     * 查询未来风险趋势分析用预警上下文
+     */
+    List<AIRiskReportWarningContextDO> getRiskReportWarningContextList(@Param("startDate") LocalDate startDate,
+                                                                       @Param("endDate") LocalDate endDate);
+
+    /**
+     * 查询图文问答环境风险上下文
+     */
+    List<AIImageEnvironmentRiskContextDO> getImageEnvironmentRiskContextList();
 }

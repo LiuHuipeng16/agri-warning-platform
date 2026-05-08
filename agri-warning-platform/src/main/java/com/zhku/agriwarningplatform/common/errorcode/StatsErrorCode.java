@@ -12,7 +12,7 @@ public interface StatsErrorCode {
     ErrorCode PARAM_IS_NULL = new ErrorCode(400, "STATS_001", "请求参数不能为空");
 
     ErrorCode PARAM_INVALID = new ErrorCode(400, "STATS_002", "请求参数不合法");
-
+    ErrorCode LIMIT_INVALID = new ErrorCode(400, "STATS_003", "排行数量参数不合法");
     // service层错误码
     ErrorCode DATA_NOT_EXIST = new ErrorCode(404, "STATS_101", "统计数据不存在");
 

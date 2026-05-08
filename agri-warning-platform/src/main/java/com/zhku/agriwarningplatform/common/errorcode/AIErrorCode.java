@@ -48,4 +48,10 @@ public interface AIErrorCode {
     ErrorCode IMAGE_SIZE_TOO_LARGE = new ErrorCode(400, "AI_121", "单张图片大小不能超过5MB");
     ErrorCode IMAGE_UPLOAD_FAILED = new ErrorCode(500, "AI_122", "图片上传失败");
     ErrorCode IMAGE_ANALYSIS_FAILED = new ErrorCode(500, "AI_123", "图片识别失败");
+    // ==================== 8.12 / 8.13 新增 ====================
+    ErrorCode REFRESH_FORBIDDEN = new ErrorCode(403, "AI_124", "无权限强制刷新风险趋势分析");
+    ErrorCode RISK_REPORT_DAYS_INVALID = new ErrorCode(400, "AI_125", "分析天数不合法");
+    ErrorCode RISK_REPORT_DATA_EMPTY = new ErrorCode(400, "AI_126", "暂无可分析的天气或预警数据");
+    ErrorCode WARNING_EXPLANATION_GENERATE_FAILED = new ErrorCode(500, "AI_127", "AI预警解释生成失败");
+    ErrorCode RISK_REPORT_GENERATE_FAILED = new ErrorCode(500, "AI_128", "风险趋势分析生成失败");
 }

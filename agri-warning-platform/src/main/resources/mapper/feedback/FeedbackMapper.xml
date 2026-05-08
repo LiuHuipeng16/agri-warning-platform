@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zhku.agriwarningplatform.module.feedback.mapper.FeedbackMapper">
+
+    <!-- ==================== Base ResultMap ==================== -->
+
+    <resultMap id="FeedbackDOResultMap"
+               type="com.zhku.agriwarningplatform.module.feedback.mapper.dataobject.FeedbackDO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="targetType" column="target_type"/>
+        <result property="targetId" column="target_id"/>
+        <result property="feedbackResult" column="feedback_result"/>
+        <result property="content" column="content"/>
+        <result property="deleteFlag" column="delete_flag"/>
+        <result property="gmtCreate" column="gmt_create"/>
+        <result property="gmtModified" column="gmt_modified"/>
+    </resultMap>
+
+    <resultMap id="FeedbackPageItemDOResultMap"
+               type="com.zhku.agriwarningplatform.module.feedback.mapper.dataobject.FeedbackPageItemDO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="targetType" column="target_type"/>
+        <result property="targetId" column="target_id"/>
+        <result property="feedbackResult" column="feedback_result"/>
+        <result property="content" column="content"/>
+        <result property="gmtCreate" column="gmt_create"/>
+    </resultMap>
+
+    <resultMap id="FeedbackDetailDOResultMap"
+               type="com.zhku.agriwarningplatform.module.feedback.mapper.dataobject.FeedbackDetailDO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="targetType" column="target_type"/>
+        <result property="targetId" column="target_id"/>
+        <result property="feedbackResult" column="feedback_result"/>
+        <result property="content" column="content"/>
+        <result property="gmtCreate" column="gmt_create"/>
+    </resultMap>
+
+    <resultMap id="FeedbackWarningTargetDetailDOResultMap"
+               type="com.zhku.agriwarningplatform.module.feedback.mapper.dataobject.FeedbackWarningTargetDetailDO">
+        <id property="warningId" column="warning_id"/>
+        <result property="title" column="title"/>
+        <result property="cropName" column="crop_name"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="warningDate" column="warning_date"/>
+        <result property="warningType" column="warning_type"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="riskScore" column="risk_score"/>
+    </resultMap>
+
+    <resultMap id="FeedbackAIMessageTargetDetailDOResultMap"
+               type="com.zhku.agriwarningplatform.module.feedback.mapper.dataobject.FeedbackAIMessageTargetDetailDO">
+        <result property="chatId" column="chat_id"/>
+        <result property="question" column="question"/>
+        <result property="imageAnalysis" column="image_analysis"/>
+        <result property="answerSummary" column="answer_summary"/>
+    </resultMap>
+
+    <!-- ==================== SQL 片段 ==================== -->
+
+    <sql id="FeedbackBaseColumns">
+        id,
+        user_id,
+        target_type,
+        target_id,
+        feedback_result,
+        content,
+        delete_flag,
+        gmt_create,
+        gmt_modified
+    </sql>
+
+    <sql id="FeedbackPageWhere">
+        f.delete_flag = 0
+
+        <if test="query.userId != null">
+            AND f.user_id = #{query.userId}
+        </if>
+
+        <if test="query.username != null and query.username != ''">
+            AND u.username LIKE CONCAT('%', #{query.username}, '%')
+        </if>
+
+        <if test="query.targetType != null and query.targetType != ''">
+            AND f.target_type = #{query.targetType}
+        </if>
+
+        <if test="query.feedbackResult != null and query.feedbackResult != ''">
+            AND f.feedback_result = #{query.feedbackResult}
+        </if>
+
+        <if test="query.cropId != null">
+            AND f.target_type = 'WARNING'
+            AND w.crop_id = #{query.cropId}
+        </if>
+
+        <if test="query.pestId != null">
+            AND f.target_type = 'WARNING'
+            AND w.pest_id = #{query.pestId}
+        </if>
+
+        <if test="query.dateStart != null">
+            AND DATE(f.gmt_create) &gt;= #{query.dateStart}
+        </if>
+
+        <if test="query.dateEnd != null">
+            AND DATE(f.gmt_create) &lt;= #{query.dateEnd}
+        </if>
+    </sql>
+
+    <!-- ==================== 我的反馈分页 ==================== -->
+
+    <select id="countMyFeedbackPage" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM feedback f
+        WHERE f.delete_flag = 0
+        AND f.user_id = #{query.userId}
+
+        <if test="query.targetType != null and query.targetType != ''">
+            AND f.target_type = #{query.targetType}
+        </if>
+
+        <if test="query.feedbackResult != null and query.feedbackResult != ''">
+            AND f.feedback_result = #{query.feedbackResult}
+        </if>
+    </select>
+
+    <select id="selectMyFeedbackPage" resultMap="FeedbackPageItemDOResultMap">
+        SELECT
+        f.id,
+        f.user_id,
+        NULL AS username,
+        f.target_type,
+        f.target_id,
+        f.feedback_result,
+        f.content,
+        f.gmt_create
+        FROM feedback f
+        WHERE f.delete_flag = 0
+        AND f.user_id = #{query.userId}
+
+        <if test="query.targetType != null and query.targetType != ''">
+            AND f.target_type = #{query.targetType}
+        </if>
+
+        <if test="query.feedbackResult != null and query.feedbackResult != ''">
+            AND f.feedback_result = #{query.feedbackResult}
+        </if>
+
+        ORDER BY f.gmt_create DESC, f.id DESC
+        LIMIT #{query.offset}, #{query.pageSize}
+    </select>
+
+    <!-- ==================== 后台反馈分页 ==================== -->
+
+    <select id="countFeedbackPage" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM feedback f
+        INNER JOIN user u
+        ON f.user_id = u.id
+        AND u.delete_flag = 0
+        LEFT JOIN warning w
+        ON f.target_type = 'WARNING'
+        AND f.target_id = CAST(w.id AS CHAR)
+        AND w.delete_flag = 0
+        WHERE
+        <include refid="FeedbackPageWhere"/>
+    </select>
+
+    <select id="selectFeedbackPage" resultMap="FeedbackPageItemDOResultMap">
+        SELECT
+        f.id,
+        f.user_id,
+        u.username,
+        f.target_type,
+        f.target_id,
+        f.feedback_result,
+        f.content,
+        f.gmt_create
+        FROM feedback f
+        INNER JOIN user u
+        ON f.user_id = u.id
+        AND u.delete_flag = 0
+        LEFT JOIN warning w
+        ON f.target_type = 'WARNING'
+        AND f.target_id = CAST(w.id AS CHAR)
+        AND w.delete_flag = 0
+        WHERE
+        <include refid="FeedbackPageWhere"/>
+        ORDER BY f.gmt_create DESC, f.id DESC
+        LIMIT #{query.offset}, #{query.pageSize}
+    </select>
+
+    <!-- ==================== 反馈详情 / 修改 / 删除 ==================== -->
+
+    <select id="selectFeedbackDetailById" resultMap="FeedbackDetailDOResultMap">
+        SELECT
+        f.id,
+        f.user_id,
+        u.username,
+        f.target_type,
+        f.target_id,
+        f.feedback_result,
+        f.content,
+        f.gmt_create
+        FROM feedback f
+        INNER JOIN user u
+        ON f.user_id = u.id
+        AND u.delete_flag = 0
+        WHERE f.id = #{id}
+        AND f.delete_flag = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectValidFeedbackById" resultMap="FeedbackDOResultMap">
+        SELECT
+        <include refid="FeedbackBaseColumns"/>
+        FROM feedback
+        WHERE id = #{id}
+        AND delete_flag = 0
+        LIMIT 1
+    </select>
+
+    <update id="deleteFeedbackLogical">
+        UPDATE feedback
+        SET delete_flag = 1,
+        gmt_modified = NOW()
+        WHERE id = #{id}
+        AND delete_flag = 0
+    </update>
+
+    <!-- ==================== 反馈目标存在性校验 ==================== -->
+
+    <select id="countWarningTargetById" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM warning
+        WHERE id = #{warningId}
+        AND delete_flag = 0
+    </select>
+
+    <select id="countAIMessageTargetById" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM ai_chat_message
+        WHERE id = #{messageId}
+        AND role = 'assistant'
+        AND message_status IN ('COMPLETED', 'STOPPED')
+        AND delete_flag = 0
+
+        <if test="messageType != null and messageType != ''">
+            AND message_type = #{messageType}
+        </if>
+    </select>
+
+    <!-- ==================== 反馈目标摘要查询 ==================== -->
+
+    <select id="selectWarningTargetDetail" resultMap="FeedbackWarningTargetDetailDOResultMap">
+        SELECT
+        w.id AS warning_id,
+        w.title AS title,
+        c.name AS crop_name,
+        p.name AS pest_name,
+        w.warning_date AS warning_date,
+        w.warning_type AS warning_type,
+        w.risk_level AS risk_level,
+        w.risk_score AS risk_score
+        FROM warning w
+        INNER JOIN crop c
+        ON w.crop_id = c.id
+        AND c.delete_flag = 0
+        INNER JOIN pest p
+        ON w.pest_id = p.id
+        AND p.delete_flag = 0
+        WHERE w.id = #{warningId}
+        AND w.delete_flag = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectAIAnswerMessageDetail" resultMap="FeedbackAIMessageTargetDetailDOResultMap">
+        SELECT
+        m.chat_id AS chat_id,
+        NULL AS question,
+        m.image_analysis AS image_analysis,
+        CASE
+        WHEN CHAR_LENGTH(m.content) > 200
+        THEN CONCAT(SUBSTRING(m.content, 1, 200), '...')
+        ELSE m.content
+        END AS answer_summary
+        FROM ai_chat_message m
+        WHERE m.id = #{messageId}
+        AND m.role = 'assistant'
+        AND m.message_status IN ('COMPLETED', 'STOPPED')
+        AND m.delete_flag = 0
+
+        <if test="messageType != null and messageType != ''">
+            AND m.message_type = #{messageType}
+        </if>
+
+        LIMIT 1
+    </select>
+
+    <select id="selectPreviousUserQuestion" resultType="java.lang.String">
+        SELECT
+        CASE
+        WHEN CHAR_LENGTH(m.content) > 200
+        THEN CONCAT(SUBSTRING(m.content, 1, 200), '...')
+        ELSE m.content
+        END
+        FROM ai_chat_message m
+        WHERE m.chat_id = #{chatId}
+        AND m.id &lt; #{beforeMessageId}
+        AND m.role = 'user'
+        AND m.delete_flag = 0
+        ORDER BY m.id DESC
+        LIMIT 1
+    </select>
+    <update id="updateFeedbackSelective">
+        UPDATE feedback
+        <set>
+            <if test="feedbackResult != null">
+                feedback_result = #{feedbackResult},
+            </if>
+            <if test="content != null">
+                content = #{content},
+            </if>
+            gmt_modified = NOW()
+        </set>
+        WHERE id = #{id}
+        AND delete_flag = 0
+    </update>
+</mapper>

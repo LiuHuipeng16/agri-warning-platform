@@ -22,7 +22,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import com.zhku.agriwarningplatform.module.weather.mapper.WeatherMapper;
+import com.zhku.agriwarningplatform.module.weather.mapper.dataobject.WeatherForecastRiskDO;
 
+import java.util.HashMap;
+import java.util.Map;
 /**
  * 天气 Service 实现类
  */
@@ -60,7 +64,10 @@ public class WeatherServiceImpl implements WeatherService {
      */
     private static final int DEFAULT_FORECAST_DAYS = 4;
 
-    public WeatherServiceImpl() {
+    private final WeatherMapper weatherMapper;
+
+    public WeatherServiceImpl(WeatherMapper weatherMapper) {
+        this.weatherMapper = weatherMapper;
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -141,7 +148,10 @@ public class WeatherServiceImpl implements WeatherService {
                 throw new ServiceException(WeatherErrorCode.WEATHER_DATA_EMPTY);
             }
 
-            return buildForecastWeatherDTOList(responseObj, startDate, endDate);
+            List<WeatherForecastDTO> forecastDTOList = buildForecastWeatherDTOList(responseObj, startDate, endDate);
+            fillForecastRiskInfo(forecastDTOList, startDate, endDate);
+
+            return forecastDTOList;
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
@@ -149,6 +159,7 @@ public class WeatherServiceImpl implements WeatherService {
             throw new ServiceException(WeatherErrorCode.WEATHER_QUERY_FAILED);
         }
     }
+
 
     /**
      * 构建获取当天天气的 Open-Meteo URL
@@ -599,5 +610,43 @@ public class WeatherServiceImpl implements WeatherService {
         }
 
         return result;
+    }
+
+    /**
+     * 填充每日风险概览信息
+     */
+    private void fillForecastRiskInfo(List<WeatherForecastDTO> forecastDTOList,
+                                      LocalDate startDate,
+                                      LocalDate endDate) {
+        if (forecastDTOList == null || forecastDTOList.isEmpty()) {
+            return;
+        }
+
+        List<WeatherForecastRiskDO> riskDOList =
+                weatherMapper.listForecastRiskStats(startDate.toString(), endDate.toString());
+
+        Map<String, WeatherForecastRiskDO> riskMap = new HashMap<>();
+        if (riskDOList != null && !riskDOList.isEmpty()) {
+            for (WeatherForecastRiskDO riskDO : riskDOList) {
+                riskMap.put(riskDO.getDate(), riskDO);
+            }
+        }
+
+        for (WeatherForecastDTO dto : forecastDTOList) {
+            WeatherForecastRiskDO riskDO = riskMap.get(dto.getDate());
+
+            if (riskDO == null) {
+                dto.setRiskLevel(null);
+                dto.setRiskScore(0);
+                dto.setHighRiskCount(0);
+                dto.setWarningCount(0);
+                continue;
+            }
+
+            dto.setRiskLevel(riskDO.getRiskLevel());
+            dto.setRiskScore(riskDO.getRiskScore() == null ? 0 : riskDO.getRiskScore());
+            dto.setHighRiskCount(riskDO.getHighRiskCount() == null ? 0 : riskDO.getHighRiskCount());
+            dto.setWarningCount(riskDO.getWarningCount() == null ? 0 : riskDO.getWarningCount());
+        }
     }
 }

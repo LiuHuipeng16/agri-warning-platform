@@ -4,6 +4,7 @@ import com.zhku.agriwarningplatform.common.errorcode.AIErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ControllerException;
 import com.zhku.agriwarningplatform.common.result.CommonResult;
 import com.zhku.agriwarningplatform.common.util.JacksonUtils;
+import com.zhku.agriwarningplatform.common.util.JwtUtils;
 import com.zhku.agriwarningplatform.module.ai.controller.param.AIAssistantChatStreamParam;
 import com.zhku.agriwarningplatform.module.ai.controller.param.AIAssistantHistoryParam;
 import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatCreateParam;
@@ -13,19 +14,12 @@ import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatUpdateTitle
 import com.zhku.agriwarningplatform.module.ai.controller.vo.AIChatMessageVO;
 import com.zhku.agriwarningplatform.module.ai.controller.vo.AIChatSessionItemVO;
 import com.zhku.agriwarningplatform.module.ai.service.AIService;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIAssistantChatReqDTO;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatCreateReqDTO;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatHistoryQueryDTO;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatMessageDTO;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatSessionItemDTO;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatStopReqDTO;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatStreamReqDTO;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatUpdateTitleReqDTO;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIWarningSuggestionReqDTO;
+import com.zhku.agriwarningplatform.module.ai.service.dto.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,7 +33,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.zhku.agriwarningplatform.module.ai.controller.param.AIChatImageStreamParam;
-import com.zhku.agriwarningplatform.module.ai.service.dto.AIChatImageStreamReqDTO;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
@@ -52,7 +45,8 @@ import java.util.List;
 public class AIController {
 
     private final AIService aiService;
-
+    @Autowired
+    private JwtUtils jwtUtils;
     /**
      * 悬浮 AI 对话（流式）
      */
@@ -270,6 +264,53 @@ public class AIController {
         return aiService.generateWarningSuggestionStream(reqDTO);
     }
 
+    /**
+     * AI预警解释（流式）
+     */
+    @GetMapping("/warnings/{warningId}/explanation/stream")
+    public SseEmitter generateWarningExplanationStream(@PathVariable("warningId") Long warningId,
+                                                       @RequestParam(value = "refresh", required = false) Boolean refresh,
+                                                       HttpServletRequest request) {
+        log.info("进入接口:AIController#generateWarningExplanationStream,warningId={},refresh={}", warningId, refresh);
+
+        if (warningId == null || warningId <= 0) {
+            throw new ControllerException(AIErrorCode.WARNING_ID_INVALID);
+        }
+
+        Long userId = getCurrentUserId(request);
+
+        AIWarningExplanationReqDTO reqDTO = new AIWarningExplanationReqDTO();
+        reqDTO.setWarningId(warningId);
+        reqDTO.setUserId(userId);
+        reqDTO.setRefresh(Boolean.TRUE.equals(refresh));
+
+        return aiService.generateWarningExplanationStream(reqDTO);
+    }
+
+    /**
+     * 未来农业风险趋势分析（流式）
+     */
+    @GetMapping("/reports/risk/stream")
+    public SseEmitter generateRiskReportStream(@RequestParam(value = "days", required = false) Integer days,
+                                               @RequestParam(value = "refresh", required = false) Boolean refresh,
+                                               HttpServletRequest request) {
+        log.info("进入接口:AIController#generateRiskReportStream,days={},refresh={}", days, refresh);
+
+        if (days != null && (days < 1 || days > 7)) {
+            throw new ControllerException(AIErrorCode.RISK_REPORT_DAYS_INVALID);
+        }
+
+        Long userId = getCurrentUserId(request);
+        String role = getCurrentRole(request);
+
+        AIRiskReportReqDTO reqDTO = new AIRiskReportReqDTO();
+        reqDTO.setDays(days == null ? 7 : days);
+        reqDTO.setRefresh(Boolean.TRUE.equals(refresh));
+        reqDTO.setUserId(userId);
+        reqDTO.setRole(role);
+
+        return aiService.generateRiskReportStream(reqDTO);
+    }
     // ==================== 参数校验 ====================
 
     private void validateAssistantChatStreamParam(AIAssistantChatStreamParam param) {
@@ -464,5 +505,21 @@ public class AIController {
         }
 
         throw new ControllerException(AIErrorCode.TOKEN_PARSE_FAILED);
+    }
+    private String getCurrentRole(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+
+        if (!StringUtils.hasText(authorization) || !authorization.startsWith("Bearer ")) {
+            throw new ControllerException(AIErrorCode.AUTH_HEADER_INVALID);
+        }
+
+        String token = authorization.substring(7);
+        String role = jwtUtils.getRoleFromToken(token);
+
+        if (!StringUtils.hasText(role)) {
+            throw new ControllerException(AIErrorCode.AUTH_HEADER_INVALID);
+        }
+
+        return role;
     }
 }

@@ -61,7 +61,58 @@
         <result property="ruleName" column="rule_name"/>
         <result property="suggestion" column="suggestion"/>
     </resultMap>
+    <resultMap id="AIWarningExplanationContextResultMap" type="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIWarningExplanationContextDO">
+        <id property="warningId" column="warning_id"/>
+        <result property="warningTitle" column="warning_title"/>
+        <result property="cropId" column="crop_id"/>
+        <result property="cropName" column="crop_name"/>
+        <result property="pestId" column="pest_id"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="pestType" column="pest_type"/>
+        <result property="symptoms" column="symptoms"/>
+        <result property="cause" column="cause"/>
+        <result property="prevention" column="prevention"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="riskScore" column="risk_score"/>
+        <result property="riskScoreDetail" column="risk_score_detail"/>
+        <result property="matchDetail" column="match_detail"/>
+        <result property="warningType" column="warning_type"/>
+        <result property="warningDate" column="warning_date"/>
+        <result property="ruleId" column="rule_id"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="suggestion" column="suggestion"/>
+    </resultMap>
 
+    <resultMap id="AIRiskReportWarningContextResultMap" type="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIRiskReportWarningContextDO">
+        <id property="warningId" column="warning_id"/>
+        <result property="warningTitle" column="warning_title"/>
+        <result property="cropName" column="crop_name"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="pestType" column="pest_type"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="riskScore" column="risk_score"/>
+        <result property="warningType" column="warning_type"/>
+        <result property="warningDate" column="warning_date"/>
+        <result property="ruleName" column="rule_name"/>
+    </resultMap>
+
+    <resultMap id="AIImageEnvironmentRiskContextResultMap"
+               type="com.zhku.agriwarningplatform.module.ai.mapper.dataobject.AIImageEnvironmentRiskContextDO">
+        <id property="warningId" column="warning_id"/>
+        <result property="warningTitle" column="warning_title"/>
+        <result property="cropName" column="crop_name"/>
+        <result property="pestName" column="pest_name"/>
+        <result property="pestType" column="pest_type"/>
+        <result property="riskLevel" column="risk_level"/>
+        <result property="riskScore" column="risk_score"/>
+        <result property="warningType" column="warning_type"/>
+        <result property="warningDate" column="warning_date"/>
+        <result property="ruleName" column="rule_name"/>
+        <result property="suggestion" column="suggestion"/>
+        <result property="temperatureRange" column="temperature_range"/>
+        <result property="humidityRange" column="humidity_range"/>
+        <result property="environmentDescription" column="environment_description"/>
+    </resultMap>
     <!-- ==================== 会话表（独立AI） ==================== -->
 
     <select id="getSessionByChatId" resultMap="AIChatSessionResultMap">
@@ -401,5 +452,130 @@
           AND delete_flag = 0
         ORDER BY gmt_create DESC, id DESC
             LIMIT 1
+    </select>
+
+    <select id="getWarningExplanationContextByWarningId" resultMap="AIWarningExplanationContextResultMap">
+        SELECT
+            w.id AS warning_id,
+            w.title AS warning_title,
+            w.crop_id AS crop_id,
+            c.name AS crop_name,
+            w.pest_id AS pest_id,
+            p.name AS pest_name,
+            p.type AS pest_type,
+            p.symptoms AS symptoms,
+            p.cause AS cause,
+            p.prevention AS prevention,
+            w.risk_level AS risk_level,
+            w.risk_score AS risk_score,
+            w.risk_score_detail AS risk_score_detail,
+            w.match_detail AS match_detail,
+            w.warning_type AS warning_type,
+            w.warning_date AS warning_date,
+            w.rule_id AS rule_id,
+            r.rule_name AS rule_name,
+            r.suggestion AS suggestion
+        FROM warning w
+                 INNER JOIN crop c
+                            ON w.crop_id = c.id
+                                AND c.delete_flag = 0
+                 INNER JOIN pest p
+                            ON w.pest_id = p.id
+                                AND p.delete_flag = 0
+                 INNER JOIN prewarning_rules r
+                            ON w.rule_id = r.id
+                                AND r.delete_flag = 0
+        WHERE w.id = #{warningId}
+          AND w.delete_flag = 0
+            LIMIT 1
+    </select>
+
+    <select id="getRiskReportWarningContextList" resultMap="AIRiskReportWarningContextResultMap">
+        SELECT
+            w.id AS warning_id,
+            w.title AS warning_title,
+            c.name AS crop_name,
+            p.name AS pest_name,
+            p.type AS pest_type,
+            w.risk_level AS risk_level,
+            w.risk_score AS risk_score,
+            w.warning_type AS warning_type,
+            w.warning_date AS warning_date,
+            r.rule_name AS rule_name
+        FROM warning w
+                 INNER JOIN crop c
+                            ON w.crop_id = c.id
+                                AND c.delete_flag = 0
+                 INNER JOIN pest p
+                            ON w.pest_id = p.id
+                                AND p.delete_flag = 0
+                 INNER JOIN prewarning_rules r
+                            ON w.rule_id = r.id
+                                AND r.delete_flag = 0
+        WHERE w.delete_flag = 0
+          AND w.warning_type = 'FORECAST'
+          AND w.warning_date <![CDATA[>=]]> #{startDate}
+          AND w.warning_date <![CDATA[<=]]> #{endDate}
+        ORDER BY
+            w.warning_date ASC,
+            CASE w.risk_level
+                WHEN '高' THEN 1
+                WHEN '中' THEN 2
+                WHEN '低' THEN 3
+                ELSE 4
+                END,
+            w.risk_score DESC,
+            w.id DESC
+    </select>
+
+    <select id="getImageEnvironmentRiskContextList" resultMap="AIImageEnvironmentRiskContextResultMap">
+        SELECT
+            w.id AS warning_id,
+            w.title AS warning_title,
+            c.name AS crop_name,
+            p.name AS pest_name,
+            p.type AS pest_type,
+            w.risk_level AS risk_level,
+            w.risk_score AS risk_score,
+            w.warning_type AS warning_type,
+            w.warning_date AS warning_date,
+            pr.rule_name AS rule_name,
+            pr.suggestion AS suggestion,
+            pec.temperature_range AS temperature_range,
+            pec.humidity_range AS humidity_range,
+            pec.environment_description AS environment_description
+        FROM warning w
+                 INNER JOIN crop c
+                            ON w.crop_id = c.id
+                                AND c.delete_flag = 0
+                 INNER JOIN pest p
+                            ON w.pest_id = p.id
+                                AND p.delete_flag = 0
+                 INNER JOIN prewarning_rules pr
+                            ON w.rule_id = pr.id
+                                AND pr.delete_flag = 0
+                 LEFT JOIN pest_environment_conditions pec
+                           ON p.id = pec.pest_id
+                               AND pec.delete_flag = 0
+        WHERE w.delete_flag = 0
+          AND (
+            w.warning_type = 'TODAY'
+                OR (
+                w.warning_type = 'FORECAST'
+                    AND w.warning_date &gt;= CURDATE()
+                    AND w.warning_date &lt;= DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+                )
+            )
+        ORDER BY
+            CASE w.risk_level
+                WHEN '高' THEN 1
+                WHEN '中' THEN 2
+                WHEN '低' THEN 3
+                ELSE 4
+                END,
+            w.risk_score DESC,
+            w.warning_date ASC,
+            w.id DESC
+            LIMIT 10
     </select>
 </mapper>

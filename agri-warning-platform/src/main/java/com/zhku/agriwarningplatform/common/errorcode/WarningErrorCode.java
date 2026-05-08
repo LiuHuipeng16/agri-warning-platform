@@ -63,4 +63,15 @@ public interface WarningErrorCode {
     ErrorCode CROP_NOT_EXIST = new ErrorCode(404, "WARNING_023", "作物不存在");
 
     ErrorCode PEST_NOT_EXIST = new ErrorCode(404, "WARNING_024", "病虫害不存在");
+    ErrorCode WARNING_RISK_SCORE_QUERY_FAILED =
+            new ErrorCode(500, "WARNING_025", "预警风险评分查询失败");
+
+    ErrorCode WARNING_MATCH_DETAIL_QUERY_FAILED =
+            new ErrorCode(500, "WARNING_026", "预警规则命中依据查询失败");
+
+    ErrorCode WARNING_RISK_SCORE_DETAIL_INVALID =
+            new ErrorCode(500, "WARNING_027", "预警风险评分明细数据异常");
+
+    ErrorCode WARNING_MATCH_DETAIL_INVALID =
+            new ErrorCode(500, "WARNING_028", "预警规则命中依据数据异常");
 }

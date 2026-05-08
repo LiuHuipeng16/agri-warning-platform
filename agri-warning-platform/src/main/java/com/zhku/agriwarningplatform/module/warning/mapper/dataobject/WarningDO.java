@@ -46,6 +46,21 @@ public class WarningDO {
     private String riskLevel;
 
     /**
+     * 风险评分（0~100）
+     */
+    private Integer riskScore;
+
+    /**
+     * 风险评分明细JSON
+     */
+    private String riskScoreDetail;
+
+    /**
+     * 命中依据详情JSON
+     */
+    private String matchDetail;
+
+    /**
      * 预警类型：TODAY / FORECAST
      */
     private String warningType;
