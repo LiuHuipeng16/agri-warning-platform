@@ -24,7 +24,6 @@ public class FeedbackDO {
     /**
      * 反馈ID
      */
-    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

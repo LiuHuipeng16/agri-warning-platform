@@ -368,7 +368,7 @@ public class FeedbackController {
         FeedbackPageQueryDTO queryDTO = new FeedbackPageQueryDTO();
         queryDTO.setPageNum(param.getPageNum());
         queryDTO.setPageSize(param.getPageSize());
-        queryDTO.setUserId(userId);
+        queryDTO.setUserId(null);
         queryDTO.setRole(role);
         queryDTO.setUsername(trimToNull(param.getUsername()));
         queryDTO.setTargetType(trimToNull(param.getTargetType()));
