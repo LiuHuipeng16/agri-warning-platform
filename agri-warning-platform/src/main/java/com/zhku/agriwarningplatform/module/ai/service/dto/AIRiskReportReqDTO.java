@@ -19,4 +19,13 @@ public class AIRiskReportReqDTO {
     private Long userId;
 
     private String role;
+    /**
+     * 原始days字符串
+     */
+    private String daysStr;
+
+    /**
+     * 原始refresh字符串
+     */
+    private String refreshStr;
 }

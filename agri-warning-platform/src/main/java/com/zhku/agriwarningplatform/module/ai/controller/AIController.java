@@ -51,11 +51,9 @@ public class AIController {
      * 悬浮 AI 对话（流式）
      */
     @PostMapping("/assistant/chat/stream")
-    public SseEmitter assistantChatStream(@Valid @RequestBody AIAssistantChatStreamParam param,
+    public SseEmitter assistantChatStream(@RequestBody AIAssistantChatStreamParam param,
                                           HttpServletRequest request) {
         log.info("进入接口:AIController#assistantChatStream,param={}", JacksonUtils.writeValueAsString(param));
-
-        validateAssistantChatStreamParam(param);
 
         Long userId = getCurrentUserId(request);
         AIAssistantChatReqDTO reqDTO = convertToAIAssistantChatReqDTO(param, userId);
@@ -87,11 +85,9 @@ public class AIController {
      * 独立 AI 问答（流式）
      */
     @PostMapping("/chat/stream")
-    public SseEmitter chatStream(@Valid @RequestBody AIChatStreamParam param,
+    public SseEmitter chatStream(@RequestBody AIChatStreamParam param,
                                  HttpServletRequest request) {
         log.info("进入接口:AIController#chatStream,param={}", JacksonUtils.writeValueAsString(param));
-
-        validateAIChatStreamParam(param);
 
         Long userId = getCurrentUserId(request);
         AIChatStreamReqDTO reqDTO = convertToAIChatStreamReqDTO(param, userId);
@@ -103,7 +99,7 @@ public class AIController {
      * 独立 AI 图文对话（流式）
      */
     @PostMapping(value = "/chat/image/stream", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public SseEmitter chatImageStream(@Valid AIChatImageStreamParam param,
+    public SseEmitter chatImageStream(AIChatImageStreamParam param,
                                       HttpServletRequest request) {
 
         log.info("进入接口:AIController#chatImageStream, chatId={}, prompt={}",
@@ -247,7 +243,7 @@ public class AIController {
      * 预警 AI 智能建议（流式）
      */
     @GetMapping("/warnings/{warningId}/suggestion/stream")
-    public SseEmitter generateWarningSuggestionStream(@Valid @PathVariable("warningId") Long warningId,
+    public SseEmitter generateWarningSuggestionStream(@PathVariable("warningId") Long warningId,
                                                       HttpServletRequest request) {
         log.info("进入接口:AIController#generateWarningSuggestionStream,warningId={}", warningId);
 
@@ -268,44 +264,35 @@ public class AIController {
      * AI预警解释（流式）
      */
     @GetMapping("/warnings/{warningId}/explanation/stream")
-    public SseEmitter generateWarningExplanationStream(@PathVariable("warningId") Long warningId,
-                                                       @RequestParam(value = "refresh", required = false) Boolean refresh,
+    public SseEmitter generateWarningExplanationStream(@PathVariable("warningId") String warningId,
+                                                       @RequestParam(value = "refresh", required = false) String refresh,
                                                        HttpServletRequest request) {
         log.info("进入接口:AIController#generateWarningExplanationStream,warningId={},refresh={}", warningId, refresh);
-
-        if (warningId == null || warningId <= 0) {
-            throw new ControllerException(AIErrorCode.WARNING_ID_INVALID);
-        }
 
         Long userId = getCurrentUserId(request);
 
         AIWarningExplanationReqDTO reqDTO = new AIWarningExplanationReqDTO();
-        reqDTO.setWarningId(warningId);
+        reqDTO.setWarningIdStr(warningId);
+        reqDTO.setRefreshStr(refresh);
         reqDTO.setUserId(userId);
-        reqDTO.setRefresh(Boolean.TRUE.equals(refresh));
 
         return aiService.generateWarningExplanationStream(reqDTO);
     }
-
     /**
      * 未来农业风险趋势分析（流式）
      */
     @GetMapping("/reports/risk/stream")
-    public SseEmitter generateRiskReportStream(@RequestParam(value = "days", required = false) Integer days,
-                                               @RequestParam(value = "refresh", required = false) Boolean refresh,
+    public SseEmitter generateRiskReportStream(@RequestParam(value = "days", required = false) String days,
+                                               @RequestParam(value = "refresh", required = false) String refresh,
                                                HttpServletRequest request) {
         log.info("进入接口:AIController#generateRiskReportStream,days={},refresh={}", days, refresh);
-
-        if (days != null && (days < 1 || days > 7)) {
-            throw new ControllerException(AIErrorCode.RISK_REPORT_DAYS_INVALID);
-        }
 
         Long userId = getCurrentUserId(request);
         String role = getCurrentRole(request);
 
         AIRiskReportReqDTO reqDTO = new AIRiskReportReqDTO();
-        reqDTO.setDays(days == null ? 7 : days);
-        reqDTO.setRefresh(Boolean.TRUE.equals(refresh));
+        reqDTO.setDaysStr(days);
+        reqDTO.setRefreshStr(refresh);
         reqDTO.setUserId(userId);
         reqDTO.setRole(role);
 
