@@ -21,4 +21,5 @@ public class AIWarningSuggestionReqDTO {
      * 用户ID
      */
     private Long userId;
+
 }

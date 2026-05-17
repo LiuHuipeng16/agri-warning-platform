@@ -54,4 +54,6 @@ public interface AIErrorCode {
     ErrorCode RISK_REPORT_DATA_EMPTY = new ErrorCode(400, "AI_126", "暂无可分析的天气或预警数据");
     ErrorCode WARNING_EXPLANATION_GENERATE_FAILED = new ErrorCode(500, "AI_127", "AI预警解释生成失败");
     ErrorCode RISK_REPORT_GENERATE_FAILED = new ErrorCode(500, "AI_128", "风险趋势分析生成失败");
+    ErrorCode REFRESH_PARAM_INVALID =
+            new ErrorCode(400, "AI_129", "请求参数 refresh 类型错误");
 }

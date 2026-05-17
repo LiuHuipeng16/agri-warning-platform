@@ -9,6 +9,8 @@ package com.zhku.agriwarningplatform.module.ai.service.impl;
  */
 import com.zhku.agriwarningplatform.common.errorcode.AIErrorCode;
 import com.zhku.agriwarningplatform.common.exception.ServiceException;
+import com.zhku.agriwarningplatform.common.result.CommonResult;
+import com.zhku.agriwarningplatform.common.util.JacksonUtils;
 import com.zhku.agriwarningplatform.module.ai.mapper.AIMapper;
 import com.zhku.agriwarningplatform.module.ai.mapper.dataobject.*;
 import com.zhku.agriwarningplatform.module.ai.service.AIService;
@@ -129,11 +131,16 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public SseEmitter assistantChatStream(AIAssistantChatReqDTO reqDTO) {
-        validateAssistantChatReq(reqDTO);
-
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
         aiExecutor.execute(() -> {
+            try {
+                validateAssistantChatReq(reqDTO);
+            } catch (ServiceException e) {
+                sendServiceExceptionAsSseError(emitter, e);
+                return;
+            }
+
             String stopKey = buildStopKey(reqDTO.getUserId(), reqDTO.getChatId());
             stopFlagMap.put(stopKey, false);
 
@@ -169,7 +176,6 @@ public class AIServiceImpl implements AIService {
                             if (!StringUtils.hasText(chunk)) {
                                 return;
                             }
-
                             sendSseChunk(emitter, chunk);
                             displayedContent.append(chunk);
                         },
@@ -184,8 +190,9 @@ public class AIServiceImpl implements AIService {
                             } catch (Exception ex) {
                                 log.error("更新悬浮AI消息失败, chatId={}", reqDTO.getChatId(), ex);
                             } finally {
-                                handleStreamError(emitter, reqDTO.getChatId(), error);
+                                sendSseError(emitter, 500, "AI服务响应异常，请稍后重试");
                                 stopFlagMap.remove(stopKey);
+                                safeComplete(emitter);
                             }
                         },
                         () -> {
@@ -196,64 +203,44 @@ public class AIServiceImpl implements AIService {
                                             : MESSAGE_STATUS_COMPLETED;
                                     updateAssistantMessage(finalAssistantMessageId, reqDTO.getUserId(), displayedContent.toString(), status);
                                 }
-                                emitter.complete();
                             } catch (Exception e) {
                                 log.error("保存悬浮AI回复异常, chatId={}", reqDTO.getChatId(), e);
-                                completeWithError(emitter, e);
                             } finally {
                                 stopFlagMap.remove(stopKey);
+                                safeComplete(emitter);
                             }
                         }
                 );
 
                 Long finalAssistantMessageId1 = assistantMessageId;
                 emitter.onCompletion(() -> {
-                    try {
-                        disposable.dispose();
-                        if (finalAssistantMessageId1 != null && finished.compareAndSet(false, true)) {
-                            String status = Boolean.TRUE.equals(stopFlagMap.get(stopKey))
-                                    ? MESSAGE_STATUS_STOPPED
-                                    : MESSAGE_STATUS_FAILED;
-                            updateAssistantMessage(finalAssistantMessageId1, reqDTO.getUserId(), displayedContent.toString(), status);
-                        }
-                    } catch (Exception e) {
-                        log.error("SSE连接断开后兜底更新悬浮AI消息失败, chatId={}", reqDTO.getChatId(), e);
-                    } finally {
-                        stopFlagMap.remove(stopKey);
-                    }
+                    disposable.dispose();
+                    stopFlagMap.remove(stopKey);
                 });
 
                 emitter.onTimeout(() -> {
+                    disposable.dispose();
                     try {
-                        disposable.dispose();
                         if (finalAssistantMessageId1 != null && finished.compareAndSet(false, true)) {
                             updateAssistantMessage(finalAssistantMessageId1, reqDTO.getUserId(), displayedContent.toString(), MESSAGE_STATUS_FAILED);
                         }
+                        sendSseError(emitter, 500, "AI响应超时，请稍后重试");
                     } catch (Exception e) {
-                        log.error("悬浮AI SSE超时后更新消息失败, chatId={}", reqDTO.getChatId(), e);
+                        log.error("悬浮AI超时处理失败, chatId={}", reqDTO.getChatId(), e);
                     } finally {
                         stopFlagMap.remove(stopKey);
-                        try {
-                            emitter.complete();
-                        } catch (Exception ex) {
-                            log.error("悬浮AI SSE超时后关闭连接失败, chatId={}", reqDTO.getChatId(), ex);
-                        }
+                        safeComplete(emitter);
                     }
                 });
 
+            } catch (ServiceException e) {
+                stopFlagMap.remove(stopKey);
+                sendServiceExceptionAsSseError(emitter, e);
             } catch (Exception e) {
                 log.error("悬浮AI对话异常, chatId={}", reqDTO.getChatId(), e);
-
-                if (assistantMessageId != null && finished.compareAndSet(false, true)) {
-                    try {
-                        updateAssistantMessage(assistantMessageId, reqDTO.getUserId(), displayedContent.toString(), MESSAGE_STATUS_FAILED);
-                    } catch (Exception ex) {
-                        log.error("异常场景更新悬浮AI消息失败, chatId={}", reqDTO.getChatId(), ex);
-                    }
-                }
-
                 stopFlagMap.remove(stopKey);
-                completeWithError(emitter, e);
+                sendSseError(emitter, 500, "AI服务异常，请稍后重试");
+                safeComplete(emitter);
             }
         });
 
@@ -278,11 +265,16 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public SseEmitter chatStream(AIChatStreamReqDTO reqDTO) {
-        validateChatStreamReq(reqDTO);
-
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
         aiExecutor.execute(() -> {
+            try {
+                validateChatStreamReq(reqDTO);
+            } catch (ServiceException e) {
+                sendServiceExceptionAsSseError(emitter, e);
+                return;
+            }
+
             String stopKey = buildStopKey(reqDTO.getUserId(), reqDTO.getChatId());
             stopFlagMap.put(stopKey, false);
 
@@ -319,7 +311,6 @@ public class AIServiceImpl implements AIService {
                             if (!StringUtils.hasText(chunk)) {
                                 return;
                             }
-
                             sendSseChunk(emitter, chunk);
                             displayedContent.append(chunk);
                         },
@@ -334,8 +325,9 @@ public class AIServiceImpl implements AIService {
                             } catch (Exception ex) {
                                 log.error("更新AI消息失败, chatId={}", reqDTO.getChatId(), ex);
                             } finally {
-                                handleStreamError(emitter, reqDTO.getChatId(), error);
+                                sendSseError(emitter, 500, "AI服务响应异常，请稍后重试");
                                 stopFlagMap.remove(stopKey);
+                                safeComplete(emitter);
                             }
                         },
                         () -> {
@@ -346,64 +338,44 @@ public class AIServiceImpl implements AIService {
                                             : MESSAGE_STATUS_COMPLETED;
                                     updateAssistantMessage(finalAssistantMessageId, reqDTO.getUserId(), displayedContent.toString(), status);
                                 }
-                                emitter.complete();
                             } catch (Exception e) {
                                 log.error("保存AI回复异常, chatId={}", reqDTO.getChatId(), e);
-                                completeWithError(emitter, e);
                             } finally {
                                 stopFlagMap.remove(stopKey);
+                                safeComplete(emitter);
                             }
                         }
                 );
 
                 Long finalAssistantMessageId1 = assistantMessageId;
                 emitter.onCompletion(() -> {
-                    try {
-                        disposable.dispose();
-                        if (finalAssistantMessageId1 != null && finished.compareAndSet(false, true)) {
-                            String status = Boolean.TRUE.equals(stopFlagMap.get(stopKey))
-                                    ? MESSAGE_STATUS_STOPPED
-                                    : MESSAGE_STATUS_FAILED;
-                            updateAssistantMessage(finalAssistantMessageId1, reqDTO.getUserId(), displayedContent.toString(), status);
-                        }
-                    } catch (Exception e) {
-                        log.error("SSE连接断开后兜底更新AI消息失败, chatId={}", reqDTO.getChatId(), e);
-                    } finally {
-                        stopFlagMap.remove(stopKey);
-                    }
+                    disposable.dispose();
+                    stopFlagMap.remove(stopKey);
                 });
 
                 emitter.onTimeout(() -> {
+                    disposable.dispose();
                     try {
-                        disposable.dispose();
                         if (finalAssistantMessageId1 != null && finished.compareAndSet(false, true)) {
                             updateAssistantMessage(finalAssistantMessageId1, reqDTO.getUserId(), displayedContent.toString(), MESSAGE_STATUS_FAILED);
                         }
+                        sendSseError(emitter, 500, "AI响应超时，请稍后重试");
                     } catch (Exception e) {
-                        log.error("SSE超时后更新AI消息失败, chatId={}", reqDTO.getChatId(), e);
+                        log.error("AI超时处理失败, chatId={}", reqDTO.getChatId(), e);
                     } finally {
                         stopFlagMap.remove(stopKey);
-                        try {
-                            emitter.complete();
-                        } catch (Exception ex) {
-                            log.error("SSE超时后关闭连接失败, chatId={}", reqDTO.getChatId(), ex);
-                        }
+                        safeComplete(emitter);
                     }
                 });
 
+            } catch (ServiceException e) {
+                stopFlagMap.remove(stopKey);
+                sendServiceExceptionAsSseError(emitter, e);
             } catch (Exception e) {
                 log.error("独立AI对话异常, chatId={}", reqDTO.getChatId(), e);
-
-                if (assistantMessageId != null && finished.compareAndSet(false, true)) {
-                    try {
-                        updateAssistantMessage(assistantMessageId, reqDTO.getUserId(), displayedContent.toString(), MESSAGE_STATUS_FAILED);
-                    } catch (Exception ex) {
-                        log.error("异常场景更新AI消息失败, chatId={}", reqDTO.getChatId(), ex);
-                    }
-                }
-
                 stopFlagMap.remove(stopKey);
-                completeWithError(emitter, e);
+                sendSseError(emitter, 500, "AI服务异常，请稍后重试");
+                safeComplete(emitter);
             }
         });
 
@@ -411,40 +383,45 @@ public class AIServiceImpl implements AIService {
     }
     @Override
     public SseEmitter chatImageStream(AIChatImageStreamReqDTO reqDTO) {
-        validateChatImageStreamReq(reqDTO);
-
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
-        String stopKey = buildStopKey(reqDTO.getUserId(), reqDTO.getChatId());
-        stopFlagMap.put(stopKey, false);
-
-        AtomicBoolean finished = new AtomicBoolean(false);
-
-        emitter.onTimeout(() -> {
-            log.warn("图文AI响应超时, chatId={}", reqDTO.getChatId());
-
+        aiExecutor.execute(() -> {
             try {
-                sendSseError(emitter, "AI响应超时，请稍后重试或换一张更清晰的图片");
-            } finally {
+                validateChatImageStreamReq(reqDTO);
+            } catch (ServiceException e) {
+                sendServiceExceptionAsSseError(emitter, e);
+                return;
+            }
+
+            String stopKey = buildStopKey(reqDTO.getUserId(), reqDTO.getChatId());
+            stopFlagMap.put(stopKey, false);
+
+            AtomicBoolean finished = new AtomicBoolean(false);
+
+            emitter.onTimeout(() -> {
+                log.warn("图文AI响应超时, chatId={}", reqDTO.getChatId());
+
+                try {
+                    sendSseError(emitter, 500, "AI响应超时，请稍后重试或换一张更清晰的图片");
+                } finally {
+                    stopFlagMap.remove(stopKey);
+                    finished.set(true);
+                    safeComplete(emitter);
+                }
+            });
+
+            emitter.onError(error -> {
+                log.error("图文AI SSE连接异常, chatId={}", reqDTO.getChatId(), error);
                 stopFlagMap.remove(stopKey);
                 finished.set(true);
-                safeComplete(emitter);
-            }
-        });
+            });
 
-        emitter.onError(error -> {
-            log.error("图文AI SSE连接异常, chatId={}", reqDTO.getChatId(), error);
-            stopFlagMap.remove(stopKey);
-            finished.set(true);
-        });
+            emitter.onCompletion(() -> {
+                log.info("图文AI SSE连接结束, chatId={}", reqDTO.getChatId());
+                stopFlagMap.remove(stopKey);
+                finished.set(true);
+            });
 
-        emitter.onCompletion(() -> {
-            log.info("图文AI SSE连接结束, chatId={}", reqDTO.getChatId());
-            stopFlagMap.remove(stopKey);
-            finished.set(true);
-        });
-
-        aiExecutor.execute(() -> {
             Long assistantMessageId = null;
             StringBuilder displayedContent = new StringBuilder();
 
@@ -454,6 +431,7 @@ public class AIServiceImpl implements AIService {
                 List<String> imageUrlList = uploadImages(reqDTO.getImages());
                 String imageUrlsJson = writeJson(imageUrlList);
 
+                // 第一阶段：DashScope 只负责图片识别
                 String imageAnalysis = analyzeImages(reqDTO.getPrompt(), imageUrlList, reqDTO.getImages());
 
                 saveUserImageMessage(
@@ -472,6 +450,8 @@ public class AIServiceImpl implements AIService {
                 String historyContext = buildHistoryContext(recentMessages);
                 String environmentRiskContext = buildImageEnvironmentRiskContext();
 
+                log.info("图文问答环境风险上下文={}", environmentRiskContext);
+
                 String finalPrompt = buildImageChatFinalPrompt(
                         historyContext,
                         reqDTO.getPrompt(),
@@ -479,10 +459,13 @@ public class AIServiceImpl implements AIService {
                         environmentRiskContext
                 );
 
+                log.info("图文问答最终Prompt={}", finalPrompt);
+
                 PromptTemplate promptTemplate = buildRagPromptTemplate();
                 QuestionAnswerAdvisor advisor = buildQuestionAnswerAdvisor(promptTemplate, reqDTO.getPrompt());
 
-                Flux<String> flux = dashScopeChatClient.prompt()
+                // 第二阶段：DeepSeek 负责农业知识 + 环境风险 + 结构化综合回答
+                Flux<String> flux = deepSeekChatClient.prompt()
                         .user(finalPrompt)
                         .advisors(advisor)
                         .stream()
@@ -519,7 +502,7 @@ public class AIServiceImpl implements AIService {
                                     );
                                 }
 
-                                sendSseError(emitter, "AI服务响应异常，请稍后重试");
+                                sendSseError(emitter, 500, "AI服务响应异常，请稍后重试");
 
                             } catch (Exception ex) {
                                 log.error("处理图文AI异常失败, chatId={}", reqDTO.getChatId(), ex);
@@ -547,7 +530,7 @@ public class AIServiceImpl implements AIService {
 
                             } catch (Exception e) {
                                 log.error("保存图文AI回复异常, chatId={}", reqDTO.getChatId(), e);
-                                sendSseError(emitter, "AI回复保存失败，请稍后重试");
+                                sendSseError(emitter, 500, "AI回复保存失败，请稍后重试");
                                 safeComplete(emitter);
                             } finally {
                                 stopFlagMap.remove(stopKey);
@@ -574,7 +557,7 @@ public class AIServiceImpl implements AIService {
                             );
                         }
 
-                        sendSseError(emitter, "AI响应超时，请稍后重试或换一张更清晰的图片");
+                        sendSseError(emitter, 500, "AI响应超时，请稍后重试或换一张更清晰的图片");
 
                     } catch (Exception e) {
                         log.error("图文AI超时处理失败, chatId={}", reqDTO.getChatId(), e);
@@ -583,6 +566,25 @@ public class AIServiceImpl implements AIService {
                         safeComplete(emitter);
                     }
                 });
+
+            } catch (ServiceException e) {
+                log.error("图文AI业务异常, chatId={}", reqDTO.getChatId(), e);
+
+                if (assistantMessageId != null && finished.compareAndSet(false, true)) {
+                    try {
+                        updateAssistantMessage(
+                                assistantMessageId,
+                                reqDTO.getUserId(),
+                                displayedContent.toString(),
+                                MESSAGE_STATUS_FAILED
+                        );
+                    } catch (Exception ex) {
+                        log.error("业务异常场景更新图文AI消息失败, chatId={}", reqDTO.getChatId(), ex);
+                    }
+                }
+
+                stopFlagMap.remove(stopKey);
+                sendServiceExceptionAsSseError(emitter, e);
 
             } catch (Exception e) {
                 log.error("独立AI图文对话异常, chatId={}", reqDTO.getChatId(), e);
@@ -601,7 +603,7 @@ public class AIServiceImpl implements AIService {
                 }
 
                 try {
-                    sendSseError(emitter, "AI图文识别失败，请稍后重试");
+                    sendSseError(emitter, 500, "AI图文识别失败，请稍后重试");
                 } finally {
                     stopFlagMap.remove(stopKey);
                     safeComplete(emitter);
@@ -752,20 +754,27 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public SseEmitter generateWarningSuggestionStream(AIWarningSuggestionReqDTO reqDTO) {
-        if (reqDTO.getWarningId() == null || reqDTO.getWarningId() <= 0) {
-            throw new ServiceException(AIErrorCode.WARNING_ID_INVALID);
-        }
-
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
         aiExecutor.execute(() -> {
+            try {
+                if (reqDTO == null || reqDTO.getWarningId() == null || reqDTO.getWarningId() <= 0) {
+                    throw new ServiceException(AIErrorCode.WARNING_ID_INVALID);
+                }
+            } catch (ServiceException e) {
+                sendServiceExceptionAsSseError(emitter, e);
+                return;
+            }
+
             String stopKey = buildStopKey(reqDTO.getUserId(), "warning_suggestion_" + reqDTO.getWarningId());
             stopFlagMap.put(stopKey, false);
 
             try {
                 AIWarningSuggestionContextDO contextDO = aiMapper.getWarningSuggestionContextByWarningId(reqDTO.getWarningId());
                 if (contextDO == null) {
-                    throw new ServiceException(AIErrorCode.WARNING_NOT_EXIST);
+                    sendSseError(emitter, 404, "预警不存在");
+                    safeComplete(emitter);
+                    return;
                 }
 
                 String prompt = buildWarningSuggestionPrompt(contextDO);
@@ -775,28 +784,24 @@ public class AIServiceImpl implements AIService {
                         .stream()
                         .content();
 
-                StringBuilder answerBuilder = new StringBuilder();
-
                 Disposable disposable = flux.subscribe(
                         chunk -> {
                             if (Boolean.TRUE.equals(stopFlagMap.get(stopKey))) {
                                 return;
                             }
-                            if (chunk != null) {
-                                answerBuilder.append(chunk);
+                            if (StringUtils.hasText(chunk)) {
                                 sendSseChunk(emitter, chunk);
                             }
                         },
                         error -> {
-                            handleStreamError(emitter, "warning_suggestion_" + reqDTO.getWarningId(), error);
+                            log.error("预警AI建议生成异常, warningId={}", reqDTO.getWarningId(), error);
+                            sendSseError(emitter, 500, "AI服务响应异常，请稍后重试");
                             stopFlagMap.remove(stopKey);
+                            safeComplete(emitter);
                         },
                         () -> {
-                            try {
-                                emitter.complete();
-                            } finally {
-                                stopFlagMap.remove(stopKey);
-                            }
+                            stopFlagMap.remove(stopKey);
+                            safeComplete(emitter);
                         }
                 );
 
@@ -807,19 +812,24 @@ public class AIServiceImpl implements AIService {
 
                 emitter.onTimeout(() -> {
                     disposable.dispose();
+                    sendSseError(emitter, 500, "AI响应超时，请稍后重试");
                     stopFlagMap.remove(stopKey);
+                    safeComplete(emitter);
                 });
 
+            } catch (ServiceException e) {
+                stopFlagMap.remove(stopKey);
+                sendServiceExceptionAsSseError(emitter, e);
             } catch (Exception e) {
                 log.error("生成预警AI建议异常, warningId={}", reqDTO.getWarningId(), e);
                 stopFlagMap.remove(stopKey);
-                completeWithError(emitter, e);
+                sendSseError(emitter, 500, "AI服务异常，请稍后重试");
+                safeComplete(emitter);
             }
         });
 
         return emitter;
     }
-
     @Override
     public void initKnowledgeBaseToVectorStore() {
         try {
@@ -844,11 +854,16 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public SseEmitter generateWarningExplanationStream(AIWarningExplanationReqDTO reqDTO) {
-        validateWarningExplanationReq(reqDTO);
-
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
         aiExecutor.execute(() -> {
+            try {
+                validateWarningExplanationReq(reqDTO);
+            } catch (ServiceException e) {
+                sendServiceExceptionAsSseError(emitter, e);
+                return;
+            }
+
             String cacheKey = WARNING_EXPLANATION_CACHE_KEY_PREFIX + reqDTO.getWarningId();
 
             try {
@@ -866,7 +881,9 @@ public class AIServiceImpl implements AIService {
                         aiMapper.getWarningExplanationContextByWarningId(reqDTO.getWarningId());
 
                 if (contextDO == null) {
-                    throw new ServiceException(AIErrorCode.WARNING_NOT_EXIST);
+                    sendSseError(emitter, 404, "预警不存在");
+                    safeComplete(emitter);
+                    return;
                 }
 
                 String prompt = buildWarningExplanationPrompt(contextDO);
@@ -887,7 +904,8 @@ public class AIServiceImpl implements AIService {
                         },
                         error -> {
                             log.error("AI预警解释生成异常, warningId={}", reqDTO.getWarningId(), error);
-                            completeWithError(emitter, new ServiceException(AIErrorCode.WARNING_EXPLANATION_GENERATE_FAILED));
+                            sendSseError(emitter, 500, "AI预警解释生成失败");
+                            safeComplete(emitter);
                         },
                         () -> {
                             try {
@@ -900,35 +918,45 @@ public class AIServiceImpl implements AIService {
                                             TimeUnit.SECONDS
                                     );
                                 }
-                                emitter.complete();
                             } catch (Exception e) {
                                 log.error("AI预警解释缓存写入异常, warningId={}", reqDTO.getWarningId(), e);
-                                emitter.complete();
+                            } finally {
+                                safeComplete(emitter);
                             }
                         }
                 );
 
                 emitter.onCompletion(disposable::dispose);
-                emitter.onTimeout(disposable::dispose);
+
+                emitter.onTimeout(() -> {
+                    disposable.dispose();
+                    sendSseError(emitter, 500, "AI响应超时，请稍后重试");
+                    safeComplete(emitter);
+                });
 
             } catch (ServiceException e) {
-                completeWithError(emitter, e);
+                sendServiceExceptionAsSseError(emitter, e);
             } catch (Exception e) {
                 log.error("AI预警解释处理异常, warningId={}", reqDTO.getWarningId(), e);
-                completeWithError(emitter, new ServiceException(AIErrorCode.WARNING_EXPLANATION_GENERATE_FAILED));
+                sendSseError(emitter, 500, "AI预警解释生成失败");
+                safeComplete(emitter);
             }
         });
 
         return emitter;
     }
-
     @Override
     public SseEmitter generateRiskReportStream(AIRiskReportReqDTO reqDTO) {
-        validateRiskReportReq(reqDTO);
-
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
         aiExecutor.execute(() -> {
+            try {
+                validateRiskReportReq(reqDTO);
+            } catch (ServiceException e) {
+                sendServiceExceptionAsSseError(emitter, e);
+                return;
+            }
+
             String cacheKey = RISK_REPORT_CACHE_KEY_PREFIX + reqDTO.getDays();
 
             try {
@@ -951,7 +979,9 @@ public class AIServiceImpl implements AIService {
                         aiMapper.getRiskReportWarningContextList(startDate, endDate);
 
                 if (CollectionUtils.isEmpty(forecastList) && CollectionUtils.isEmpty(warningList)) {
-                    throw new ServiceException(AIErrorCode.RISK_REPORT_DATA_EMPTY);
+                    sendSseError(emitter, 400, "暂无可分析的天气或预警数据");
+                    safeComplete(emitter);
+                    return;
                 }
 
                 String prompt = buildRiskReportPrompt(reqDTO.getDays(), forecastList, warningList);
@@ -972,7 +1002,8 @@ public class AIServiceImpl implements AIService {
                         },
                         error -> {
                             log.error("未来农业风险趋势分析生成异常, days={}", reqDTO.getDays(), error);
-                            completeWithError(emitter, new ServiceException(AIErrorCode.RISK_REPORT_GENERATE_FAILED));
+                            sendSseError(emitter, 500, "风险趋势分析生成失败");
+                            safeComplete(emitter);
                         },
                         () -> {
                             try {
@@ -985,28 +1016,33 @@ public class AIServiceImpl implements AIService {
                                             TimeUnit.SECONDS
                                     );
                                 }
-                                emitter.complete();
                             } catch (Exception e) {
                                 log.error("未来农业风险趋势分析缓存写入异常, days={}", reqDTO.getDays(), e);
-                                emitter.complete();
+                            } finally {
+                                safeComplete(emitter);
                             }
                         }
                 );
 
                 emitter.onCompletion(disposable::dispose);
-                emitter.onTimeout(disposable::dispose);
+
+                emitter.onTimeout(() -> {
+                    disposable.dispose();
+                    sendSseError(emitter, 500, "AI响应超时，请稍后重试");
+                    safeComplete(emitter);
+                });
 
             } catch (ServiceException e) {
-                completeWithError(emitter, e);
+                sendServiceExceptionAsSseError(emitter, e);
             } catch (Exception e) {
                 log.error("未来农业风险趋势分析处理异常, days={}", reqDTO.getDays(), e);
-                completeWithError(emitter, new ServiceException(AIErrorCode.RISK_REPORT_GENERATE_FAILED));
+                sendSseError(emitter, 500, "风险趋势分析生成失败");
+                safeComplete(emitter);
             }
         });
 
         return emitter;
     }
-
     // ==================== 校验方法 ====================
 
     private void validateAssistantChatReq(AIAssistantChatReqDTO reqDTO) {
@@ -1088,25 +1124,76 @@ public class AIServiceImpl implements AIService {
     }
 
     private void validateWarningExplanationReq(AIWarningExplanationReqDTO reqDTO) {
-        if (reqDTO == null || reqDTO.getWarningId() == null || reqDTO.getWarningId() <= 0) {
+
+        if (reqDTO == null || !StringUtils.hasText(reqDTO.getWarningIdStr())) {
             throw new ServiceException(AIErrorCode.WARNING_ID_INVALID);
         }
+
+        Long warningId;
+
+        try {
+            warningId = Long.valueOf(reqDTO.getWarningIdStr());
+        } catch (Exception e) {
+            throw new ServiceException(AIErrorCode.WARNING_ID_INVALID);
+        }
+
+        if (warningId <= 0) {
+            throw new ServiceException(AIErrorCode.WARNING_ID_INVALID);
+        }
+
+        Boolean refresh = parseBooleanParam(reqDTO.getRefreshStr());
+
+        reqDTO.setWarningId(warningId);
+        reqDTO.setRefresh(refresh);
     }
 
     private void validateRiskReportReq(AIRiskReportReqDTO reqDTO) {
+
         if (reqDTO == null) {
             throw new ServiceException(AIErrorCode.RISK_REPORT_DAYS_INVALID);
         }
 
-        if (reqDTO.getDays() == null || reqDTO.getDays() < 1 || reqDTO.getDays() > 7) {
+        Integer days = 7;
+
+        if (StringUtils.hasText(reqDTO.getDaysStr())) {
+
+            try {
+                days = Integer.valueOf(reqDTO.getDaysStr());
+            } catch (Exception e) {
+                throw new ServiceException(AIErrorCode.RISK_REPORT_DAYS_INVALID);
+            }
+        }
+
+        if (days < 1 || days > 7) {
             throw new ServiceException(AIErrorCode.RISK_REPORT_DAYS_INVALID);
         }
 
-        if (Boolean.TRUE.equals(reqDTO.getRefresh()) && !ROLE_ADMIN.equals(reqDTO.getRole())) {
+        Boolean refresh = parseBooleanParam(reqDTO.getRefreshStr());
+
+        if (Boolean.TRUE.equals(refresh)
+                && !ROLE_ADMIN.equals(reqDTO.getRole())) {
             throw new ServiceException(AIErrorCode.REFRESH_FORBIDDEN);
         }
-    }
 
+        reqDTO.setDays(days);
+        reqDTO.setRefresh(refresh);
+    }
+    private Boolean parseBooleanParam(String value) {
+
+        if (!StringUtils.hasText(value)) {
+            return false;
+        }
+
+        if ("true".equalsIgnoreCase(value)) {
+            return true;
+        }
+
+        if ("false".equalsIgnoreCase(value)) {
+            return false;
+        }
+
+        throw new ServiceException(AIErrorCode.REFRESH_PARAM_INVALID);
+    }
     private void sendCachedTextAsStream(SseEmitter emitter, String cachedText) {
         try {
             List<String> chunks = splitCachedTextToChunks(cachedText);
@@ -1153,7 +1240,20 @@ public class AIServiceImpl implements AIService {
 
         return result;
     }
+    private void sendSseError(SseEmitter emitter, Integer code, String msg) {
+        try {
+            CommonResult<Void> result = new CommonResult<>();
+            result.setCode(code);
+            result.setMsg(msg);
+            result.setData(null);
 
+            emitter.send(SseEmitter.event()
+                    .name("error")
+                    .data(JacksonUtils.writeValueAsString(result)));
+        } catch (Exception e) {
+            log.error("发送SSE错误事件失败, code={}, msg={}", code, msg, e);
+        }
+    }
     private boolean isAllowedImageType(String contentType) {
         return "image/jpeg".equals(contentType)
                 || "image/jpg".equals(contentType)
@@ -1660,7 +1760,20 @@ public class AIServiceImpl implements AIService {
             log.warn("发送SSE错误事件失败, message={}", message, e);
         }
     }
+    private void sendServiceExceptionAsSseError(SseEmitter emitter, ServiceException e) {
+        try {
+            // 如果你的 ServiceException 不是 getErrorCode()，这里按你项目实际 getter 改一下
+            Integer code = e.getCode();
+            String msg = e.getMessage();
 
+            sendSseError(emitter, code, msg);
+        } catch (Exception ex) {
+            log.error("解析ServiceException失败", ex);
+            sendSseError(emitter, 500, "AI服务异常，请稍后重试");
+        } finally {
+            safeComplete(emitter);
+        }
+    }
     private void safeComplete(SseEmitter emitter) {
         try {
             emitter.complete();
@@ -1829,13 +1942,33 @@ public class AIServiceImpl implements AIService {
             当前农业环境风险上下文：
             %s
 
-            请结合以下信息进行综合分析：
-            1. 图片识别中间结果
-            2. 用户当前问题
-            3. 知识库检索内容
-            4. 当前天气与未来天气
-            5. 当前及未来预警风险
-            6. 病虫害适宜发生环境条件
+            你是农业病虫害图文综合分析助手。
+            现在你需要基于“图片识别中间结果 + 用户问题 + 当前天气 + 未来天气 + 当前及未来预警风险 + 病虫害环境条件 + 知识库检索内容”生成最终回答。
+
+            重要强制要求：
+            1. 最终回答必须包含以下五个标题，标题名称不能改：
+               【诊断结果】
+               【风险等级】
+               【判断依据】
+               【防治建议】
+               【后续观察】
+
+            2. 【判断依据】中必须明确分成以下四项，名称不能省略：
+               1. 图片依据：
+               2. 环境依据：
+               3. 预警依据：
+               4. 知识库依据：
+
+            3. 如果“当前农业环境风险上下文”中存在当前天气、未来天气、湿度、降水、风速、预警、风险评分、适宜温湿度等信息，
+               最终回答必须明确引用这些信息，不能只分析图片。
+
+            4. 如果“当前农业环境风险上下文”中没有天气或预警数据，
+               也必须在【判断依据】中明确写：
+               环境依据：暂无天气数据 / 暂无未来天气数据
+               预警依据：暂无当前或未来预警风险数据
+
+            5. 不允许编造未提供的数据。
+               如果没有具体数值，就用“当前环境数据不足”“暂无相关预警”表达。
 
             输出格式必须严格如下：
 
@@ -1843,29 +1976,36 @@ public class AIServiceImpl implements AIService {
             用1~2句话说明疑似作物、疑似病虫害或无法确定的原因。
 
             【风险等级】
-            结合图片症状、天气、预警和环境条件，判断为：低风险 / 中风险 / 高风险 / 暂无法判断。
-            如果判断依据不足，必须写“暂无法判断”，不要硬判。
+            结合图片症状、当前天气、未来天气、预警风险和病虫害适宜环境条件，判断为：低风险 / 中风险 / 高风险 / 暂无法判断。
+            如果图片症状或环境依据不足，必须写“暂无法判断”，不要硬判。
 
             【判断依据】
             1. 图片依据：
+            说明图片中可见的症状，例如白色粉末、病斑、虫体、叶片颜色、受害部位等。
             2. 环境依据：
+            必须说明当前天气或未来天气对病虫害发生的影响，例如湿度、降水、温度、风速。
+            如果没有天气数据，明确写“暂无天气数据”。
             3. 预警依据：
+            必须说明当前或未来是否存在相关预警、风险等级、风险评分、命中规则。
+            如果没有预警数据，明确写“暂无当前或未来预警风险数据”。
             4. 知识库依据：
+            结合病虫害常见症状、发生条件或防治知识进行说明。
+            如果知识库依据不足，明确写“暂无足够知识库依据”。
 
             【防治建议】
-            1. 优先给出农业管理建议，例如通风、排水、巡查、清除病叶、降低湿度等。
+            1. 优先给出农业管理建议，例如通风、排水、巡查、清除病叶、降低湿度、减少田间郁闭等。
             2. 如需用药，只能说“必要时咨询当地农技人员后规范用药”，不要编造具体药剂和剂量。
-            3. 如果图片不清晰，要建议补充清晰图片、拍摄叶片正反面和整株情况。
+            3. 建议要结合环境风险，例如湿度高则强调通风降湿，未来降水多则强调排水和雨后巡查。
 
             【后续观察】
-            说明用户接下来1~3天应该重点观察什么。
+            说明用户接下来1~3天应该重点观察什么，例如病斑是否扩大、白色粉状物是否增加、叶片背面是否出现虫体、雨后是否扩散等。
 
             回答要求：
             1. 不要输出JSON。
             2. 不要说“根据上下文”“作为AI”。
-            3. 不要把图片识别结果原样复制一遍。
-            4. 不要编造没有提供的天气、预警、病虫害名称。
-            5. 如果图片与环境风险不一致，要明确说明“图片症状与当前环境风险不完全一致，需要继续观察”。
+            3. 不要把图片识别结果原样复制一遍，要整理成最终分析。
+            4. 不要编造没有提供的天气、预警、病虫害名称和具体数值。
+            5. 如果图片症状与环境风险不一致，要明确说明“图片症状与当前环境风险不完全一致，需要继续观察”。
             6. 语言要专业、简洁、适合农业系统页面展示。
             """.formatted(
                 getNullableString(historyContext),
@@ -1874,7 +2014,6 @@ public class AIServiceImpl implements AIService {
                 getNullableString(environmentRiskContext)
         );
     }
-
     private String buildImageEnvironmentRiskContext() {
         StringBuilder sb = new StringBuilder();
 

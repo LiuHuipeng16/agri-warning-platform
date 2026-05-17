@@ -17,4 +17,13 @@ public class AIWarningExplanationReqDTO {
     private Long userId;
 
     private Boolean refresh;
+    /**
+     * 原始warningId字符串
+     */
+    private String warningIdStr;
+
+    /**
+     * 原始refresh字符串
+     */
+    private String refreshStr;
 }
