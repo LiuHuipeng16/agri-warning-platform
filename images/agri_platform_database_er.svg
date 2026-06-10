@@ -1,0 +1,405 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1500" viewBox="0 0 1800 1500">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="#555"/>
+  </marker>
+  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000000" flood-opacity="0.12"/>
+  </filter>
+</defs>
+<rect x="0" y="0" width="1800" height="1500" fill="#ffffff"/>
+<text x="900.0" y="42" text-anchor="middle" font-size="28" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">
+农业病虫害综合平台数据库关系图
+</text>
+<text x="900.0" y="72" text-anchor="middle" font-size="15" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#666">
+Database Relationship Diagram · PK 主键 · FK 外键 · UQ 唯一约束
+</text>
+
+<path d="M755.0,395 C755.0,395 755.0,318 755.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="755.0" y="350.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 crop_id</text>
+<path d="M950,495.0 C995.0,495.0 995.0,204.0 1040,204.0" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="995.0" y="343.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 pest_id</text>
+<path d="M1235.0,395 C1235.0,395 1235.0,318 1235.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="1235.0" y="350.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">1:1 pest_id</text>
+<path d="M755.0,675 C755.0,675 755.0,318 755.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="755.0" y="490.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 crop_id</text>
+<path d="M950,817.0 C995.0,817.0 995.0,204.0 1040,204.0" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="995.0" y="504.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 pest_id</text>
+<path d="M755.0,1015 C755.0,1015 755.0,959 755.0,959" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="755.0" y="981.0" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 rule_id</text>
+<path d="M560,1157.0 C657.5,1157.0 657.5,318 755.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="657.5" y="731.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 crop_id</text>
+<path d="M950,1157.0 C1092.5,1157.0 1092.5,318 1235.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="1092.5" y="731.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 pest_id</text>
+<path d="M1235.0,675 C1235.0,675 1235.0,318 1235.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="1235.0" y="490.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 pest_id</text>
+<path d="M1040,789.0 C897.5,789.0 897.5,318 755.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="897.5" y="547.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 crop_id</text>
+<path d="M275.0,430 C275.0,430 275.0,318 275.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="275.0" y="368.0" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 user_id</text>
+<path d="M275.0,710 C275.0,710 275.0,318 275.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="275.0" y="508.0" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 user_id</text>
+<path d="M275.0,1015 C275.0,1015 275.0,318 275.0,318" fill="none" stroke="#777" stroke-width="2" marker-end="url(#arrow)" opacity="0.85"/>
+<text x="275.0" y="660.5" text-anchor="middle" font-size="13" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#555" paint-order="stroke" stroke="#fff" stroke-width="4">N:1 user_id</text>
+<g filter="url(#shadow)">
+  <rect x="80" y="90" width="390" height="228" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="80" y="90" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="80" y="124" width="390" height="10" fill="#f2f5f9"/>
+  <text x="96" y="119" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">user 用户表</text>
+
+  <rect x="94" y="139" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="110" y="153" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="136" y="153" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="92" y1="164" x2="458" y2="164" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="94" y="167" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="110" y="181" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">UQ</text>
+  <text x="136" y="181" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">username</text>
+
+  <line x1="92" y1="192" x2="458" y2="192" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="209" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">password</text>
+
+  <line x1="92" y1="220" x2="458" y2="220" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="237" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">role</text>
+
+  <line x1="92" y1="248" x2="458" y2="248" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="265" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">delete_flag</text>
+
+  <line x1="92" y1="276" x2="458" y2="276" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="293" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">gmt_create / gmt_modified</text>
+
+  <line x1="92" y1="304" x2="458" y2="304" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="560" y="90" width="390" height="228" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="560" y="90" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="560" y="124" width="390" height="10" fill="#f2f5f9"/>
+  <text x="576" y="119" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">crop 作物表</text>
+
+  <rect x="574" y="139" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="153" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="616" y="153" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="572" y1="164" x2="938" y2="164" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="167" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="181" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">UQ</text>
+  <text x="616" y="181" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">name</text>
+
+  <line x1="572" y1="192" x2="938" y2="192" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="209" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">category</text>
+
+  <line x1="572" y1="220" x2="938" y2="220" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="237" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">intro / description</text>
+
+  <line x1="572" y1="248" x2="938" y2="248" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="265" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">image_url</text>
+
+  <line x1="572" y1="276" x2="938" y2="276" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="293" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">delete_flag</text>
+
+  <line x1="572" y1="304" x2="938" y2="304" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="1040" y="90" width="390" height="228" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="1040" y="90" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="1040" y="124" width="390" height="10" fill="#f2f5f9"/>
+  <text x="1056" y="119" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">pest 病虫害表</text>
+
+  <rect x="1054" y="139" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="1070" y="153" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="1096" y="153" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="1052" y1="164" x2="1418" y2="164" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="1054" y="167" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="1070" y="181" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">UQ</text>
+  <text x="1096" y="181" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">name</text>
+
+  <line x1="1052" y1="192" x2="1418" y2="192" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="209" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">type</text>
+
+  <line x1="1052" y1="220" x2="1418" y2="220" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="237" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">symptoms / cause / prevention</text>
+
+  <line x1="1052" y1="248" x2="1418" y2="248" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="265" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">risk_level</text>
+
+  <line x1="1052" y1="276" x2="1418" y2="276" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="293" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">season</text>
+
+  <line x1="1052" y1="304" x2="1418" y2="304" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="560" y="395" width="390" height="200" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="560" y="395" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="560" y="429" width="390" height="10" fill="#f2f5f9"/>
+  <text x="576" y="424" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">crop_pest_rel 作物病虫害关联表</text>
+
+  <rect x="574" y="444" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="458" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="616" y="458" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="572" y1="469" x2="938" y2="469" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="472" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="486" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="616" y="486" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">crop_id → crop.id</text>
+
+  <line x1="572" y1="497" x2="938" y2="497" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="500" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="514" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="616" y="514" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">pest_id → pest.id</text>
+
+  <line x1="572" y1="525" x2="938" y2="525" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="528" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="542" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">UQ</text>
+  <text x="616" y="542" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">crop_id + pest_id</text>
+
+  <line x1="572" y1="553" x2="938" y2="553" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="570" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">delete_flag</text>
+
+  <line x1="572" y1="581" x2="938" y2="581" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="1040" y="395" width="390" height="200" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="1040" y="395" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="1040" y="429" width="390" height="10" fill="#f2f5f9"/>
+  <text x="1056" y="424" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">pest_environment_conditions 环境条件表</text>
+
+  <rect x="1054" y="444" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="1070" y="458" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="1096" y="458" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="1052" y1="469" x2="1418" y2="469" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="1054" y="472" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="1070" y="486" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="1096" y="486" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">pest_id → pest.id</text>
+
+  <line x1="1052" y1="497" x2="1418" y2="497" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="514" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">temperature_range</text>
+
+  <line x1="1052" y1="525" x2="1418" y2="525" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="542" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">humidity_range</text>
+
+  <line x1="1052" y1="553" x2="1418" y2="553" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="570" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">environment_description</text>
+
+  <line x1="1052" y1="581" x2="1418" y2="581" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="560" y="675" width="390" height="284" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="560" y="675" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="560" y="709" width="390" height="10" fill="#f2f5f9"/>
+  <text x="576" y="704" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">prewarning_rules 预警规则表</text>
+
+  <rect x="574" y="724" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="738" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="616" y="738" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="572" y1="749" x2="938" y2="749" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="752" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="766" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="616" y="766" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">crop_id → crop.id</text>
+
+  <line x1="572" y1="777" x2="938" y2="777" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="780" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="794" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="616" y="794" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">pest_id → pest.id</text>
+
+  <line x1="572" y1="805" x2="938" y2="805" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="822" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">min/max temp</text>
+
+  <line x1="572" y1="833" x2="938" y2="833" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="850" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">min/max humidity</text>
+
+  <line x1="572" y1="861" x2="938" y2="861" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="878" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">min/max precipitation</text>
+
+  <line x1="572" y1="889" x2="938" y2="889" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="906" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">min/max wind_speed</text>
+
+  <line x1="572" y1="917" x2="938" y2="917" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="934" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">risk_level / rule_status</text>
+
+  <line x1="572" y1="945" x2="938" y2="945" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="560" y="1015" width="390" height="284" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="560" y="1015" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="560" y="1049" width="390" height="10" fill="#f2f5f9"/>
+  <text x="576" y="1044" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">warning 预警表</text>
+
+  <rect x="574" y="1064" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="1078" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="616" y="1078" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="572" y1="1089" x2="938" y2="1089" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="1092" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="1106" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="616" y="1106" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">crop_id → crop.id</text>
+
+  <line x1="572" y1="1117" x2="938" y2="1117" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="1120" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="1134" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="616" y="1134" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">pest_id → pest.id</text>
+
+  <line x1="572" y1="1145" x2="938" y2="1145" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="1148" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="1162" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="616" y="1162" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">rule_id → prewarning_rules.id</text>
+
+  <line x1="572" y1="1173" x2="938" y2="1173" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="1190" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">risk_level / risk_score</text>
+
+  <line x1="572" y1="1201" x2="938" y2="1201" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="1218" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">risk_score_detail</text>
+
+  <line x1="572" y1="1229" x2="938" y2="1229" stroke="#eeeeee" stroke-width="1"/>
+  <text x="578" y="1246" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">match_detail</text>
+
+  <line x1="572" y1="1257" x2="938" y2="1257" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="574" y="1260" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="590" y="1274" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">UQ</text>
+  <text x="616" y="1274" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">crop+pest+rule+type+date</text>
+
+  <line x1="572" y1="1285" x2="938" y2="1285" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="1040" y="675" width="390" height="228" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="1040" y="675" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="1040" y="709" width="390" height="10" fill="#f2f5f9"/>
+  <text x="1056" y="704" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">lightweight_knowledge_base_enhanced_qa 知识库问答表</text>
+
+  <rect x="1054" y="724" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="1070" y="738" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="1096" y="738" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="1052" y1="749" x2="1418" y2="749" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="1054" y="752" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="1070" y="766" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="1096" y="766" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">pest_id → pest.id</text>
+
+  <line x1="1052" y1="777" x2="1418" y2="777" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="1054" y="780" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="1070" y="794" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="1096" y="794" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">crop_id → crop.id</text>
+
+  <line x1="1052" y1="805" x2="1418" y2="805" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="822" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">question</text>
+
+  <line x1="1052" y1="833" x2="1418" y2="833" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="850" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">answer</text>
+
+  <line x1="1052" y1="861" x2="1418" y2="861" stroke="#eeeeee" stroke-width="1"/>
+  <text x="1058" y="878" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">delete_flag</text>
+
+  <line x1="1052" y1="889" x2="1418" y2="889" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="80" y="430" width="390" height="228" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="80" y="430" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="80" y="464" width="390" height="10" fill="#f2f5f9"/>
+  <text x="96" y="459" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">ai_chat_session AI会话表</text>
+
+  <rect x="94" y="479" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="110" y="493" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="136" y="493" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">chat_id</text>
+
+  <line x1="92" y1="504" x2="458" y2="504" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="94" y="507" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="110" y="521" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="136" y="521" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">user_id → user.id</text>
+
+  <line x1="92" y1="532" x2="458" y2="532" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="549" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">session_type</text>
+
+  <line x1="92" y1="560" x2="458" y2="560" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="577" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">context_type</text>
+
+  <line x1="92" y1="588" x2="458" y2="588" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="605" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">context_id</text>
+
+  <line x1="92" y1="616" x2="458" y2="616" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="633" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">title</text>
+
+  <line x1="92" y1="644" x2="458" y2="644" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="80" y="710" width="390" height="256" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="80" y="710" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="80" y="744" width="390" height="10" fill="#f2f5f9"/>
+  <text x="96" y="739" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">ai_chat_message AI消息表</text>
+
+  <rect x="94" y="759" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="110" y="773" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="136" y="773" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="92" y1="784" x2="458" y2="784" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="94" y="787" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="110" y="801" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="136" y="801" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">user_id → user.id</text>
+
+  <line x1="92" y1="812" x2="458" y2="812" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="829" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">chat_id</text>
+
+  <line x1="92" y1="840" x2="458" y2="840" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="857" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">role</text>
+
+  <line x1="92" y1="868" x2="458" y2="868" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="885" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">content</text>
+
+  <line x1="92" y1="896" x2="458" y2="896" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="913" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">message_type / image_urls</text>
+
+  <line x1="92" y1="924" x2="458" y2="924" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="941" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">message_status</text>
+
+  <line x1="92" y1="952" x2="458" y2="952" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+<g filter="url(#shadow)">
+  <rect x="80" y="1015" width="390" height="228" rx="10" fill="#fff" stroke="#333" stroke-width="1.4"/>
+  <rect x="80" y="1015" width="390" height="44" rx="10" fill="#f2f5f9" stroke="#333" stroke-width="1.4"/>
+  <rect x="80" y="1049" width="390" height="10" fill="#f2f5f9"/>
+  <text x="96" y="1044" font-size="17" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700" fill="#222">feedback 用户反馈表</text>
+
+  <rect x="94" y="1064" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="110" y="1078" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">PK</text>
+  <text x="136" y="1078" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">id</text>
+
+  <line x1="92" y1="1089" x2="458" y2="1089" stroke="#eeeeee" stroke-width="1"/>
+  <rect x="94" y="1092" width="32" height="20" rx="4" fill="#eef2f6" stroke="#b7c0cc"/>
+  <text x="110" y="1106" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="#333">FK</text>
+  <text x="136" y="1106" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">user_id → user.id</text>
+
+  <line x1="92" y1="1117" x2="458" y2="1117" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="1134" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">target_type</text>
+
+  <line x1="92" y1="1145" x2="458" y2="1145" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="1162" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">target_id</text>
+
+  <line x1="92" y1="1173" x2="458" y2="1173" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="1190" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">feedback_result</text>
+
+  <line x1="92" y1="1201" x2="458" y2="1201" stroke="#eeeeee" stroke-width="1"/>
+  <text x="98" y="1218" font-size="14" font-family="Consolas, 'Microsoft YaHei', monospace" fill="#333">content</text>
+
+  <line x1="92" y1="1229" x2="458" y2="1229" stroke="#eeeeee" stroke-width="1"/>
+</g>
+
+
+<rect x="80" y="1370" width="1640" height="85" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="105" y="1400" font-size="15" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#333">
+说明：本图用于 GitHub README 展示，重点体现核心业务表、AI会话表、反馈表之间的主外键关系。
+</text>
+<text x="105" y="1426" font-size="15" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#333">
+其中 warning 表通过 rule_id 关联预警规则，并额外保存 risk_score、risk_score_detail、match_detail，用于风险评分与命中依据展示。
+</text>
+</svg>
