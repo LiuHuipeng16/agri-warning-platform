@@ -1136,31 +1136,40 @@ public class WarningServiceImpl implements WarningService {
                                                                                  PestDO pestDO) {
         List<WarningRiskScoreDTO.ScoreDetailDTO> list = new ArrayList<>();
 
+        boolean humidityEnabled = isMetricConfigured(ruleDO.getMinHumidity(), ruleDO.getMaxHumidity());
         list.add(buildScoreDetail("湿度", calculateSingleMetricScore(
                 dailySummary.getAvgHumidity(),
                 ruleDO.getMinHumidity(),
                 ruleDO.getMaxHumidity(),
                 35
-        ), 35));
+        ), humidityEnabled ? 35 : 0));
 
-        list.add(buildScoreDetail("温度", calculateTemperatureScore(ruleDO, dailySummary), 30));
+        boolean temperatureEnabled = isMetricConfigured(ruleDO.getMinTemp(), ruleDO.getMaxTemp());
+        list.add(buildScoreDetail("温度", calculateTemperatureScore(ruleDO, dailySummary), temperatureEnabled ? 30 : 0));
 
+        boolean precipitationEnabled = isMetricConfigured(ruleDO.getMinPrecipitation(), ruleDO.getMaxPrecipitation());
         list.add(buildScoreDetail("降水", calculateSingleMetricScore(
                 dailySummary.getPrecipitation(),
                 ruleDO.getMinPrecipitation(),
                 ruleDO.getMaxPrecipitation(),
                 25
-        ), 25));
+        ), precipitationEnabled ? 25 : 0));
 
+        boolean windSpeedEnabled = isMetricConfigured(ruleDO.getMinWindSpeed(), ruleDO.getMaxWindSpeed());
         list.add(buildScoreDetail("风速", calculateSingleMetricScore(
                 dailySummary.getMaxWindSpeed(),
                 ruleDO.getMinWindSpeed(),
                 ruleDO.getMaxWindSpeed(),
                 10
-        ), 10));
+        ), windSpeedEnabled ? 10 : 0));
 
         return list;
     }
+
+    private boolean isMetricConfigured(BigDecimal minValue, BigDecimal maxValue) {
+        return Objects.nonNull(minValue) || Objects.nonNull(maxValue);
+    }
+
     private WarningRiskScoreDTO.ScoreDetailDTO buildScoreDetail(String factor,
                                                                 Integer score,
                                                                 Integer maxScore) {
@@ -1315,18 +1324,26 @@ public class WarningServiceImpl implements WarningService {
             return 0;
         }
 
-        int total = 0;
+        int actualScore = 0;
+        int maxScore = 0;
         for (WarningRiskScoreDTO.ScoreDetailDTO detailDTO : scoreDetails) {
-            if (detailDTO.getScore() != null) {
-                total += detailDTO.getScore();
+            if (detailDTO.getMaxScore() != null && detailDTO.getMaxScore() > 0) {
+                maxScore += detailDTO.getMaxScore();
+                if (detailDTO.getScore() != null) {
+                    actualScore += detailDTO.getScore();
+                }
             }
         }
 
-        if (total < 0) {
+        if (actualScore <= 0 || maxScore <= 0) {
             return 0;
         }
 
-        return Math.min(total, 100);
+        BigDecimal normalizedScore = BigDecimal.valueOf(actualScore)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(maxScore), 0, RoundingMode.HALF_UP);
+
+        return Math.min(normalizedScore.intValue(), 100);
     }
 
     private List<WarningMatchDetailDTO.MatchDetailDTO> buildMatchDetailDTOList(PreWarningRuleDO ruleDO,
